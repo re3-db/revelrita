@@ -6,3 +6,9 @@ out/
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# keep the env template
+!.env.example
+
+# original single-file design, images now live in public/images
+_source/
