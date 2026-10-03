@@ -1,9 +1,9 @@
 import { contact } from "@/lib/site";
 
 /**
- * The confirmation email a visitor gets after sending the inquiry form (Helen is
- * BCC'd on it). Email clients ignore stylesheets and most modern CSS, so this is
- * old-school tables + inline styles, using the site's palette.
+ * The confirmation email a visitor gets after sending the inquiry form. Helen gets
+ * the same email with a note on top. Email clients ignore stylesheets and most
+ * modern CSS, so this is old-school tables + inline styles, using the site's palette.
  */
 
 // Absolute, because the email is read outside the site. Lives at public/email/logo.png.
@@ -24,7 +24,16 @@ const serif = "'Newsreader',Georgia,'Times New Roman',serif";
 const escape = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export function inquiryEmail({ name, answers }: { name: string; answers: [question: string, answer: string][] }) {
+export function inquiryEmail({
+  name,
+  answers,
+  note,
+}: {
+  name: string;
+  answers: [question: string, answer: string][];
+  /** Shown in a banner above everything else (Helen's copy uses it). */
+  note?: string;
+}) {
   const firstName = name.split(/\s+/)[0] ?? "";
   const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
   const thanks = "Thank you for your inquiry!";
@@ -59,6 +68,16 @@ export function inquiryEmail({ name, answers }: { name: string; answers: [questi
     <tr>
       <td align="center" style="padding:32px 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
+${
+            note
+              ? `
+          <tr>
+            <td style="padding:0 0 24px;">
+              <div style="background:${c.blush};border-radius:14px;padding:14px 18px;font-family:${sans};font-size:15px;line-height:1.5;font-weight:700;color:${c.ink};">${escape(note)}</div>
+            </td>
+          </tr>`
+              : ""
+          }
           <tr>
             <td align="center" style="padding:0 0 24px;">
               <a href="https://revelrita.com" style="text-decoration:none;">
@@ -101,6 +120,7 @@ export function inquiryEmail({ name, answers }: { name: string; answers: [questi
 </html>`;
 
   const text = [
+    ...(note ? [note, "", "========================================", ""] : []),
     greeting,
     "",
     thanks,

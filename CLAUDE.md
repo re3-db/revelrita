@@ -64,8 +64,10 @@ Run `npm run build && npm run lint` before committing.
 
 Both forms call `sendInquiry` (`app/actions.ts`), which posts to the Resend REST API (no SDK).
 The visitor gets a branded HTML confirmation (`lib/inquiry-email.ts`: thank-you note plus a copy of
-their answers) from `fun@revelrita.com`, with `fun@revelrita.com` BCC'd so Helen gets the same copy.
-If Resend refuses the visitor's address, the inquiry is sent to Helen alone (reply-to the visitor).
+their answers) from `fun@revelrita.com`. Helen gets the same email as a separate message from
+`website@revelrita.com` (reply-to the visitor, with a note on top). It is not a BCC on purpose: Gmail
+files mail "from" your own address under Sent, so a BCC from fun@ never reaches the fun@ inbox.
+If the visitor's confirmation fails, Helen's copy says so.
 The email logo is `public/email/logo.png`, loaded from `https://revelrita.com/email/logo.png`.
 
 revelrita.com must be verified in Resend (Domains, DNS records at the domain host). Resend refuses to
@@ -73,8 +75,9 @@ send to anyone but the account owner until it is.
 
 Env vars (see `.env.example`; set them in Vercel for Production and Preview):
 - `RESEND_API_KEY` (required). Without it the form shows a friendly error and logs the inquiry.
-- `INQUIRY_FROM` (optional, default `Revelrita <fun@revelrita.com>`).
-- `INQUIRY_BCC` (optional, default `fun@revelrita.com`).
+- `INQUIRY_FROM` (optional, default `Revelrita <fun@revelrita.com>`): the visitor's confirmation.
+- `INQUIRY_TO` (optional, default `fun@revelrita.com`): where Helen's copy goes.
+- `INQUIRY_NOTIFY_FROM` (optional, default `Revelrita website <website@revelrita.com>`): Helen's copy.
 
 The form has a hidden `company` honeypot field. If a bot fills it, the action returns success without sending.
 

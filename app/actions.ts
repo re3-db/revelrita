@@ -17,8 +17,8 @@ const failed: InquiryResult = {
 };
 
 /**
- * Handles a booking inquiry (from the home page or /book form): emails the visitor
- * a branded confirmation with a copy of their answers, BCC'ing Helen, via Resend.
+ * Handles a booking inquiry (from the home page or /book form) via Resend: emails
+ * the visitor a branded confirmation with a copy of their answers, and Helen a copy.
  */
 export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
   const field = (key: string) => String(formData.get(key) ?? "").trim().slice(0, 5000);
@@ -33,49 +33,66 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
 
   const name = field("name");
   const date = field("date");
-  const { html, text } = inquiryEmail({
-    name,
-    answers: [
-      ["Your name", name],
-      ["Email", email],
-      ["Event date", date],
-      ["Guest count", field("guests")],
-      ["What kind of event is it?", field("kind")],
-      ["What are you thinking for drinks?", drinkLabels[field("drinks")] ?? ""],
-      ["Where is it, and what's the vibe?", field("vibe")],
-    ],
-  });
+  const answers: [string, string][] = [
+    ["Your name", name],
+    ["Email", email],
+    ["Event date", date],
+    ["Guest count", field("guests")],
+    ["What kind of event is it?", field("kind")],
+    ["What are you thinking for drinks?", drinkLabels[field("drinks")] ?? ""],
+    ["Where is it, and what's the vibe?", field("vibe")],
+  ];
   const firstName = name.split(/\s+/)[0];
-  const subject = `Thanks for your inquiry${firstName ? `, ${firstName}` : ""}!${date ? ` (${date})` : ""}`;
+  const forDate = date ? ` for ${date}` : "";
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.error(`RESEND_API_KEY is not set, so the inquiry could not be emailed:\n${text}`);
+    console.error(`RESEND_API_KEY is not set, so this inquiry could not be emailed:\n${JSON.stringify(answers)}`);
     return failed;
   }
-
-  const from = process.env.INQUIRY_FROM || "Revelrita <fun@revelrita.com>";
-  const helen = process.env.INQUIRY_BCC || "fun@revelrita.com";
-  const send = (payload: Record<string, unknown>) =>
-    fetch("https://api.resend.com/emails", {
+  const send = async (payload: Record<string, unknown>) => {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, subject, html, text, ...payload }),
+      body: JSON.stringify(payload),
     });
+    if (!res.ok) console.error(`Resend rejected the email to ${payload.to}: ${res.status} ${await res.text()}`);
+    return res.ok;
+  };
 
-  let res = await send({ to: [email], bcc: [helen] });
-  if (!res.ok) {
-    // Most likely Resend refused the visitor's address. Still get the inquiry to
-    // Helen (reply-to the visitor) so it isn't lost.
-    console.error("Resend rejected the confirmation email:", res.status, await res.text());
-    res = await send({ to: [helen], reply_to: email, subject: `[Confirmation not sent to ${email}] ${subject}` });
-    if (!res.ok) {
-      console.error(`Resend rejected the fallback email too: ${res.status} ${await res.text()}\n${text}`);
-      return failed;
-    }
+  // The visitor's confirmation, from fun@revelrita.com
+  const confirmed = await send({
+    from: process.env.INQUIRY_FROM || "Revelrita <fun@revelrita.com>",
+    to: [email],
+    subject: `Thanks for your inquiry${firstName ? `, ${firstName}` : ""}!${date ? ` (${date})` : ""}`,
+    ...inquiryEmail({ name, answers }),
+  });
+
+  // Helen's copy is a separate email from a different address: Gmail files mail
+  // "from" your own address under Sent, so a BCC from fun@ never reaches her inbox.
+  const notified = await send({
+    from: process.env.INQUIRY_NOTIFY_FROM || "Revelrita website <website@revelrita.com>",
+    to: [process.env.INQUIRY_TO || "fun@revelrita.com"],
+    reply_to: email,
+    subject: `${confirmed ? "" : "[Confirmation not sent] "}New inquiry from ${name || email}${forDate}`,
+    ...inquiryEmail({
+      name,
+      answers,
+      note: confirmed
+        ? `New inquiry! ${email} was sent the confirmation below. Hit reply to answer them directly.`
+        : `New inquiry! The confirmation could NOT be sent to ${email} (check the address for typos). Hit reply to write to them.`,
+    }),
+  });
+
+  if (!notified) {
+    console.error(`Helen's copy of this inquiry was not sent:\n${JSON.stringify(answers)}`);
+    // The visitor has their confirmation (which Helen can find in Resend), so don't alarm them
+    if (!confirmed) return failed;
   }
   return {
     ok: true,
-    message: "Got it, thank you! We're on it. Check your inbox for a confirmation with a copy of your answers.",
+    message: confirmed
+      ? "Got it, thank you! We're on it. Check your inbox for a confirmation with a copy of your answers."
+      : "Got it, thank you! We're on it and will be in touch soon.",
   };
 }
