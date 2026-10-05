@@ -9,6 +9,39 @@ function perPage() {
   return window.innerWidth <= 640 ? 1 : window.innerWidth <= 1000 ? 2 : 3;
 }
 
+/** A review quote clamped to 8 lines, with a "Read more" toggle when it overflows. */
+function Quote({ text }: { text: string }) {
+  const ref = useRef<HTMLQuoteElement>(null);
+  const [open, setOpen] = useState(false);
+  const [clamped, setClamped] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setClamped(el.scrollHeight > el.clientHeight + 1);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="flex-1">
+      <blockquote ref={ref} className={open ? undefined : "line-clamp-8"}>
+        {text}
+      </blockquote>
+      {(open || clamped) && (
+        <button
+          className="mt-[10px] p-0 border-0 bg-transparent cursor-pointer font-sans text-[14px] font-semibold text-ink underline underline-offset-4"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? "Show less" : "Read more"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /** The scroll-snapping reviews strip on the home page, with dots and arrows. */
 export default function ReviewCarousel() {
   const track = useRef<HTMLDivElement>(null);
@@ -62,14 +95,18 @@ export default function ReviewCarousel() {
           {reviews.map((r) => (
             <figure className="review" key={r.name}>
               <Stars />
-              <blockquote>{r.quote}</blockquote>
+              <Quote text={r.quote} />
               <figcaption>{r.name}</figcaption>
             </figure>
           ))}
         </div>
       </div>
       <div className="rev-nav">
-        <div className="dots">
+        {/* A dot per review won't fit beside the arrows on a phone, so phones get a counter */}
+        <p className="hidden max-[641px]:block m-0 font-sans text-[14px] font-semibold text-ink">
+          {current + 1} / {pageCount}
+        </p>
+        <div className="dots max-[641px]:hidden">
           {Array.from({ length: pageCount }, (_, i) => (
             <button
               key={i}
