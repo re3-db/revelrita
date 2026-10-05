@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { sendInquiry, type InquiryResult } from "@/app/actions";
+import DatePicker from "@/components/DatePicker";
 import { delay } from "@/lib/site";
 
 type Variant = "home" | "book";
@@ -107,7 +108,7 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
         </div>
         <div className={fieldClass}>
           <label htmlFor={`${variant}-date`}>Event date</label>
-          <input id={`${variant}-date`} name="date" placeholder={book ? "June 14, or still deciding" : undefined} />
+          <DatePicker id={`${variant}-date`} placeholder={book ? "Pick a date" : undefined} />
         </div>
         <div className={fieldClass}>
           <label htmlFor={`${variant}-guests`}>Guest count</label>

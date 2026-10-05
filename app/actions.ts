@@ -1,5 +1,6 @@
 "use server";
 
+import { formatDate, isIsoDate } from "@/lib/dates";
 import { inquiryEmail } from "@/lib/inquiry-email";
 
 export type InquiryResult = { ok: boolean; message: string };
@@ -32,18 +33,27 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
   }
 
   const name = field("name");
-  const date = field("date");
+  // The calendar sends each picked day as a YYYY-MM-DD `date`, plus `flexible=yes`
+  // when the visitor is still choosing between several
+  const flexible = field("flexible") === "yes";
+  const dates = formData.getAll("date").map(String).filter(isIsoDate).sort().slice(0, 20).map(formatDate);
+  const date = flexible ? "" : (dates[0] ?? field("date"));
+  const dateAnswer = flexible
+    ? dates.length
+      ? `Still deciding. Possible dates:\n${dates.join("\n")}`
+      : "Still deciding"
+    : date;
   const answers: [string, string][] = [
     ["Your name", name],
     ["Email", email],
-    ["Event date", date],
+    ["Event date", dateAnswer],
     ["Guest count", field("guests")],
     ["What kind of event is it?", field("kind")],
     ["What are you thinking for drinks?", drinkLabels[field("drinks")] ?? ""],
     ["Where is it, and what's the vibe?", field("vibe")],
   ];
   const firstName = name.split(/\s+/)[0];
-  const forDate = date ? ` for ${date}` : "";
+  const forDate = date ? ` for ${date}` : flexible ? " (date TBD)" : "";
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {

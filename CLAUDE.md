@@ -25,7 +25,8 @@ Run `npm run build && npm run lint` before committing.
 - `app/actions.ts` is the `sendInquiry` server action behind both "Check your date" forms.
 - `components/` holds shared pieces: `Nav` (sticky nav + full-screen menu), `Footer`,
   `ReviewCarousel` / `ReviewCards` / `Stars`, `InquiryForm` (`variant="home" | "book"`),
-  `HeroSlides`, `DrinkCalculator`, `ContactLinks`, `RevealObserver`.
+  `DatePicker` (the form's calendar, with a "several possible dates" mode), `HeroSlides`,
+  `DrinkCalculator`, `ContactLinks`, `RevealObserver`.
 - `lib/site.ts` has contact details, the page list (drives the menu), and `delay()`.
 - `lib/reviews.ts` has every review. Add new ones here and both review sections pick them up.
 - `lib/images.ts` re-exports every photo in `public/images/` as a static import.
