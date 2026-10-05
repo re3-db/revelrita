@@ -18,17 +18,26 @@ const drinkChoices = (variant: Variant) => [
 
 /**
  * The "Check your date" inquiry form. The home page shows a shorter version on
- * a sky card; /book adds placeholders and an event-type field.
+ * a sky card; /book adds placeholders and an event-type field. Once sent, the
+ * fields give way to a thank-you message.
  */
 export default function InquiryForm({ variant }: { variant: Variant }) {
   const book = variant === "book";
   const [result, setResult] = useState<InquiryResult | null>(null);
   const [pending, startTransition] = useTransition();
   const note = useRef<HTMLParagraphElement>(null);
+  const thanks = useRef<HTMLHeadingElement>(null);
+  const sent = result?.ok === true;
 
   useEffect(() => {
-    if (book && result) note.current?.scrollIntoView({ block: "nearest" });
-  }, [book, result]);
+    if (sent) {
+      // The card shrinks to just the message, so bring it into view and move focus to it
+      thanks.current?.scrollIntoView({ block: "center" });
+      thanks.current?.focus({ preventScroll: true });
+    } else if (book && result) {
+      note.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [book, result, sent]);
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,12 +58,31 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
   // The book page wraps each input in .field; the home page doesn't
   const fieldClass = book ? "field" : undefined;
 
+  // Same <form> element either way, so its scroll-reveal state carries over
+  const cardClass = `card reveal ${book ? "bg-paper" : "bg-sky"}`;
+
+  if (sent) {
+    return (
+      <form className={cardClass} style={delay(120)} onSubmit={(e) => e.preventDefault()}>
+        <p className={`eyebrow ${book ? "" : "text-ink"}`}>Inquiry sent</p>
+        <h2 ref={thanks} tabIndex={-1} className="mt-[14px] text-[clamp(34px,3.6vw,48px)] outline-none">
+          Thank you!{" "}
+          <em className={`block font-fancy font-normal italic ${book ? "text-orange" : "text-ember"}`}>We&apos;re on it.</em>
+        </h2>
+        {result.message && <p className="mt-[16px] text-[19px]">{result.message}</p>}
+        <button
+          type="button"
+          className="mt-[24px] cursor-pointer border-0 bg-transparent p-0 font-sans text-[15px] font-semibold text-ink underline"
+          onClick={() => setResult(null)}
+        >
+          Send another inquiry
+        </button>
+      </form>
+    );
+  }
+
   return (
-    <form
-      className={`card reveal ${book ? "bg-paper" : "bg-sky"}`}
-      style={delay(120)}
-      onSubmit={onSubmit}
-    >
+    <form className={cardClass} style={delay(120)} onSubmit={onSubmit}>
       <input type="hidden" name="source" value={book ? "Book page" : "Home page"} />
       <div aria-hidden="true" className="absolute left-[-9999px]">
         <label htmlFor={`${variant}-company`}>Company</label>

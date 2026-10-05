@@ -89,10 +89,9 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
     // The visitor has their confirmation (which Helen can find in Resend), so don't alarm them
     if (!confirmed) return failed;
   }
+  const next = "We'll be in touch soon with answers to your questions and a proposal.";
   return {
     ok: true,
-    message: confirmed
-      ? "Got it, thank you! We're on it. Check your inbox for a confirmation with a copy of your answers."
-      : "Got it, thank you! We're on it and will be in touch soon.",
+    message: confirmed ? `${next} A copy of your answers is on its way to ${email}.` : next,
   };
 }
