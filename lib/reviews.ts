@@ -13,6 +13,11 @@ export const reviews: Review[] = [
   { quote: "Delicious and unique cocktail options, and the team's energy was the life of the party.", name: "Claire B." },
   { quote: "Helen is so dialed. Revelrita is your go-to mobile bartending service for your next event.", name: "Cole Suiste" },
   { quote: "Showed up with music, energy, and delicious cocktails. Easy to book and friendly bartenders.", name: "Sophia Pruett" },
+  { quote: "Revelrita is the BEST! We got to bring her to our wedding out in Pauma Valley. Made our cocktail hour and dinner portion so fun. Vibes were had.", name: "Joy Park" },
+  { quote: "Revelrita was an 11/10 experience. From booking and working with Helen on the drink menu to cleanup, it couldn't have gone better. You'd be a fool not to book Revelrita!", name: "Grace Kelly" },
+  { quote: "A vibe you won't want to pass up!! Incredible all around. 10/10", name: "Tori Hensley" },
+  { quote: "If you're looking to elevate any party or gathering in San Diego, Revelrita is an absolute MUST-HAVE. The real stars of the show are the drinks and the service.", name: "Lauren Streufert" },
+  { quote: "Helen is incredible to work with and helps make an event memorable… not to mention the good vibes, tasty drinks and ENERGY that come with the booking!", name: "Blake Fol" },
 ];
 
 export function reviewsBy(...names: string[]) {
