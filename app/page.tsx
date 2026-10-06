@@ -5,6 +5,7 @@ import HeroSlides from "@/components/HeroSlides";
 import InquiryForm from "@/components/InquiryForm";
 import ReviewCarousel from "@/components/ReviewCarousel";
 import * as img from "@/lib/images";
+import { press } from "@/lib/press";
 import { delay } from "@/lib/site";
 
 const heroSlides = [
@@ -222,6 +223,32 @@ export default function HomePage() {
             <a className="btn ink mt-[24px]" href="#inquire">
               Check your date
             </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="pad" id="press">
+        <div className="wrap">
+          <div className="reveal">
+            <p className="eyebrow">In the press</p>
+            <h2 className="big mt-[14px]">Read all about it.</h2>
+          </div>
+          <div className="steps">
+            {press.map((f, i) => (
+              <a
+                key={f.url}
+                className="step reveal flex flex-col bg-white no-underline transition-transform duration-200 hover:-translate-y-[4px]"
+                style={delay(i * 110)}
+                href={f.url}
+                target="_blank"
+                rel="noopener"
+              >
+                <p className="num">{f.outlet}</p>
+                <h3>{f.title}</h3>
+                <p>{f.date}</p>
+                <p className="mt-auto pt-[18px] font-sans text-[15px] font-semibold text-ember">Read the interview &rarr;</p>
+              </a>
+            ))}
           </div>
         </div>
       </section>

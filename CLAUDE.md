@@ -29,6 +29,8 @@ Run `npm run build && npm run lint` before committing.
   `DrinkCalculator`, `ContactLinks`, `RevealObserver`.
 - `lib/site.ts` has contact details, the page list (drives the menu), and `delay()`.
 - `lib/reviews.ts` has every review. Add new ones here and both review sections pick them up.
+- `lib/press.ts` has every article/interview featuring Revelrita (newest first). The home page
+  "In the press" section (`#press`) lists them all.
 - `lib/images.ts` re-exports every photo in `public/images/` as a static import.
 
 ## Styling rules
