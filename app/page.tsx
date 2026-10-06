@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import ContactLinks from "@/components/ContactLinks";
@@ -7,6 +8,10 @@ import PressCards from "@/components/PressCards";
 import ReviewCarousel from "@/components/ReviewCarousel";
 import * as img from "@/lib/images";
 import { delay } from "@/lib/site";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const heroSlides = [
   { src: img.heroCartWindow, alt: "The Revelrita bar cart window with a live edge bar top, wine bottles and a framed cocktail menu" },

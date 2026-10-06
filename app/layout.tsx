@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import Footer from "@/components/Footer";
+import JsonLd from "@/components/JsonLd";
 import Nav from "@/components/Nav";
 import RevealObserver from "@/components/RevealObserver";
+import { businessSchema } from "@/lib/schema";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://revelrita.com"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Revelrita | San Diego's bar cart",
     template: "%s | Revelrita",
@@ -43,6 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main>{children}</main>
         <Footer />
         <RevealObserver />
+        <JsonLd data={businessSchema} />
       </body>
     </html>
   );

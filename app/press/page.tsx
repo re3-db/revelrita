@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Press",
   description:
     "Interviews and articles featuring Helen Bowman and Revelrita, the mobile bar cart in Cardiff, CA, from SDVoyager, CanvasRebel and Bold Journey.",
+  alternates: { canonical: "/press" },
 };
 
 export default function PressPage() {

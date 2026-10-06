@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+export const siteUrl = "https://revelrita.com";
+
 export const contact = {
   email: "fun@revelrita.com",
   phone: "(803) 207-9491",

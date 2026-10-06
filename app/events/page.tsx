@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Events",
   description:
     "Weddings, engagement parties, birthdays, work parties and pop-ups. Revelrita brings a fully staffed craft cocktail bar cart to events across San Diego County.",
+  alternates: { canonical: "/events" },
 };
 
 const eventTypes = [

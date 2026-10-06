@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Book the cart",
   description:
     "Check your date with Revelrita. Tell us your date, guest count and what you're thinking for drinks and we'll come back with availability and menu ideas.",
+  alternates: { canonical: "/book" },
 };
 
 export default function BookPage() {

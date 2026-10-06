@@ -7,6 +7,7 @@ import { delay } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Gallery",
   description: "Photos of the Revelrita bar cart at recent weddings, backyard parties and pop-ups around San Diego.",
+  alternates: { canonical: "/gallery" },
 };
 
 const photos = [

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import JsonLd from "@/components/JsonLd";
 
 export const metadata: Metadata = {
   title: "FAQ",
   description:
     "How the alcohol works, what's included, how far we travel, insurance and how to book the Revelrita bar cart.",
+  alternates: { canonical: "/faq" },
 };
 
 const packagesLink = (
@@ -13,7 +15,8 @@ const packagesLink = (
   </Link>
 );
 
-const faqs: { q: string; a: React.ReactNode }[] = [
+// `text` is the plain-text answer for structured data, needed when `a` contains links
+const faqs: { q: string; a: React.ReactNode; text?: string }[] = [
   {
     q: "How does the alcohol work?",
     a: "You buy it. We build the shopping list down to the bottle based on your guest count and menu, you pay liquor store prices with nothing marked up, and anything unopened goes home with you. We are not licensed to buy alcohol on your behalf, so it goes on your card at checkout, or you log into our Total Wine account and we handle the rest.",
@@ -30,6 +33,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
         liability coverage. The full list, along with everything you can add on, is on the {packagesLink}.
       </>
     ),
+    text: "The cart, the bartenders, a custom menu, ice and drinkware, garnish, lemon water, setup and breakdown, and liability coverage. The full list, along with everything you can add on, is on the packages page at revelrita.com/packages.",
   },
   {
     q: "How far do you travel?",
@@ -56,6 +60,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
         will put a number to it.
       </>
     ),
+    text: "Every event is quoted on its own, because the number moves with your guest count, how long we pour and how many bartenders you need. See revelrita.com/packages for what is included, then send over your date at revelrita.com/book and we will put a number to it.",
   },
   {
     q: "Are you insured?",
@@ -67,9 +72,20 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   },
 ];
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: typeof f.a === "string" ? f.a : f.text },
+  })),
+};
+
 export default function FaqPage() {
   return (
     <section className="subhero">
+      <JsonLd data={faqSchema} />
       <div className="wrap center reveal">
         <h1 className="mx-auto my-0">Frequently asked questions.</h1>
       </div>

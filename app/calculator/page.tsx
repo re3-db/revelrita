@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "Drink calculator",
   description:
     "How much alcohol do you need for your party? Enter your guest count and hours to get a rough count of beer, wine, bubbly and spirits.",
+  alternates: { canonical: "/calculator" },
 };
 
 export default function CalculatorPage() {

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Packages",
   description:
     "Beer and wine, beer wine and cocktails, or mocktails. Every Revelrita package includes the cart, bartenders, custom menu, ice, drinkware, garnish and setup.",
+  alternates: { canonical: "/packages" },
 };
 
 const included = [

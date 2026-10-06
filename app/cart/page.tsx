@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "The cart",
   description:
     "Meet the Revelrita bar cart: a restored sky blue pony trailer with a live edge bar top, pebble ice, fresh juice and a commercial sound system.",
+  alternates: { canonical: "/cart" },
 };
 
 export default function CartPage() {

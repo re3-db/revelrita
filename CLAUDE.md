@@ -25,7 +25,7 @@ Run `npm run build && npm run lint` before committing.
 - `app/actions.ts` is the `sendInquiry` server action behind both "Check your date" forms.
 - `components/` holds shared pieces: `Nav` (sticky nav + full-screen menu), `Footer`,
   `ReviewCarousel` / `ReviewCards` / `Stars`, `InquiryForm` (`variant="home" | "book"`),
-  `DatePicker` (the form's calendar, with a "several possible dates" mode), `PressCards`, `HeroSlides`,
+  `DatePicker` (the form's calendar, with a "several possible dates" mode), `PressCards`, `JsonLd`, `HeroSlides`,
   `DrinkCalculator`, `ContactLinks`, `RevealObserver`.
 - `lib/site.ts` has contact details, the page list (drives the menu), and `delay()`.
 - `lib/reviews.ts` has every review. Add new ones here and both review sections pick them up.
@@ -49,6 +49,14 @@ Run `npm run build && npm run lint` before committing.
   Fonts `<link>` in `app/layout.tsx`, exactly as in the original. Don't swap to `next/font`
   without comparing side by side: the original only loads weights 400/600/800, so CSS `700`
   renders as 800, and a variable font would change that.
+
+## SEO
+
+- Each page's `metadata` sets `alternates: { canonical: "/route" }`. Add one to every new page.
+- `app/sitemap.ts` lists every entry in `pages` (`lib/site.ts`); `app/robots.ts` allows all and points to it.
+- `lib/schema.ts` is the schema.org `LocalBusiness` JSON-LD rendered on every page (via `JsonLd` in the
+  root layout). It pulls contact details from `lib/site.ts` and articles from `lib/press.ts`.
+- `/faq` also renders `FAQPage` JSON-LD from its `faqs` list. Answers that contain JSX need a plain `text`.
 
 ## Images
 
