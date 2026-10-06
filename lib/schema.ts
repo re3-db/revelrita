@@ -34,7 +34,8 @@ export const businessSchema = {
     "San Diego County, CA",
   ].map((name) => ({ "@type": "Place", name })),
   knowsAbout: ["Mobile bar service", "Bartending", "Craft cocktails", "Mocktails", "Wedding bar service", "Event bartending"],
-  sameAs: [contact.instagramHref],
+  // Profiles of the business elsewhere: Instagram, Google Business Profile, Yelp
+  sameAs: [contact.instagramHref, "https://share.google/8c6W75ANGrv326BsR", "https://www.yelp.com/biz/revelrita-cardiff-2"],
   subjectOf: press.map((f) => ({
     "@type": "Article",
     headline: f.title,
