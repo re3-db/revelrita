@@ -1,6 +1,7 @@
 export type Feature = { outlet: string; title: string; date: string; url: string };
 
-// Articles and interviews featuring Revelrita. Newest first; the home page "In the press" section lists them all.
+// Articles and interviews featuring Revelrita. Newest first; the /press page and the home page
+// "In the press" section both list them all.
 export const press: Feature[] = [
   {
     outlet: "Bold Journey",

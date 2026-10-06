@@ -20,17 +20,17 @@ Run `npm run build && npm run lint` before committing.
 ## Layout
 
 - `app/` has one folder per page: `/` (home), `/events`, `/cart`, `/packages`, `/calculator`,
-  `/gallery`, `/faq`, `/book`. Each page sets its own `metadata` (title uses the
+  `/gallery`, `/press`, `/faq`, `/book`. Each page sets its own `metadata` (title uses the
   `"%s | Revelrita"` template from `app/layout.tsx`).
 - `app/actions.ts` is the `sendInquiry` server action behind both "Check your date" forms.
 - `components/` holds shared pieces: `Nav` (sticky nav + full-screen menu), `Footer`,
   `ReviewCarousel` / `ReviewCards` / `Stars`, `InquiryForm` (`variant="home" | "book"`),
-  `DatePicker` (the form's calendar, with a "several possible dates" mode), `HeroSlides`,
+  `DatePicker` (the form's calendar, with a "several possible dates" mode), `PressCards`, `HeroSlides`,
   `DrinkCalculator`, `ContactLinks`, `RevealObserver`.
 - `lib/site.ts` has contact details, the page list (drives the menu), and `delay()`.
 - `lib/reviews.ts` has every review. Add new ones here and both review sections pick them up.
-- `lib/press.ts` has every article/interview featuring Revelrita (newest first). The home page
-  "In the press" section (`#press`) lists them all.
+- `lib/press.ts` has every article/interview featuring Revelrita (newest first). `PressCards` renders
+  them on `/press` and in the home page "In the press" section (`#press`).
 - `lib/images.ts` re-exports every photo in `public/images/` as a static import.
 
 ## Styling rules
