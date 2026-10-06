@@ -11,6 +11,11 @@ export const metadata: Metadata = {
 };
 
 const photos = [
+  { src: img.weddingOrangeGrove, alt: "Wedding guests gathered around the cart in an orange grove" },
+  { src: img.bartenderWindowSmile, alt: "A bartender smiling from the cart window at dusk" },
+  { src: img.signBarMenu, alt: "The revelrita sign beside a wedding bar menu" },
+  { src: img.cocktailMenuWindow, alt: "A framed cocktail menu and a margarita on the bar top under the lit sign" },
+  { src: img.cowboyHatGuestBar, alt: "A guest in a cowboy hat watching the bartender shake a cocktail" },
   { src: img.cartNight, alt: "The cart lit up at night with guests at the window" },
   { src: img.guestsBarWindow, alt: "Two guests leaning into the bar window" },
   { src: img.drinksMenuFrame, alt: "A printed drinks menu in a brass frame" },
@@ -43,8 +48,8 @@ const photos = [
   { src: img.stringLights, alt: "Two friends with drinks under the string lights" },
 ];
 
-/* The reveal stagger restarted a couple of times in the original list; kept as-is */
-const stagger = [0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0];
+/* The reveal stagger restarted a couple of times in the original list; kept as-is (new photos are prepended) */
+const stagger = [0, 70, 140, 0, 70, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0, 70, 140, 0];
 
 export default function GalleryPage() {
   return (

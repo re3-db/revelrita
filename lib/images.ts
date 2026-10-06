@@ -1,15 +1,18 @@
 // Every photo on the site. Static imports give next/image the real width/height.
+export { default as bartenderWindowSmile } from "@/public/images/bartender-window-smile.jpg";
 export { default as barTopMenu } from "@/public/images/bar-top-menu.jpg";
 export { default as beersCheers } from "@/public/images/beers-cheers.jpg";
 export { default as bottlesDrinkware } from "@/public/images/bottles-drinkware.jpg";
-export { default as campChairsLaughing } from "@/public/images/camp-chairs-laughing.jpg";
 export { default as campChairs } from "@/public/images/camp-chairs.jpg";
+export { default as campChairsLaughing } from "@/public/images/camp-chairs-laughing.jpg";
+export { default as cart } from "@/public/images/cart.png";
 export { default as cartGardenDusk } from "@/public/images/cart-garden-dusk.jpg";
 export { default as cartLawnGuests } from "@/public/images/cart-lawn-guests.jpg";
 export { default as cartNight } from "@/public/images/cart-night.jpg";
 export { default as cartSunset } from "@/public/images/cart-sunset.jpg";
-export { default as cart } from "@/public/images/cart.png";
+export { default as cocktailMenuWindow } from "@/public/images/cocktail-menu-window.jpg";
 export { default as coupleCart } from "@/public/images/couple-cart.jpg";
+export { default as cowboyHatGuestBar } from "@/public/images/cowboy-hat-guest-bar.jpg";
 export { default as crowdBackyard } from "@/public/images/crowd-backyard.jpg";
 export { default as drinksMenuFrame } from "@/public/images/drinks-menu-frame.jpg";
 export { default as friendsBackyard } from "@/public/images/friends-backyard.jpg";
@@ -35,5 +38,7 @@ export { default as margaritasAbove } from "@/public/images/margaritas-above.jpg
 export { default as margaritasBarTop } from "@/public/images/margaritas-bar-top.jpg";
 export { default as margaritasCheers } from "@/public/images/margaritas-cheers.jpg";
 export { default as pinkSunsetGuests } from "@/public/images/pink-sunset-guests.jpg";
+export { default as signBarMenu } from "@/public/images/sign-bar-menu.jpg";
 export { default as stringLights } from "@/public/images/string-lights.jpg";
+export { default as weddingOrangeGrove } from "@/public/images/wedding-orange-grove.jpg";
 export { default as windowMenuFlowers } from "@/public/images/window-menu-flowers.jpg";
