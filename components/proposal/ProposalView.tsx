@@ -12,7 +12,7 @@ import {
   proposalHelen,
   proposalToast,
 } from "@/lib/images";
-import type { PhotoKey, ProposalContent } from "@/lib/proposals";
+import { money, pricedRows, type PhotoKey, type ProposalContent } from "@/lib/proposals";
 
 /**
  * A client's proposal: a port of render() from Helen's proposal builder artifact. Same
@@ -20,7 +20,7 @@ import type { PhotoKey, ProposalContent } from "@/lib/proposals";
  * for when a slide or photo shows. Used by /proposal/[id] and the builder's preview.
  */
 
-const photos: Record<PhotoKey, { src: StaticImageData; alt: string }> = {
+export const photos: Record<PhotoKey, { src: StaticImageData; alt: string }> = {
   guest: { src: proposalGuest, alt: "A guest laughing with a drink at dusk" },
   bottles: { src: proposalBottles, alt: "Wine, cans and flowers set out on the bar" },
   helen: { src: proposalHelen, alt: "Helen with the Revelrita cart" },
@@ -74,8 +74,6 @@ function paras(s: string) {
     .filter((p) => p.trim())
     .map((p, i) => <p key={i}>{breaks(p.trim())}</p>);
 }
-
-const money = (n: number) => "$" + n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 
 export default function ProposalView({
   content: d,
@@ -160,27 +158,7 @@ export default function ProposalView({
   flush();
 
   /* ---------- the numbers ---------- */
-  const rows = d.pricing
-    .map((row) => {
-      const r = { label: row.label.trim(), amount: row.amount.trim(), note: row.note.trim() };
-      // "Bar cart, 4 hours: $850" typed all in the first box still counts as an amount
-      if (!r.amount) {
-        const m = r.label.match(/[:\-–]?\s*\$?\s*([0-9][0-9,]*(?:\.[0-9]{2})?)\s*\$?\s*$/);
-        if (m) {
-          r.amount = m[1];
-          r.label = r.label
-            .slice(0, m.index)
-            .replace(/[\s:,\-]+$/, "")
-            .trim();
-        }
-      }
-      const raw = r.amount.replace(/[$,\s]/g, "");
-      const num = raw !== "" && /^[0-9.]+$/.test(raw) ? parseFloat(raw) : null;
-      return { ...r, num, display: num !== null ? money(num) : r.amount };
-    })
-    .filter((r) => r.label || r.amount);
-  const counted = rows.filter((r) => r.num !== null);
-  const total = counted.reduce((sum, r) => sum + (r.num ?? 0), 0);
+  const { rows, counted, total } = pricedRows(d.pricing);
   const terms = [
     d.peak && (
       <li className="peak" key="peak">

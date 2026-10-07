@@ -1,16 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } from "@/app/(proposals)/admin/actions";
-import ProposalView from "@/components/proposal/ProposalView";
+import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
   defaultSubject,
   eventTypes,
+  money,
   photoKeys,
   photoLabels,
+  pricedRows,
   type EventType,
   type PriceLine,
   type Proposal,
@@ -18,9 +21,10 @@ import {
 } from "@/lib/proposals";
 
 /**
- * The proposal builder from Helen's artifact, on the site: the same form, fieldsets and
- * bottom bar, but proposals save to the site as she types (instead of into a link), and
- * "Send" emails the client a link to /proposal/<id>.
+ * The proposal builder from Helen's artifact, on the site: the same fields and defaults,
+ * laid out as cream cards like the proposals list. Proposals save to the site as she types
+ * (instead of into a link), and "Send" emails the client a link to /proposal/<id>.
+ * Preview shows the client's page exactly as the artifact rendered it.
  */
 
 type TextKey = { [K in keyof ProposalContent]: ProposalContent[K] extends string ? K : never }[keyof ProposalContent];
@@ -192,95 +196,64 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
   }
 
   const answers = proposal.inquiry?.answers.filter(([, a]) => a) ?? [];
+  const who = content.name.trim();
+  const { counted, total } = pricedRows(content.pricing);
 
   return (
-    <div id="builder">
-      <div className="bhead">
-        <div className="bwrap">
-          <p className="back">
-            <Link href="/admin">All proposals</Link>
+    <div id="builder" className="ed">
+      <div className="ed-wrap">
+        <header className="ahero ed-hero">
+          <div className="ahero-top">
+            <Link href="/admin" className="alink">
+              &larr; All proposals
+            </Link>
+            <span className={`apill ${sent ? "sent" : "draft"}`}>{sent ? "Sent" : "Draft"}</span>
+          </div>
+          <h1 className="ahero-title">
+            {who ? (
+              <>
+                Proposal for <em>{who}</em>
+              </>
+            ) : (
+              <>
+                New <em>proposal</em>
+              </>
+            )}
+          </h1>
+          <p className="ahero-sub">
+            {sent
+              ? `${meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}${meta.sentAt ? ` on ${day(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.`
+              : `${proposal.inquiry ? `Made from the inquiry ${proposal.inquiry.answers[0]?.[1] || "someone"} sent on ${day(proposal.inquiry.receivedAt)}. ` : ""}It saves as you type, and nothing goes to the client until you hit Send.`}
           </p>
-          <h1>Revelrita proposal builder</h1>
-          <p>Fill this in, preview it, send it. It saves as you type, and nothing goes to the client until you hit Send.</p>
-        </div>
-      </div>
-
-      <div className="bwrap">
-        <div className={`setup${sent ? " done" : ""}`}>
-          {sent ? (
-            <>
-              <h2>Sent</h2>
-              <p>
-                {meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}
-                {meta.sentAt ? ` on ${day(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.
-              </p>
-              <p>
-                <a href={link} target="_blank" rel="noreferrer">
-                  Open their page
-                </a>
-              </p>
-            </>
-          ) : (
-            <>
-              <h2>Draft</h2>
-              <p>
-                {proposal.inquiry
-                  ? `Made from the inquiry ${proposal.inquiry.answers[0]?.[1] || "someone"} sent on ${day(proposal.inquiry.receivedAt)}. `
-                  : ""}
-                Fill in the rest, preview it, and hit <strong>Send to client</strong> when it&apos;s right.
-              </p>
-            </>
+          {sent && (
+            <p className="ed-open">
+              <a className="alink" href={link} target="_blank" rel="noreferrer">
+                Open their page &#8599;
+              </a>
+            </p>
           )}
-          {answers.length > 0 && (
-            <details className="inquiry" open={!sent}>
-              <summary>What they sent through the website</summary>
-              <dl>
-                {answers.map(([q, a]) => (
-                  <div key={q}>
-                    <dt>{q}</dt>
-                    <dd>{a}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
-          )}
-        </div>
+        </header>
 
-        <fieldset>
-          <legend>The event</legend>
-          <div className="grid">
-            <Stack label="Who it's for" htmlFor="f_name">
-              <input {...bind("name")} placeholder="Sarah + Mike" />
-            </Stack>
-            <Stack label="Event type (sets the colors)" htmlFor="f_eventType">
-              <select
-                id="f_eventType"
-                value={content.eventType}
-                onChange={(e) => change({ eventType: e.target.value as EventType })}
-              >
-                {eventTypes.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </Stack>
-            <Stack label="Occasion" htmlFor="f_occasion">
-              <input {...bind("occasion")} placeholder="Wedding reception" />
-            </Stack>
-            <Stack label="Date" htmlFor="f_date">
-              <input {...bind("date")} placeholder="Saturday, June 13" />
-            </Stack>
-            <Stack label="Venue or location" htmlFor="f_venue">
-              <input {...bind("venue")} placeholder="Private home, Leucadia" />
-            </Stack>
-            <Stack label="Guest count" htmlFor="f_guests">
-              <input {...bind("guests")} placeholder="85 guests" />
-            </Stack>
-            <Stack label="Service window" htmlFor="f_serviceWindow">
-              <input {...bind("serviceWindow")} placeholder="4 hours, 5:00 to 9:00" />
-            </Stack>
-            <Stack label="Their email (where Send goes)" htmlFor="f_clientEmail">
+        {answers.length > 0 && (
+          <details className="ecard einq" open={!sent}>
+            <summary>What they sent through the website</summary>
+            <dl>
+              {answers.map(([q, a]) => (
+                <div key={q}>
+                  <dt>{q}</dt>
+                  <dd>{a}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+        )}
+
+        <Card title="The event" note="The basics. They show at the top of the proposal.">
+          <div className="egrid">
+            <Field label="Who it's for" htmlFor="f_name" hint="The greeting says “Hey, [this].”">
+              <input {...bind("name")} placeholder="e.g. Sarah + Mike" />
+            </Field>
+            <Field label="Their email" htmlFor="f_clientEmail" hint="Where Send to client goes.">
               <input
                 id="f_clientEmail"
                 type="email"
@@ -290,113 +263,137 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                   setSaveState("unsaved");
                   setClientEmail(e.target.value);
                 }}
-                placeholder="sarah@email.com"
+                placeholder="e.g. sarah@email.com"
               />
-            </Stack>
+            </Field>
           </div>
-          <Stack
-            label="Opening note"
-            htmlFor="f_intro"
-            hint="Two or three sentences, the way you'd write it in a text."
-          >
+          <div className="estack">
+            <span className="elabel" id="eventTypeLabel">
+              Event type
+            </span>
+            <div className="eseg" role="radiogroup" aria-labelledby="eventTypeLabel">
+              {eventTypes.map((t) => (
+                <label key={t.value} className={content.eventType === t.value ? "on" : undefined}>
+                  <input
+                    type="radio"
+                    name="eventType"
+                    value={t.value}
+                    checked={content.eventType === t.value}
+                    onChange={() => change({ eventType: t.value as EventType })}
+                  />
+                  {t.label}
+                </label>
+              ))}
+            </div>
+            <p className="ehint">Sets the accent color, and “Hi” or “Hey” in the greeting.</p>
+          </div>
+          <div className="egrid">
+            <Field label="Occasion" htmlFor="f_occasion">
+              <input {...bind("occasion")} placeholder="e.g. Wedding reception" />
+            </Field>
+            <Field label="Date" htmlFor="f_date">
+              <input {...bind("date")} placeholder="e.g. Saturday, June 13" />
+            </Field>
+            <Field label="Venue or location" htmlFor="f_venue">
+              <input {...bind("venue")} placeholder="e.g. Private home, Leucadia" />
+            </Field>
+            <Field label="Guest count" htmlFor="f_guests">
+              <input {...bind("guests")} placeholder="e.g. 85 guests" />
+            </Field>
+            <Field label="Service window" htmlFor="f_serviceWindow">
+              <input {...bind("serviceWindow")} placeholder="e.g. 4 hours, 5:00 to 9:00" />
+            </Field>
+          </div>
+          <Field label="Opening note" htmlFor="f_intro" hint="Two or three sentences, the way you'd write it in a text.">
             <textarea
               {...bind("intro")}
               rows={3}
-              placeholder="So glad you reached out. Here's what I'm picturing for your day."
+              placeholder="e.g. So glad you reached out. Here's what I'm picturing for your day."
             />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>What they get</legend>
-          <Stack label="Package name" htmlFor="f_packageName">
-            <input {...bind("packageName")} placeholder="The Coastal Cart" />
-          </Stack>
-          <Stack label="Included, one per line" htmlFor="f_included">
+        <Card title="What they get">
+          <Field label="Package name" htmlFor="f_packageName">
+            <input {...bind("packageName")} placeholder="e.g. The Coastal Cart" />
+          </Field>
+          <Field label="What's included" htmlFor="f_included" hint="One per line.">
             <textarea {...bind("included")} rows={9} />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>The opening statement</legend>
-          <Stack label="Headline" htmlFor="f_visionTitle">
-            <input {...bind("visionTitle")} placeholder="We bring the party, minus the logistics." />
-          </Stack>
-          <Stack label="A short paragraph. Leave empty to skip this slide." htmlFor="f_visionBody">
+        <Card title="The opening statement" note="Leave both empty to skip this slide.">
+          <Field label="Headline" htmlFor="f_visionTitle">
+            <input {...bind("visionTitle")} placeholder="e.g. We bring the party, minus the logistics." />
+          </Field>
+          <Field label="A short paragraph" htmlFor="f_visionBody">
             <textarea {...bind("visionBody")} rows={4} />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>What makes Revelrita different</legend>
-          <Stack
-            label="One per line: short title, pipe, one sentence. Leave empty to skip this slide."
-            htmlFor="f_different"
-          >
+        <Card title="What makes Revelrita different" note="Leave empty to skip this slide. The first four show.">
+          <Field label="One per line: a short title, then | and one sentence" htmlFor="f_different">
             <textarea {...bind("different")} rows={5} />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>Questions people ask</legend>
-          <Stack label="One per line: question, pipe, answer. Leave empty to skip this slide." htmlFor="f_faq">
+        <Card title="Questions people ask" note="Leave empty to skip this slide.">
+          <Field label="One per line: the question, then | and the answer" htmlFor="f_faq">
             <textarea {...bind("faq")} rows={6} />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>Client quote</legend>
-          <Stack label="What they said. Leave empty to skip this slide." htmlFor="f_quote">
+        <Card title="Client quote" note="Leave empty to skip this slide.">
+          <Field label="What they said" htmlFor="f_quote">
             <textarea {...bind("quote")} rows={5} />
-          </Stack>
-          <Stack label="Who said it" htmlFor="f_quoteBy">
-            <input {...bind("quoteBy")} placeholder="Jess, backyard 40th in Encinitas" />
-          </Stack>
-        </fieldset>
+          </Field>
+          <Field label="Who said it" htmlFor="f_quoteBy">
+            <input {...bind("quoteBy")} placeholder="e.g. Jess, backyard 40th in Encinitas" />
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>Photos</legend>
-          <p className="hint" style={{ margin: "0 0 12px" }}>
-            Tick the ones you want in this proposal.
-          </p>
-          {photoKeys.map((k) => (
-            <label className="check" key={k}>
-              <input
-                type="checkbox"
-                checked={content.photos.includes(k)}
-                onChange={(e) =>
-                  change({
-                    photos: e.target.checked ? [...content.photos, k] : content.photos.filter((p) => p !== k),
-                  })
-                }
-              />{" "}
-              {photoLabels[k]}
-            </label>
-          ))}
-        </fieldset>
+        <Card title="Photos" note="Tap the ones you want in this proposal.">
+          <div className="ephotos">
+            {photoKeys.map((k) => {
+              const on = content.photos.includes(k);
+              return (
+                <label key={k} className={`ephoto${on ? " on" : ""}`}>
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={(e) =>
+                      change({
+                        photos: e.target.checked ? [...content.photos, k] : content.photos.filter((p) => p !== k),
+                      })
+                    }
+                  />
+                  <Image src={photos[k].src} alt="" sizes="(max-width: 600px) 45vw, 200px" />
+                  <span className="ephoto-label">{photoLabels[k]}</span>
+                </label>
+              );
+            })}
+          </div>
+        </Card>
 
-        <fieldset>
-          <legend>The menu</legend>
-          <Stack label="Menu heading" htmlFor="f_menuTitle">
-            <input {...bind("menuTitle")} placeholder="Two signature drinks, beer and wine" />
-          </Stack>
-          <Stack
-            label="One drink per line: name, then a pipe, then ingredients"
+        <Card title="The menu" note="Leave the drinks empty to hide the menu until it's built.">
+          <Field label="Menu heading" htmlFor="f_menuTitle">
+            <input {...bind("menuTitle")} placeholder="e.g. Two signature drinks, beer and wine" />
+          </Field>
+          <Field
+            label="Drinks, one per line: the name, then | and the ingredients"
             htmlFor="f_menu"
-            hint="Names and ingredients only, no descriptions. Leave this empty to hide the menu until the menu's built."
+            hint="Names and ingredients only, no descriptions."
           >
             <textarea
               {...bind("menu")}
               rows={6}
-              placeholder="Passion Fruit Marg | tequila blanco, passion fruit, lime, agave"
+              placeholder="e.g. Passion Fruit Marg | tequila blanco, passion fruit, lime, agave"
             />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>Pricing</legend>
-          <div className="stack">
-            <label>What you&apos;re charging</label>
+        <Card title="Pricing" note="Amounts get added up for you. You can also write “Included” or “TBD” and it shows as typed.">
+          <div className="eprice">
             <div className="prhead">
               <span>What it covers</span>
               <span>Amount</span>
@@ -409,21 +406,20 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                   <input
                     className="pr-l"
                     aria-label="What it covers"
-                    placeholder="Bar cart and two bartenders, 4 hours"
+                    placeholder="e.g. Bar cart and two bartenders, 4 hours"
                     value={row.label}
                     onChange={(e) => setRow(i, { label: e.target.value })}
                   />
                   <input
                     className="pr-a"
                     aria-label="Amount"
-                    placeholder="850"
+                    placeholder="e.g. 850"
                     value={row.amount}
                     onChange={(e) => setRow(i, { amount: e.target.value })}
                   />
                   <input
                     className="pr-n"
                     aria-label="Note"
-                    placeholder=""
                     value={row.note}
                     onChange={(e) => setRow(i, { note: e.target.value })}
                   />
@@ -433,52 +429,50 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                 </div>
               ))}
             </div>
-            <button
-              type="button"
-              className="linkbtn"
-              style={{ marginLeft: 0 }}
-              onClick={() => change({ pricing: [...content.pricing, emptyRow()] })}
-            >
-              Add another line
-            </button>
-            <p className="hint">
-              Amounts get added up for you. You can also write &quot;Included&quot; or &quot;TBD&quot; and it shows
-              as-is.
-            </p>
+            <div className="eprice-foot">
+              <button type="button" className="elink" onClick={() => change({ pricing: [...content.pricing, emptyRow()] })}>
+                + Add another line
+              </button>
+              {counted.length > 0 && (
+                <span className="eprice-total">
+                  Service total <strong>{money(total)}</strong>
+                </span>
+              )}
+            </div>
           </div>
-          <div className="grid">
-            <Stack label="Deposit line" htmlFor="f_deposit">
-              <input {...bind("deposit")} placeholder="$200 deposit holds the date" />
-            </Stack>
-            <Stack label="Good through" htmlFor="f_holdsFor">
-              <input {...bind("holdsFor")} placeholder="This quote holds for 7 days" />
-            </Stack>
+          <div className="egrid">
+            <Field label="Deposit line" htmlFor="f_deposit">
+              <input {...bind("deposit")} placeholder="e.g. $200 deposit holds the date" />
+            </Field>
+            <Field label="Good through" htmlFor="f_holdsFor">
+              <input {...bind("holdsFor")} placeholder="e.g. This quote holds for 7 days" />
+            </Field>
           </div>
-          <Stack label="Peak date line (leave empty if it's not one)" htmlFor="f_peak">
-            <input {...bind("peak")} placeholder="This is a peak Saturday, and peak dates are priced accordingly." />
-          </Stack>
-          <Stack
-            label="What's in the number. One per line: short title, pipe, one sentence. Empty to skip."
+          <Field label="Peak date line" htmlFor="f_peak" hint="Leave empty if it's not a peak date.">
+            <input {...bind("peak")} placeholder="e.g. This is a peak Saturday, and peak dates are priced accordingly." />
+          </Field>
+          <Field
+            label="What's in the number: one per line, a short title, then | and one sentence"
             htmlFor="f_inTheNumber"
+            hint="Leave empty to skip it."
           >
             <textarea {...bind("inTheNumber")} rows={6} />
-          </Stack>
-          <Stack label="Pricing note" htmlFor="f_pricingNote">
-            <input {...bind("pricingNote")} placeholder="Final count confirmed two weeks out" />
-          </Stack>
-        </fieldset>
+          </Field>
+          <Field label="Pricing note" htmlFor="f_pricingNote">
+            <input {...bind("pricingNote")} placeholder="e.g. Final count confirmed two weeks out" />
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>The alcohol</legend>
-          <Stack
+        <Card title="The alcohol">
+          <Field
             label="How the two payments work"
             htmlFor="f_alcohol"
             hint={
               <>
-                Edit it if this event&apos;s different.
+                Edit it if this event&apos;s different.{" "}
                 <button
                   type="button"
-                  className="linkbtn"
+                  className="elink"
                   onClick={() => {
                     change({ alcohol: DEFAULT_ALCOHOL });
                     say("Standard wording restored");
@@ -490,63 +484,62 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
             }
           >
             <textarea {...bind("alcohol")} rows={7} />
-          </Stack>
-        </fieldset>
+          </Field>
+        </Card>
 
-        <fieldset>
-          <legend>Next steps and contact</legend>
-          <Stack label="Steps, one per line" htmlFor="f_steps">
+        <Card title="Next steps and contact">
+          <Field label="Steps, one per line" htmlFor="f_steps">
             <textarea {...bind("steps")} rows={4} />
-          </Stack>
-          <div className="grid">
-            <Stack label="Email" htmlFor="f_email">
+          </Field>
+          <div className="egrid">
+            <Field label="Your email" htmlFor="f_email">
               <input {...bind("email")} />
-            </Stack>
-            <Stack label="Phone" htmlFor="f_phone">
+            </Field>
+            <Field label="Your phone" htmlFor="f_phone">
               <input {...bind("phone")} />
-            </Stack>
+            </Field>
           </div>
-          <Stack label="Sign-off" htmlFor="f_signOff">
-            <input {...bind("signOff")} placeholder="Can't wait. Let's make it a party." />
-          </Stack>
-        </fieldset>
+          <Field label="Sign-off" htmlFor="f_signOff">
+            <input {...bind("signOff")} placeholder="e.g. Can't wait. Let's make it a party." />
+          </Field>
+        </Card>
 
-        <p className="hint">
-          <button type="button" className="linkbtn" style={{ marginLeft: 0 }} onClick={onDelete}>
+        <p className="edelete">
+          <button type="button" className="elink danger" onClick={onDelete}>
             Delete this proposal
           </button>
         </p>
       </div>
 
-      <div className="bar noprint">
-        <button type="button" className="btn ghost" onClick={showPreview}>
-          Preview
-        </button>
-        <button type="button" className="btn" onClick={() => setSending(true)}>
-          {sent ? "Send again" : "Send to client"}
-        </button>
-        <div className="grow">
-          <input
-            readOnly
-            aria-label="Their link"
-            style={{ opacity: 0.75 }}
-            value={sent ? link : "Their link goes live when you send it."}
-          />
-        </div>
-        {sent && (
-          <button type="button" className="btn ghost" onClick={copyLink}>
-            Copy client link
+      <div className="ebar noprint">
+        <div className="ebar-inner">
+          <button type="button" className="ebtn ghost" onClick={showPreview}>
+            Preview
           </button>
-        )}
-        <button type="button" className="btn ghost" onClick={() => save(content, clientEmail)} disabled={saveState === "saving"}>
-          {saveState === "saving"
-            ? "Saving..."
-            : saveState === "saved"
-              ? "Saved"
-              : saveState === "error"
-                ? "Not saved, retry"
-                : "Save"}
-        </button>
+          <button
+            type="button"
+            className={`ebtn ghost esave ${saveState}`}
+            onClick={() => save(content, clientEmail)}
+            disabled={saveState === "saving"}
+          >
+            {saveState === "saving"
+              ? "Saving..."
+              : saveState === "saved"
+                ? "✓ Saved"
+                : saveState === "error"
+                  ? "Not saved, retry"
+                  : "Save"}
+          </button>
+          <span className="ebar-space" />
+          {sent && (
+            <button type="button" className="ebtn ghost" onClick={copyLink}>
+              Copy client link
+            </button>
+          )}
+          <button type="button" className="ebtn primary" onClick={() => setSending(true)}>
+            {sent ? "Send again" : "Send to client"}
+          </button>
+        </div>
       </div>
 
       {sending && (
@@ -587,8 +580,21 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
   );
 }
 
-/** A labelled field, the artifact's .stack */
-function Stack({
+/** One section of the editor, a cream card like a proposal slide */
+function Card({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+  return (
+    <section className="ecard">
+      <div className="ecard-head">
+        <h2>{title}</h2>
+        {note && <p>{note}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** A labelled field */
+function Field({
   label,
   htmlFor,
   hint,
@@ -600,10 +606,10 @@ function Stack({
   children: ReactNode;
 }) {
   return (
-    <div className="stack">
+    <div className="estack">
       <label htmlFor={htmlFor}>{label}</label>
       {children}
-      {hint && <p className="hint">{hint}</p>}
+      {hint && <p className="ehint">{hint}</p>}
     </div>
   );
 }
@@ -659,30 +665,30 @@ function SendPanel({
         }}
       >
         <h2 id="sendTitle">Send it{name.trim() ? ` to ${name.trim()}` : ""}</h2>
-        <Stack label="To" htmlFor="s_to">
+        <Field label="To" htmlFor="s_to">
           <input id="s_to" type="email" required value={to} onChange={(e) => setTo(e.target.value)} autoFocus />
-        </Stack>
-        <Stack label="Subject" htmlFor="s_subject">
+        </Field>
+        <Field label="Subject" htmlFor="s_subject">
           <input id="s_subject" required value={subject} onChange={(e) => setSubject(e.target.value)} />
-        </Stack>
-        <Stack
+        </Field>
+        <Field
           label="Message"
           htmlFor="s_message"
           hint="They get this with a button to their proposal. It comes from fun@revelrita.com, so replies land in your inbox."
         >
           <textarea id="s_message" rows={9} value={message} onChange={(e) => setMessage(e.target.value)} />
-        </Stack>
-        <div className="cta-row">
-          <button type="submit" className="btn" disabled={busy}>
+        </Field>
+        <div className="esend-actions">
+          <button type="submit" className="ebtn primary" disabled={busy}>
             {busy ? "Sending..." : "Send it"}
           </button>
-          <button type="button" className="btn ghost" onClick={onClose} disabled={busy}>
+          <button type="button" className="ebtn ghost" onClick={onClose} disabled={busy}>
             Cancel
           </button>
         </div>
-        <p className="hint">
-          Rather text or DM it yourself?
-          <button type="button" className="linkbtn" disabled={busy} onClick={() => run(() => onCopyInstead(to.trim()))}>
+        <p className="esend-alt">
+          Rather text or DM it yourself?{" "}
+          <button type="button" className="elink" disabled={busy} onClick={() => run(() => onCopyInstead(to.trim()))}>
             Mark it sent and copy the link
           </button>
         </p>
