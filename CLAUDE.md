@@ -4,8 +4,8 @@
 
 Marketing site for Revelrita, Helen's mobile bar cart business in Cardiff, CA (revelrita.com).
 Next.js 16 App Router + Tailwind v4, deployed on Vercel. Every marketing page is static except the
-inquiry form's server action. Helen's proposal builder (`/admin`) and client proposals (`/proposal/<id>`)
-render per request.
+inquiry form's server action. Helen's admin (proposals at `/admin`, her event log at `/admin/events`)
+and client proposals (`/proposal/<id>`) render per request.
 
 This site was converted from a single-file HTML design (`_source/revelrita-site.html`, gitignored,
 not deployed). The design must stay visually identical to it: when in doubt, match the original.
@@ -120,8 +120,23 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   must keep looking like the artifact. The list, login and editor have their own look (the `.a*` and
   `.e*` classes at the bottom): the proposal hero's gradient and cream cards.
 - Photos: `public/images/proposal/` (the artifact's full-size copies), exported from `lib/images.ts`.
-- Storage: one JSON value per proposal in Upstash Redis (`lib/proposal-store.ts`, REST API via fetch,
-  no SDK). Admin server actions are in `app/(proposals)/admin/actions.ts`; each checks the login.
+- Storage: one JSON value per proposal in Upstash Redis (`lib/proposal-store.ts` on top of `lib/redis.ts`,
+  the REST API via fetch, no SDK). Admin server actions are in `app/(proposals)/admin/actions.ts`; each
+  checks the login.
+
+## Event log (`/admin/events`)
+
+A port of Helen's "Revelrita event log" Claude artifact: every party with its fee, tips, supplies
+bought and bartenders paid, plus the tally of dots, totals, revenue by month/year, by type, and a
+bartenders table. The "Proposals / Events" tabs (`components/admin/AdminNav.tsx`) link the two.
+- `components/events/EventLog.tsx` is the page (client), `lib/events.ts` the shared types and math,
+  `lib/event-store.ts` the storage (`event:<id>` + an `events` sorted set, same Upstash database),
+  `app/(proposals)/admin/events/actions.ts` the save / delete / import actions (each checks the login).
+- Type colors (`kindColor` in `lib/events.ts`) were checked as a set for color-blind separation; keep
+  them distinct if you change one. Text never takes a type's color; the type is always named next to it.
+- "Import events from a file" takes the old artifact's events as JSON (`{ "events": [...] }`, with the
+  artifact's ids, so a second import of the same file adds nothing). Her financial data never goes in
+  the repo.
 
 ## Deploying
 
