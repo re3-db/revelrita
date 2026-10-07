@@ -166,6 +166,39 @@ export function defaultContent(): ProposalContent {
   };
 }
 
+/* ---------- pricing ---------- */
+
+export const money = (n: number) => "$" + n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+
+/**
+ * The pricing lines as the client's page shows them (the artifact's rules): amounts that are
+ * numbers get formatted and added up, anything else ("Included", "TBD") shows as typed.
+ */
+export function pricedRows(pricing: PriceLine[]) {
+  const rows = pricing
+    .map((row) => {
+      const r = { label: row.label.trim(), amount: row.amount.trim(), note: row.note.trim() };
+      // "Bar cart, 4 hours: $850" typed all in the first box still counts as an amount
+      if (!r.amount) {
+        const m = r.label.match(/[:\-\u2013]?\s*\$?\s*([0-9][0-9,]*(?:\.[0-9]{2})?)\s*\$?\s*$/);
+        if (m) {
+          r.amount = m[1];
+          r.label = r.label
+            .slice(0, m.index)
+            .replace(/[\s:,\-]+$/, "")
+            .trim();
+        }
+      }
+      const raw = r.amount.replace(/[$,\s]/g, "");
+      const num = raw !== "" && /^[0-9.]+$/.test(raw) ? parseFloat(raw) : null;
+      return { ...r, num, display: num !== null ? money(num) : r.amount };
+    })
+    .filter((r) => r.label || r.amount);
+  const counted = rows.filter((r) => r.num !== null);
+  const total = counted.reduce((sum, r) => sum + (r.num ?? 0), 0);
+  return { rows, counted, total };
+}
+
 /* ---------- untrusted input (server actions) ---------- */
 
 const text = (value: unknown, max = 5000) => (typeof value === "string" ? value.slice(0, max) : "");

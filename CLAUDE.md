@@ -116,7 +116,9 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   artifact's `render()`). Drafts 404 unless Helen is logged in. Edits after sending show up live.
 - Styling: `app/(proposals)/proposal.css` is the artifact's stylesheet, unchanged, with site-only
   additions at the bottom. Its class names clash with `globals.css`, which is why it has its own root
-  layout. Fonts are the artifact's (Fraunces, DM Sans). Keep proposals looking like the artifact.
+  layout. Fonts are the artifact's (Fraunces, DM Sans). The client's page (and the builder's Preview)
+  must keep looking like the artifact. The list, login and editor have their own look (the `.a*` and
+  `.e*` classes at the bottom): the proposal hero's gradient and cream cards.
 - Photos: `public/images/proposal/` (the artifact's full-size copies), exported from `lib/images.ts`.
 - Storage: one JSON value per proposal in Upstash Redis (`lib/proposal-store.ts`, REST API via fetch,
   no SDK). Admin server actions are in `app/(proposals)/admin/actions.ts`; each checks the login.
