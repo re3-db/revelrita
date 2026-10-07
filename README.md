@@ -6,7 +6,7 @@ Website for revelrita.com. Next.js + Tailwind, deployed on Vercel.
 
 ```bash
 npm install
-cp .env.example .env.local   # add RESEND_API_KEY so the forms can send email
+cp .env.example .env.local   # RESEND_API_KEY for email; ADMIN_PASSWORD + KV_* for /admin proposals
 npm run dev
 ```
 

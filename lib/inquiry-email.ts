@@ -28,11 +28,14 @@ export function inquiryEmail({
   name,
   answers,
   note,
+  link,
 }: {
   name: string;
   answers: [question: string, answer: string][];
   /** Shown in a banner above everything else (Helen's copy uses it). */
   note?: string;
+  /** A link at the end of the note's banner (Helen's copy: the draft proposal) */
+  link?: { href: string; label: string };
 }) {
   const firstName = name.split(/\s+/)[0] ?? "";
   const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
@@ -73,7 +76,11 @@ ${
               ? `
           <tr>
             <td style="padding:0 0 24px;">
-              <div style="background:${c.blush};border-radius:14px;padding:14px 18px;font-family:${sans};font-size:15px;line-height:1.5;font-weight:700;color:${c.ink};">${escape(note)}</div>
+              <div style="background:${c.blush};border-radius:14px;padding:14px 18px;font-family:${sans};font-size:15px;line-height:1.5;font-weight:700;color:${c.ink};">${escape(note)}${
+                link
+                  ? `<div style="padding-top:10px;"><a href="${escape(link.href)}" style="color:${c.ink};">${escape(link.label)}</a></div>`
+                  : ""
+              }</div>
             </td>
           </tr>`
               : ""
@@ -120,7 +127,7 @@ ${
 </html>`;
 
   const text = [
-    ...(note ? [note, "", "========================================", ""] : []),
+    ...(note ? [note, ...(link ? [`${link.label}: ${link.href}`] : []), "", "========================================", ""] : []),
     greeting,
     "",
     thanks,

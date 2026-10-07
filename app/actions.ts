@@ -2,6 +2,10 @@
 
 import { formatDate, isIsoDate } from "@/lib/dates";
 import { inquiryEmail } from "@/lib/inquiry-email";
+import { siteOrigin } from "@/lib/origin";
+import { newProposalId, saveProposal, storeConfigured } from "@/lib/proposal-store";
+import { contentFromInquiry, type InquiryDetails } from "@/lib/proposals";
+import { sendEmail } from "@/lib/resend";
 
 export type InquiryResult = { ok: boolean; message: string };
 
@@ -18,8 +22,34 @@ const failed: InquiryResult = {
 };
 
 /**
+ * Saves a draft proposal for Helen to finish in /admin. Never sent to the visitor, and
+ * never in the way of the inquiry itself: if it fails, the emails still go out.
+ */
+async function createDraft(details: InquiryDetails, answers: [string, string][]) {
+  if (!storeConfigured()) return null;
+  try {
+    const now = Date.now();
+    const id = newProposalId();
+    await saveProposal({
+      id,
+      status: "draft",
+      createdAt: now,
+      updatedAt: now,
+      clientEmail: details.email,
+      inquiry: { answers, receivedAt: now },
+      content: contentFromInquiry(details),
+    });
+    return id;
+  } catch (error) {
+    console.error("Couldn't save a draft proposal for this inquiry:", error);
+    return null;
+  }
+}
+
+/**
  * Handles a booking inquiry (from the home page or /book form) via Resend: emails
- * the visitor a branded confirmation with a copy of their answers, and Helen a copy.
+ * the visitor a branded confirmation with a copy of their answers, and Helen a copy
+ * with a link to the draft proposal it started in /admin.
  */
 export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
   const field = (key: string) => String(formData.get(key) ?? "").trim().slice(0, 5000);
@@ -36,7 +66,8 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
   // The calendar sends each picked day as a YYYY-MM-DD `date`, plus `flexible=yes`
   // when the visitor is still choosing between several
   const flexible = field("flexible") === "yes";
-  const dates = formData.getAll("date").map(String).filter(isIsoDate).sort().slice(0, 20).map(formatDate);
+  const isoDates = formData.getAll("date").map(String).filter(isIsoDate).sort().slice(0, 20);
+  const dates = isoDates.map(formatDate);
   const date = flexible ? "" : (dates[0] ?? field("date"));
   const dateAnswer = flexible
     ? dates.length
@@ -60,18 +91,22 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
     console.error(`RESEND_API_KEY is not set, so this inquiry could not be emailed:\n${JSON.stringify(answers)}`);
     return failed;
   }
-  const send = async (payload: Record<string, unknown>) => {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) console.error(`Resend rejected the email to ${payload.to}: ${res.status} ${await res.text()}`);
-    return res.ok;
-  };
+
+  const draftId = await createDraft(
+    {
+      name,
+      email,
+      dates: isoDates.length ? isoDates : [field("date")].filter(Boolean),
+      flexible,
+      guests: field("guests"),
+      kind: field("kind"),
+      vibe: field("vibe"),
+    },
+    answers,
+  );
 
   // The visitor's confirmation, from fun@revelrita.com
-  const confirmed = await send({
+  const confirmed = await sendEmail({
     from: process.env.INQUIRY_FROM || "Revelrita <fun@revelrita.com>",
     to: [email],
     subject: `Thanks for your inquiry${firstName ? `, ${firstName}` : ""}!${date ? ` (${date})` : ""}`,
@@ -80,7 +115,7 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
 
   // Helen's copy is a separate email from a different address: Gmail files mail
   // "from" your own address under Sent, so a BCC from fun@ never reaches her inbox.
-  const notified = await send({
+  const notified = await sendEmail({
     from: process.env.INQUIRY_NOTIFY_FROM || "Revelrita website <website@revelrita.com>",
     to: [process.env.INQUIRY_TO || "fun@revelrita.com"],
     reply_to: email,
@@ -91,6 +126,7 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
       note: confirmed
         ? `New inquiry! ${email} was sent the confirmation below. Hit reply to answer them directly.`
         : `New inquiry! The confirmation could NOT be sent to ${email} (check the address for typos). Hit reply to write to them.`,
+      link: draftId ? { href: `${await siteOrigin()}/admin/${draftId}`, label: "Open the draft proposal" } : undefined,
     }),
   });
 

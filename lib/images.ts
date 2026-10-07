@@ -42,3 +42,16 @@ export { default as signBarMenu } from "@/public/images/sign-bar-menu.jpg";
 export { default as stringLights } from "@/public/images/string-lights.jpg";
 export { default as weddingOrangeGrove } from "@/public/images/wedding-orange-grove.jpg";
 export { default as windowMenuFlowers } from "@/public/images/window-menu-flowers.jpg";
+
+// The proposal builder's photos (/admin, /proposal), copied from Helen's proposal artifact at
+// full size. Some are larger copies of photos above: the proposal shows them full-bleed.
+export { default as proposalBar } from "@/public/images/proposal/bar.jpg";
+export { default as proposalBartender } from "@/public/images/proposal/bartender.jpg";
+export { default as proposalBottles } from "@/public/images/proposal/bottles.jpg";
+export { default as proposalCart } from "@/public/images/proposal/cart.jpg";
+export { default as proposalCounter } from "@/public/images/proposal/counter.jpg";
+export { default as proposalDrinks } from "@/public/images/proposal/drinks.jpg";
+export { default as proposalGuest } from "@/public/images/proposal/guest.jpg";
+export { default as proposalHelen } from "@/public/images/proposal/helen.jpg";
+export { default as proposalToast } from "@/public/images/proposal/toast.jpg";
+export { default as logoCream } from "@/public/images/proposal/logo-cream.png";

@@ -3,8 +3,9 @@
 # Revelrita
 
 Marketing site for Revelrita, Helen's mobile bar cart business in Cardiff, CA (revelrita.com).
-Next.js 16 App Router + Tailwind v4, deployed on Vercel. Every page is static except the
-inquiry form's server action.
+Next.js 16 App Router + Tailwind v4, deployed on Vercel. Every marketing page is static except the
+inquiry form's server action. Helen's proposal builder (`/admin`) and client proposals (`/proposal/<id>`)
+render per request.
 
 This site was converted from a single-file HTML design (`_source/revelrita-site.html`, gitignored,
 not deployed). The design must stay visually identical to it: when in doubt, match the original.
@@ -19,9 +20,12 @@ Run `npm run build && npm run lint` before committing.
 
 ## Layout
 
-- `app/` has one folder per page: `/` (home), `/events`, `/cart`, `/packages`, `/calculator`,
+- `app/(site)/` is the marketing site: its root layout (`app/(site)/layout.tsx`, nav + footer) and
+  one folder per page: `/` (home), `/events`, `/cart`, `/packages`, `/calculator`,
   `/gallery`, `/press`, `/faq`, `/book`. Each page sets its own `metadata` (title uses the
-  `"%s | Revelrita"` template from `app/layout.tsx`).
+  `"%s | Revelrita"` template from `app/(site)/layout.tsx`).
+- `app/(proposals)/` is a second root layout for `/admin` and `/proposal`, see "Proposals" below.
+  Navigating between the two groups is a full page load; that's expected.
 - `app/actions.ts` is the `sendInquiry` server action behind both "Check your date" forms.
 - `components/` holds shared pieces: `Nav` (sticky nav + full-screen menu), `Footer`,
   `ReviewCarousel` / `ReviewCards` / `Stars`, `InquiryForm` (`variant="home" | "book"`),
@@ -35,7 +39,7 @@ Run `npm run build && npm run lint` before committing.
 
 ## Styling rules
 
-- Her CSS lives in `app/globals.css` inside `@layer components`, copied from the original
+- Her CSS lives in `app/(site)/globals.css` inside `@layer components`, copied from the original
   unchanged (lines marked `port:` are the only edits). The class names (`.btn`, `.pad`, `.wrap`,
   `.duo`, `.steps`, `.card`, `.eyebrow`, `.lede`, `h2.big`, ...) are the design system. Reuse them.
 - Tailwind is imported **without preflight** on purpose, so browser defaults match the original.
@@ -46,7 +50,7 @@ Run `npm run build && npm run lint` before committing.
   muted paper white`. They map to the CSS variables in `:root`, so change a color there, once.
 - Fonts: Bricolage Grotesque (`font-sans`, headings/UI), Newsreader (`font-serif`, body),
   Instrument Serif (`font-fancy`, the italic accents in headlines). They load through the Google
-  Fonts `<link>` in `app/layout.tsx`, exactly as in the original. Don't swap to `next/font`
+  Fonts `<link>` in `app/(site)/layout.tsx`, exactly as in the original. Don't swap to `next/font`
   without comparing side by side: the original only loads weights 400/600/800, so CSS `700`
   renders as 800, and a variable font would change that.
 
@@ -89,8 +93,33 @@ Env vars (see `.env.example`; set them in Vercel for Production and Preview):
 - `INQUIRY_FROM` (optional, default `Revelrita <fun@revelrita.com>`): the visitor's confirmation.
 - `INQUIRY_TO` (optional, default `fun@revelrita.com`): where Helen's copy goes.
 - `INQUIRY_NOTIFY_FROM` (optional, default `Revelrita website <website@revelrita.com>`): Helen's copy.
+- `ADMIN_PASSWORD` (required for `/admin`): the password Helen logs in with. Changing it logs everyone out.
+- `KV_REST_API_URL` + `KV_REST_API_TOKEN` (required for proposals): set automatically when Upstash for
+  Redis is connected in Vercel (Storage tab). `UPSTASH_REDIS_REST_URL` / `_TOKEN` also work. Without
+  them, inquiries still email as before but no drafts are saved.
+
+Sending a proposal also goes through Resend, from `INQUIRY_FROM`.
 
 The form has a hidden `company` honeypot field. If a bot fills it, the action returns success without sending.
+
+## Proposals (`/admin`)
+
+A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked from the site.
+- Every inquiry (`sendInquiry`) also saves a **draft** proposal, prefilled from the form
+  (`contentFromInquiry` in `lib/proposals.ts`), and Helen's notification email links to it. The
+  visitor is never sent anything about it. If saving fails, the inquiry emails still go out.
+- `/admin` lists drafts and sent proposals (password: `ADMIN_PASSWORD`, `lib/admin-auth.ts`).
+  `/admin/<id>` is the builder (`components/proposal/ProposalBuilder.tsx`): the artifact's form,
+  saving as Helen types. **Send to client** emails the client a link (`lib/proposal-email.ts`) and
+  marks it sent. Or "Mark it sent and copy the link" if she'd rather text it.
+- `/proposal/<id>` is what the client sees (`components/proposal/ProposalView.tsx`, a port of the
+  artifact's `render()`). Drafts 404 unless Helen is logged in. Edits after sending show up live.
+- Styling: `app/(proposals)/proposal.css` is the artifact's stylesheet, unchanged, with site-only
+  additions at the bottom. Its class names clash with `globals.css`, which is why it has its own root
+  layout. Fonts are the artifact's (Fraunces, DM Sans). Keep proposals looking like the artifact.
+- Photos: `public/images/proposal/` (the artifact's full-size copies), exported from `lib/images.ts`.
+- Storage: one JSON value per proposal in Upstash Redis (`lib/proposal-store.ts`, REST API via fetch,
+  no SDK). Admin server actions are in `app/(proposals)/admin/actions.ts`; each checks the login.
 
 ## Deploying
 
