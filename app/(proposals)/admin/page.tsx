@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import AdminNav from "@/components/admin/AdminNav";
 import { requireAdmin } from "@/lib/admin-auth";
 import { logoCream } from "@/lib/images";
 import { listProposals, storeConfigured } from "@/lib/proposal-store";
 import type { Proposal } from "@/lib/proposals";
-import { createProposal, logout } from "./actions";
+import { createProposal } from "./actions";
 
 export const metadata: Metadata = { title: "Revelrita proposals" };
 
@@ -94,11 +95,7 @@ export default async function AdminPage() {
       <header className="ahero">
         <div className="ahero-top">
           <Image className="ahero-logo" src={logoCream} alt="Revelrita" preload />
-          <form action={logout}>
-            <button type="submit" className="alink">
-              Log out
-            </button>
-          </form>
+          <AdminNav current="proposals" />
         </div>
         <h1 className="ahero-title">
           Your <em>proposals</em>
