@@ -18,6 +18,14 @@ not deployed). The design must stay visually identical to it: when in doubt, mat
 
 Run `npm run build && npm run lint` before committing.
 
+## Workflow
+
+Helen wants speed over ceremony: **commit and push straight to `main`**, without branches or pull
+requests, unless she asks for one. Few people visit the site and only she uses the admin, so the
+risk of a bug going out is low. Pushing to `main` is a release (see Deploying), so still run the
+build and lint first. A change that fails to build never goes live: Vercel keeps the last good
+deploy. A bug that builds does go live.
+
 ## Layout
 
 - `app/(site)/` is the marketing site: its root layout (`app/(site)/layout.tsx`, nav + footer) and
@@ -148,4 +156,5 @@ bartenders table. The "Proposals / Events" tabs (`components/admin/AdminNav.tsx`
 
 ## Deploying
 
-Vercel builds from `main` automatically. No `vercel.json` is needed.
+Vercel builds from `main` automatically and publishes to revelrita.com in a couple of minutes.
+No `vercel.json` is needed.
