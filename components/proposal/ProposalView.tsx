@@ -98,6 +98,7 @@ export default function ProposalView({
     [
       ["Occasion", d.occasion],
       ["Date", d.date],
+      ["Time", d.time],
       ["Where", d.venue],
       ["Guests", d.guests],
       ["Service", d.serviceWindow],

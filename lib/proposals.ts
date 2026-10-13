@@ -1,3 +1,4 @@
+import { hoursBetween, timeRange } from "@/lib/dates";
 import { mockMenu } from "@/lib/menu";
 import { reviewsBy } from "@/lib/reviews";
 import { contact } from "@/lib/site";
@@ -15,6 +16,8 @@ export type ProposalContent = {
   eventType: EventType;
   occasion: string;
   date: string;
+  /** "5:00 to 9:00 PM" */
+  time: string;
   venue: string;
   guests: string;
   serviceWindow: string;
@@ -109,6 +112,7 @@ export function defaultContent(): ProposalContent {
     eventType: "wedding",
     occasion: "",
     date: "",
+    time: "",
     venue: "",
     guests: "",
     serviceWindow: "",
@@ -245,6 +249,9 @@ export type InquiryDetails = {
   kind: string;
   /** The form's drinks choice (beer-wine, beer-wine-cocktails, mocktails, unsure) */
   drinks: string;
+  /** HH:MM from the form's time inputs, or blank */
+  start: string;
+  end: string;
   vibe: string;
 };
 
@@ -286,6 +293,8 @@ export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   content.occasion = kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : "";
   content.date = inquiry.flexible ? (dates.length ? dates.join(" or ") : "") : (dates[0] ?? "");
   content.guests = /^\d[\d,]*$/.test(guests) ? `${guests} guests` : guests;
+  content.time = timeRange(inquiry.start, inquiry.end);
+  content.serviceWindow = hoursBetween(inquiry.start, inquiry.end);
   Object.assign(content, mockMenu({ drinks: inquiry.drinks, kind, vibe: inquiry.vibe, date: inquiry.dates[0] }));
   return content;
 }

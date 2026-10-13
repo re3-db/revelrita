@@ -130,6 +130,14 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
             placeholder={book ? "Roughly is fine" : undefined}
           />
         </div>
+        <div className={fieldClass}>
+          <label htmlFor={`${variant}-start`}>Start time</label>
+          <input id={`${variant}-start`} name="start" type="time" step={900} />
+        </div>
+        <div className={fieldClass}>
+          <label htmlFor={`${variant}-end`}>End time</label>
+          <input id={`${variant}-end`} name="end" type="time" step={900} />
+        </div>
       </div>
 
       {book && (

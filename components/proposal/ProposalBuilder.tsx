@@ -294,14 +294,17 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
             <Field label="Date" htmlFor="f_date">
               <input {...bind("date")} placeholder="e.g. Saturday, June 13" />
             </Field>
+            <Field label="Time" htmlFor="f_time">
+              <input {...bind("time")} placeholder="e.g. 5:00 to 9:00 PM" />
+            </Field>
+            <Field label="Service window" htmlFor="f_serviceWindow">
+              <input {...bind("serviceWindow")} placeholder="e.g. 4 hours" />
+            </Field>
             <Field label="Venue or location" htmlFor="f_venue">
               <input {...bind("venue")} placeholder="e.g. Private home, Leucadia" />
             </Field>
             <Field label="Guest count" htmlFor="f_guests">
               <input {...bind("guests")} placeholder="e.g. 85 guests" />
-            </Field>
-            <Field label="Service window" htmlFor="f_serviceWindow">
-              <input {...bind("serviceWindow")} placeholder="e.g. 4 hours, 5:00 to 9:00" />
             </Field>
           </div>
           <Field label="Opening note" htmlFor="f_intro" hint="Two or three sentences, the way you'd write it in a text.">
