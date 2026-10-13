@@ -56,8 +56,8 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
     });
   }
 
-  // The book page wraps each input in .field; the home page doesn't
-  const fieldClass = book ? "field" : undefined;
+  // One spacing between every field, on both versions: the grid's gap, then the same below it
+  const gap = book ? "mb-[16px]" : "mt-[16px]";
 
   // Same <form> element either way, so its scroll-reveal state carries over
   const cardClass = `card reveal ${book ? "bg-paper" : "bg-sky"}`;
@@ -90,12 +90,12 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
         <input id={`${variant}-company`} name="company" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <div className="form-grid">
-        <div className={book ? "field col-span-full" : "col-span-full"}>
+      <div className={`form-grid gap-[16px] ${book ? "mb-[16px]" : ""}`}>
+        <div>
           <label htmlFor={`${variant}-name`}>Your name</label>
           <input id={`${variant}-name`} name="name" autoComplete="name" placeholder={book ? "Helen Smith" : undefined} />
         </div>
-        <div className={fieldClass}>
+        <div>
           <label htmlFor={`${variant}-email`}>Email</label>
           <input
             id={`${variant}-email`}
@@ -106,7 +106,7 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
             placeholder={book ? "you@email.com" : undefined}
           />
         </div>
-        <div className={fieldClass}>
+        <div>
           <label htmlFor={`${variant}-phone`}>Cell phone</label>
           <input
             id={`${variant}-phone`}
@@ -117,11 +117,7 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
             placeholder={book ? "(760) 555-0123" : undefined}
           />
         </div>
-        <div className={fieldClass}>
-          <label htmlFor={`${variant}-date`}>Event date</label>
-          <DatePicker id={`${variant}-date`} placeholder={book ? "Pick a date" : undefined} />
-        </div>
-        <div className={fieldClass}>
+        <div>
           <label htmlFor={`${variant}-guests`}>Guest count</label>
           <input
             id={`${variant}-guests`}
@@ -130,24 +126,29 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
             placeholder={book ? "Roughly is fine" : undefined}
           />
         </div>
-        <div className={fieldClass}>
+        {/* Full width: its "several dates" switch and picked dates sit under it without leaving a hole */}
+        <div className="col-span-full">
+          <label htmlFor={`${variant}-date`}>Event date</label>
+          <DatePicker id={`${variant}-date`} placeholder={book ? "Pick a date" : undefined} />
+        </div>
+        <div>
           <label htmlFor={`${variant}-start`}>Start time</label>
           <input id={`${variant}-start`} name="start" type="time" step={900} />
         </div>
-        <div className={fieldClass}>
+        <div>
           <label htmlFor={`${variant}-end`}>End time</label>
           <input id={`${variant}-end`} name="end" type="time" step={900} />
         </div>
       </div>
 
       {book && (
-        <div className="field">
+        <div className={gap}>
           <label htmlFor="book-kind">What kind of event is it?</label>
           <input id="book-kind" name="kind" placeholder="Wedding, birthday, work party, something else" />
         </div>
       )}
 
-      <div className={book ? "field" : "mt-[18px]"}>
+      <div className={gap}>
         <label>What are you thinking for drinks?</label>
         <div className="choices">
           {drinkChoices(variant).map((c) => (
@@ -159,13 +160,14 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
         </div>
       </div>
 
-      <div className={book ? "field" : "mt-[18px]"}>
+      <div className={gap}>
         <label htmlFor={`${variant}-vibe`}>
           {book ? "Where is it, and what's the vibe?" : "Venue, and the vibe you're going for"}
         </label>
         <textarea
           id={`${variant}-vibe`}
           name="vibe"
+          className="block"
           rows={book ? 4 : 3}
           placeholder={
             book ? "Venue or neighborhood, what you're celebrating, anything you already know you want." : undefined
@@ -174,7 +176,7 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
       </div>
 
       <button
-        className={`btn w-full ${book ? "h-[60px] text-[18px]" : "mt-[20px]"}`}
+        className={`btn w-full ${book ? "mt-[8px] h-[60px] text-[18px]" : "mt-[24px]"}`}
         type="submit"
         disabled={pending}
       >
