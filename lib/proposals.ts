@@ -1,3 +1,5 @@
+import { mockMenu } from "@/lib/menu";
+import { reviewsBy } from "@/lib/reviews";
 import { contact } from "@/lib/site";
 
 /**
@@ -98,6 +100,9 @@ export type Proposal = {
 export const DEFAULT_ALCOHOL =
   "Due to CA liquor licensing laws, alcohol has to be purchased under your name, not mine. To make it as easy as possible, here's what we do:\n\nI build the full shopping list down to the bottle, then place and manage the Total Wine order. You either pay at checkout with your card, or log into my Total Wine account and pay there. Anything unopened goes home with you!\n\nThat means two separate payments: the alcohol, paid directly by you, and my service invoice for everything above.";
 
+/** The quote every proposal starts with: the whole experience, from booking to cleanup, in one review */
+const [standardQuote] = reviewsBy("Grace Kelly");
+
 export function defaultContent(): ProposalContent {
   return {
     name: "",
@@ -112,7 +117,7 @@ export function defaultContent(): ProposalContent {
     included: [
       "The bar cart, styled and ready to go",
       "Two bartenders for the full service window",
-      "Glassware",
+      "Drinkware",
       "Ice",
       "Fresh citrus, herbs and garnishes",
       "Mixers, juices and everything non-alcoholic",
@@ -136,8 +141,8 @@ export function defaultContent(): ProposalContent {
       "How far do you travel? | We're based in Cardiff and cover San Diego County. Farther than that is usually still a yes, it just adds a travel fee.",
       "What if we don't want hard liquor? | Beer and wine only, mocktails only, any combination. The care that goes into the drinks doesn't change.",
     ].join("\n"),
-    quote: "",
-    quoteBy: "",
+    quote: standardQuote.quote,
+    quoteBy: `${standardQuote.name}, Google review`,
     photos: [...photoKeys],
     menuTitle: "",
     menu: "",
@@ -238,6 +243,8 @@ export type InquiryDetails = {
   flexible: boolean;
   guests: string;
   kind: string;
+  /** The form's drinks choice (beer-wine, beer-wine-cocktails, mocktails, unsure) */
+  drinks: string;
   vibe: string;
 };
 
@@ -263,7 +270,10 @@ export function guessEventType(...answers: string[]): EventType {
   return "wedding";
 }
 
-/** A draft proposal for a new inquiry: the builder's defaults, plus everything the form told us. */
+/**
+ * A draft proposal for a new inquiry: the builder's defaults, plus everything the form told us,
+ * and a mock-up menu built from their drinks choice, date and vibe (lib/menu.ts).
+ */
 export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   const content = defaultContent();
   const firstName = inquiry.name.split(/\s+/)[0] ?? "";
@@ -276,6 +286,7 @@ export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   content.occasion = kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : "";
   content.date = inquiry.flexible ? (dates.length ? dates.join(" or ") : "") : (dates[0] ?? "");
   content.guests = /^\d[\d,]*$/.test(guests) ? `${guests} guests` : guests;
+  Object.assign(content, mockMenu({ drinks: inquiry.drinks, kind, vibe: inquiry.vibe, date: inquiry.dates[0] }));
   return content;
 }
 

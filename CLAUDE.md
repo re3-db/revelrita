@@ -108,6 +108,11 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
 - Every inquiry (`sendInquiry`) also saves a **draft** proposal, prefilled from the form
   (`contentFromInquiry` in `lib/proposals.ts`), and Helen's notification email links to it. The
   visitor is never sent anything about it. If saving fails, the inquiry emails still go out.
+- Inquiry drafts get a mock-up menu from `lib/menu.ts`: their drinks choice sets the shape, and the
+  season of their date, their event type and words in their "vibe" pick from a fixed list of drinks
+  (deterministic, no AI). Add or retune drinks there. Proposals started by hand leave the menu empty.
+- Every new proposal starts with Grace Kelly's review as its client quote (`defaultContent`). It's
+  "Drinkware", never "Glassware".
 - `/admin` lists drafts and sent proposals (password: `ADMIN_PASSWORD`, `lib/admin-auth.ts`).
   `/admin/<id>` is the builder (`components/proposal/ProposalBuilder.tsx`): the artifact's form,
   saving as Helen types. **Send to client** emails the client a link (`lib/proposal-email.ts`) and

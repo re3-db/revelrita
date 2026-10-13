@@ -101,6 +101,7 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
       flexible,
       guests: field("guests"),
       kind: field("kind"),
+      drinks: field("drinks"),
       vibe: field("vibe"),
     },
     answers,
