@@ -91,7 +91,7 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
       </div>
 
       <div className="form-grid">
-        <div className={fieldClass}>
+        <div className={book ? "field col-span-full" : "col-span-full"}>
           <label htmlFor={`${variant}-name`}>Your name</label>
           <input id={`${variant}-name`} name="name" autoComplete="name" placeholder={book ? "Helen Smith" : undefined} />
         </div>
@@ -104,6 +104,17 @@ export default function InquiryForm({ variant }: { variant: Variant }) {
             required
             autoComplete="email"
             placeholder={book ? "you@email.com" : undefined}
+          />
+        </div>
+        <div className={fieldClass}>
+          <label htmlFor={`${variant}-phone`}>Cell phone</label>
+          <input
+            id={`${variant}-phone`}
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder={book ? "(760) 555-0123" : undefined}
           />
         </div>
         <div className={fieldClass}>
