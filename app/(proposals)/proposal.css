@@ -866,7 +866,8 @@
   .everr{margin:0 0 12px;font-size:14px;color:#B0390B}
   .evdlg-actions{align-items:center}
 
-  /* The preview bar ("Save as PDF", "Back to editor") stays at the top while the slides scroll
-     and snap under it. Before, snapping to the first slide pushed it off screen. */
+  /* Helen's views of a proposal (the builder's Preview, and /proposal/<id> while logged in) don't
+     snap from slide to slide: the snapping kept pulling the page away as she scrolled to the bar.
+     The bar ("Save as PDF", "Back to editor") is pinned on top too. Clients still get the snap. */
+  html:has(#editbar){scroll-snap-type:none;scroll-behavior:auto}
   #editbar{position:sticky;top:0;z-index:60}
-  #editbar ~ #proposalBody .slide{scroll-margin-top:62px}
