@@ -422,8 +422,16 @@ export default function ProposalView({
             <div className="cols">
               <div className="col-text">
                 <span className="eyebrow">A recent host</span>
+                <span className="qmark" aria-hidden="true">
+                  &ldquo;
+                </span>
                 <blockquote className="quote">{paras(d.quote)}</blockquote>
-                {d.quoteBy.trim() && <p className="quote-by">{d.quoteBy.trim()}</p>}
+                <div className="qby">
+                  <span className="qstars" aria-label="5 out of 5 stars">
+                    &#9733;&#9733;&#9733;&#9733;&#9733;
+                  </span>
+                  {d.quoteBy.trim() && <QuoteBy text={d.quoteBy.trim()} />}
+                </div>
               </div>
               {shows("helen") && <div className="col-art">{img("helen", sizes.col)}</div>}
             </div>
@@ -453,5 +461,16 @@ export default function ProposalView({
         </section>
       </div>
     </div>
+  );
+}
+
+/** "Grace Kelly, Google review": the name, then where it's from, on its own line */
+function QuoteBy({ text }: { text: string }) {
+  const [name, ...rest] = text.split(",");
+  return (
+    <p className="quote-by">
+      {name.trim()}
+      {rest.length > 0 && <span>{rest.join(",").trim()}</span>}
+    </p>
   );
 }
