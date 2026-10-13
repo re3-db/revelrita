@@ -512,11 +512,6 @@
   }
 
 /* ---------- site additions (not in the artifact): proposal list, login, builder extras, send panel ---------- */
-  .topbar .topbtn{
-    background:#0f3c58;color:#fff;border:0;padding:8px 14px;cursor:pointer;
-    font-family:var(--display);font-size:14px;text-decoration:none;line-height:normal;
-  }
-
   /* the proposals list (/admin) and login: the proposal's hero and cream slides, as a dashboard */
   .admin{max-width:960px;margin:0 auto;padding:22px 20px 60px}
   @media (max-width:700px){ .admin{padding:14px 12px 40px} }
@@ -871,6 +866,28 @@
      The bar ("Save as PDF", "Back to editor") is pinned on top too. Clients still get the snap. */
   html:has(#editbar){scroll-snap-type:none;scroll-behavior:auto}
   #editbar{position:sticky;top:0;z-index:60}
+
+  /* That bar (components/proposal/PreviewBar.tsx), in place of the artifact's .topbar: the editor's
+     dark bar and pill buttons, lined up with the slides below it */
+  .pbar{background:rgba(21,75,112,.97);color:var(--cream);box-shadow:0 10px 30px -14px rgba(10,40,60,.55)}
+  .pbar-inner{
+    max-width:1160px;margin:0 auto;padding:10px 20px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;
+  }
+  .pbar-note{margin:0;display:flex;align-items:center;gap:10px;font-size:14.5px;line-height:1.35}
+  .pbar-tag{
+    display:inline-flex;align-items:center;gap:6px;padding:2px 11px 2px 9px;border-radius:999px;
+    background:rgba(255,246,228,.16);font-size:12.5px;font-weight:500;line-height:1.6;white-space:nowrap;
+  }
+  .pbar-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--peach)}
+  .pbar-actions{display:flex;gap:8px}
+  .pbar .ebtn{display:inline-block;padding:8px 18px;font-size:14px;text-align:center;text-decoration:none}
+  @media (max-width:700px){
+    .pbar-inner{padding:10px 12px}
+    .pbar-note{font-size:13.5px}
+    .pbar-actions{flex:1 1 100%}
+    .pbar .ebtn{flex:1;padding:8px 12px}
+  }
 
   /* The client quote, redesigned at Helen's request. In the artifact's stylesheet `.col-text p`
      comes after `.quote p`, so the quote rendered as small body text. Now: a big accent quote

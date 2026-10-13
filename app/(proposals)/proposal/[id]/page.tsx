@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import PrintButton from "@/components/proposal/PrintButton";
+import PreviewBar from "@/components/proposal/PreviewBar";
 import ProposalView from "@/components/proposal/ProposalView";
 import { isAdmin } from "@/lib/admin-auth";
 import { getProposal } from "@/lib/proposal-store";
@@ -29,21 +29,19 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
   if (!proposal) notFound();
 
   const topbar = (await isAdmin()) ? (
-    <div id="editbar" className="topbar">
-      <div className="wrap">
-        <span>
-          {proposal.status === "sent"
-            ? "This is what your client sees."
-            : "Draft. Only you can open this link until you send it."}
-        </span>
-        <span style={{ display: "flex", gap: 8 }}>
-          <PrintButton />
-          <Link href={`/admin/${proposal.id}`} className="topbtn">
-            Back to editor
-          </Link>
-        </span>
-      </div>
-    </div>
+    <PreviewBar
+      tag={proposal.status === "sent" ? "Sent" : "Draft"}
+      note={
+        proposal.status === "sent"
+          ? "This is what your client sees."
+          : "Only you can open this link until you send it."
+      }
+      back={
+        <Link href={`/admin/${proposal.id}`} className="ebtn primary">
+          Back to editor
+        </Link>
+      }
+    />
   ) : undefined;
 
   return <ProposalView content={proposal.content} topbar={topbar} preload />;

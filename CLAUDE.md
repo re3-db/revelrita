@@ -124,8 +124,10 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   event type and date) or price list (a "Bar cart and two bartenders" line, shown as "TBD" until
   priced). The numbers slide (pricing, "What's in the number", the alcohol) shows if any of it has
   content. It's "Drinkware", never "Glassware".
-- In the Preview (and Helen's view of `/proposal/<id>`), the "Back to editor" bar is sticky, because
-  the slides' scroll-snap would otherwise scroll it out of reach.
+- In the Preview (and Helen's view of `/proposal/<id>`), the "Back to editor" bar
+  (`components/proposal/PreviewBar.tsx`, the `.pbar` rules) is sticky, and those views don't snap,
+  because the slides' scroll-snap would otherwise scroll it out of reach. It's styled like the
+  editor's bottom bar and lines up with the slides.
 - The forms' Start/End time fill a draft's Time ("5:00 to 9:00 PM") and Service window ("4 hours"),
   via `timeRange` / `hoursBetween` in `lib/dates.ts`. Proposals are read back through
   `normalizeContent`, so ones saved before a field existed get it blank instead of missing.

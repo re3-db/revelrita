@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } from "@/app/(proposals)/admin/actions";
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
+import PreviewBar from "@/components/proposal/PreviewBar";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
@@ -171,25 +172,22 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
       <ProposalView
         content={content}
         topbar={
-          <div id="editbar" className="topbar">
-            <div className="wrap">
-              <span>This is what your client sees.</span>
-              <span style={{ display: "flex", gap: 8 }}>
-                <button type="button" onClick={() => window.print()}>
-                  Save as PDF
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreview(false);
-                    window.scrollTo({ top: 0 });
-                  }}
-                >
-                  Back to editor
-                </button>
-              </span>
-            </div>
-          </div>
+          <PreviewBar
+            tag="Preview"
+            note="This is what your client sees."
+            back={
+              <button
+                type="button"
+                className="ebtn primary"
+                onClick={() => {
+                  setPreview(false);
+                  window.scrollTo({ top: 0 });
+                }}
+              >
+                Back to editor
+              </button>
+            }
+          />
         }
       />
     );
