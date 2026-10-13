@@ -1,5 +1,5 @@
 import { hoursBetween, timeRange } from "@/lib/dates";
-import { mockMenu } from "@/lib/menu";
+import { drinkLabels, mockMenu, monthIn } from "@/lib/menu";
 import { reviewsBy } from "@/lib/reviews";
 import { contact } from "@/lib/site";
 
@@ -200,12 +200,45 @@ export function pricedRows(pricing: PriceLine[]) {
       }
       const raw = r.amount.replace(/[$,\s]/g, "");
       const num = raw !== "" && /^[0-9.]+$/.test(raw) ? parseFloat(raw) : null;
-      return { ...r, num, display: num !== null ? money(num) : r.amount };
+      return { ...r, num, display: num !== null ? money(num) : r.amount || "TBD" };
     })
     .filter((r) => r.label || r.amount);
   const counted = rows.filter((r) => r.num !== null);
   const total = counted.reduce((sum, r) => sum + (r.num ?? 0), 0);
   return { rows, counted, total };
+}
+
+/* ---------- every section, every time ---------- */
+
+/**
+ * Every proposal shows every section. One missing its quote, its menu or a price line (made
+ * before those were standard, or started by hand) gets the standard one when it's opened:
+ * Grace Kelly's quote, a mock-up menu from their inquiry (or the event type and date), and a
+ * "Bar cart and two bartenders" line for Helen to price. Clearing one brings it back.
+ */
+export function withAllSections(content: ProposalContent, inquiry?: Proposal["inquiry"]): ProposalContent {
+  const c = { ...content };
+  if (!c.quote.trim()) {
+    c.quote = standardQuote.quote;
+    c.quoteBy = c.quoteBy.trim() || `${standardQuote.name}, Google review`;
+  }
+  if (!c.menu.trim()) {
+    const said = (question: string) => inquiry?.answers.find(([q]) => q === question)?.[1] ?? "";
+    const drinksLabel = said("What are you thinking for drinks?");
+    const menu = mockMenu({
+      drinks: Object.keys(drinkLabels).find((k) => drinkLabels[k] === drinksLabel) ?? "",
+      kind: [said("What kind of event is it?"), c.occasion, eventTypes.find((t) => t.value === c.eventType)?.label ?? ""].join(" "),
+      vibe: [said("Where is it, and what's the vibe?"), c.venue].join(" "),
+      month: monthIn(c.date) ?? monthIn(said("Event date")),
+    });
+    c.menu = menu.menu;
+    c.menuTitle = c.menuTitle.trim() || menu.menuTitle;
+  }
+  if (!c.pricing.some((r) => r.label.trim() || r.amount.trim())) {
+    const hours = c.serviceWindow.trim();
+    c.pricing = [{ label: `Bar cart and two bartenders${hours ? `, ${hours}` : ""}`, amount: "", note: "" }];
+  }
+  return c;
 }
 
 /* ---------- untrusted input (server actions) ---------- */

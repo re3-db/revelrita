@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { normalizeContent, type Proposal } from "@/lib/proposals";
+import { normalizeContent, withAllSections, type Proposal } from "@/lib/proposals";
 import { listJson, parseJson, pipeline } from "@/lib/redis";
 
 export { storeConfigured } from "@/lib/redis";
@@ -12,8 +12,12 @@ export { storeConfigured } from "@/lib/redis";
 const key = (id: string) => `proposal:${id}`;
 const INDEX = "proposals";
 
-/** Fills in fields added since a proposal was saved (like `time`), so pages can rely on every field */
-const complete = (p: Proposal | null): Proposal | null => p && { ...p, content: normalizeContent(p.content) };
+/**
+ * Fills in fields added since a proposal was saved (like `time`), so pages can rely on every field,
+ * and the standard quote, menu and price line where a proposal has none (see withAllSections).
+ */
+const complete = (p: Proposal | null): Proposal | null =>
+  p && { ...p, content: withAllSections(normalizeContent(p.content), p.inquiry) };
 
 /** An unguessable id: the client's link is the only way to their proposal. */
 export const newProposalId = () => randomBytes(12).toString("base64url");

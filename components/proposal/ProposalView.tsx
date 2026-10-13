@@ -304,7 +304,7 @@ export default function ProposalView({
         )}
 
         {/* ---------- 5. the numbers ---------- */}
-        {rows.length > 0 && (
+        {(rows.length > 0 || inTheNumber.length > 0 || d.alcohol.trim() || terms.length > 0) && (
           <section className="slide numbers-slide">
             <span className="eyebrow">Investment</span>
             <h2 className="sec-title">

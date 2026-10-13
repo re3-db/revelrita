@@ -6,6 +6,20 @@
  * change!)", and Helen edits it like any other field.
  */
 
+/** The form's drinks choices, as they read in the emails and on a draft's "What they sent" */
+export const drinkLabels: Record<string, string> = {
+  "beer-wine": "Beer and wine",
+  "beer-wine-cocktails": "Beer, wine and cocktails",
+  mocktails: "Mocktails only",
+  unsure: "No idea, help me decide!",
+};
+
+/** The month (1-12) named in text like "Saturday, June 13, 2027" or "Sat, Jun 13", or null */
+export function monthIn(text: string) {
+  const m = text.toLowerCase().match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/);
+  return m ? ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(m[1]) + 1 : null;
+}
+
 type Drink = {
   name: string;
   /** Shown under the name on the proposal */
@@ -62,8 +76,9 @@ function pick(drinks: Drink[], said: string, month: number | null, count: number
   const scored = drinks
     .map((d, order) => {
       const fit = (said.match(new RegExp(d.fits.source, "g")) ?? []).length;
-      const inSeason = !d.months || month === null || d.months.includes(month);
-      return { d, score: fit * 3 + (inSeason ? 1 : -2), order };
+      // In season beats any-time on a tie (a December party gets the cranberry mule); out of season loses
+      const season = !d.months || month === null ? 1 : d.months.includes(month) ? 2 : -2;
+      return { d, score: fit * 3 + season, order };
     })
     .sort((a, b) => b.score - a.score || a.order - b.order);
   const chosen: Drink[] = [];
@@ -82,6 +97,7 @@ export function mockMenu({
   kind,
   vibe,
   date,
+  month: monthFromText,
 }: {
   /** The form's drinks choice: beer-wine, beer-wine-cocktails, mocktails, unsure (or blank) */
   drinks: string;
@@ -89,9 +105,11 @@ export function mockMenu({
   vibe: string;
   /** YYYY-MM-DD of their (first) date, for the season */
   date?: string;
+  /** Or the month (1-12), when all there is is a date written out */
+  month?: number | null;
 }): { menuTitle: string; menu: string } {
   const said = `${kind} ${vibe}`.toLowerCase();
-  const month = date && /^\d{4}-\d{2}/.test(date) ? Number(date.slice(5, 7)) : null;
+  const month = date && /^\d{4}-\d{2}/.test(date) ? Number(date.slice(5, 7)) : (monthFromText ?? null);
   const wedding = /wedding|bridal|reception|rehearsal|engage|elop|vow/.test(said);
   const pours = wedding ? [...beerAndWine, "Sparkling for the toast"] : beerAndWine;
   const noBooze = drinks === "mocktails" || (!drinks && /mocktail|no alcohol|alcohol.free|sober|dry |zero.proof|non.alcoholic/.test(said));

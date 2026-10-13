@@ -118,9 +118,14 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   visitor is never sent anything about it. If saving fails, the inquiry emails still go out.
 - Inquiry drafts get a mock-up menu from `lib/menu.ts`: their drinks choice sets the shape, and the
   season of their date, their event type and words in their "vibe" pick from a fixed list of drinks
-  (deterministic, no AI). Add or retune drinks there. Proposals started by hand leave the menu empty.
-- Every new proposal starts with Grace Kelly's review as its client quote (`defaultContent`). It's
-  "Drinkware", never "Glassware".
+  (deterministic, no AI). Add or retune drinks there.
+- **Every proposal shows every section.** `withAllSections` (`lib/proposals.ts`, applied whenever a
+  proposal is read) fills an empty quote (Grace Kelly's review), menu (built from the inquiry, or the
+  event type and date) or price list (a "Bar cart and two bartenders" line, shown as "TBD" until
+  priced). The numbers slide (pricing, "What's in the number", the alcohol) shows if any of it has
+  content. It's "Drinkware", never "Glassware".
+- In the Preview (and Helen's view of `/proposal/<id>`), the "Back to editor" bar is sticky, because
+  the slides' scroll-snap would otherwise scroll it out of reach.
 - The forms' Start/End time fill a draft's Time ("5:00 to 9:00 PM") and Service window ("4 hours"),
   via `timeRange` / `hoursBetween` in `lib/dates.ts`. Proposals are read back through
   `normalizeContent`, so ones saved before a field existed get it blank instead of missing.

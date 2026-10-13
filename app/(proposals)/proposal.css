@@ -865,3 +865,8 @@
   .evcheck input{width:18px;height:18px;margin:0;accent-color:var(--fire)}
   .everr{margin:0 0 12px;font-size:14px;color:#B0390B}
   .evdlg-actions{align-items:center}
+
+  /* The preview bar ("Save as PDF", "Back to editor") stays at the top while the slides scroll
+     and snap under it. Before, snapping to the first slide pushed it off screen. */
+  #editbar{position:sticky;top:0;z-index:60}
+  #editbar ~ #proposalBody .slide{scroll-margin-top:62px}

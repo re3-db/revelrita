@@ -2,19 +2,13 @@
 
 import { formatDate, isIsoDate, timeRange } from "@/lib/dates";
 import { inquiryEmail } from "@/lib/inquiry-email";
+import { drinkLabels } from "@/lib/menu";
 import { siteOrigin } from "@/lib/origin";
 import { newProposalId, saveProposal, storeConfigured } from "@/lib/proposal-store";
 import { contentFromInquiry, type InquiryDetails } from "@/lib/proposals";
 import { sendEmail } from "@/lib/resend";
 
 export type InquiryResult = { ok: boolean; message: string };
-
-const drinkLabels: Record<string, string> = {
-  "beer-wine": "Beer and wine",
-  "beer-wine-cocktails": "Beer, wine and cocktails",
-  mocktails: "Mocktails only",
-  unsure: "No idea, help me decide!",
-};
 
 const failed: InquiryResult = {
   ok: false,

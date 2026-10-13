@@ -346,7 +346,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           </Field>
         </Card>
 
-        <Card title="Client quote" note="Leave empty to skip this slide.">
+        <Card title="Client quote" note="Every proposal has one. Grace Kelly's review is the standard; change it any time.">
           <Field label="What they said" htmlFor="f_quote">
             <textarea {...bind("quote")} rows={5} />
           </Field>
@@ -378,7 +378,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           </div>
         </Card>
 
-        <Card title="The menu" note="Leave the drinks empty to hide the menu until it's built.">
+        <Card title="The menu" note="A starting point, built from their inquiry (or the event type and date). Edit it freely.">
           <Field label="Menu heading" htmlFor="f_menuTitle">
             <input {...bind("menuTitle")} placeholder="e.g. Two signature drinks, beer and wine" />
           </Field>
