@@ -77,6 +77,7 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
   const answers: [string, string][] = [
     ["Your name", name],
     ["Email", email],
+    ["Cell phone", field("phone").slice(0, 40)],
     ["Event date", dateAnswer],
     ["Guest count", field("guests")],
     ["What kind of event is it?", field("kind")],
