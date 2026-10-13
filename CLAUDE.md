@@ -113,6 +113,9 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   (deterministic, no AI). Add or retune drinks there. Proposals started by hand leave the menu empty.
 - Every new proposal starts with Grace Kelly's review as its client quote (`defaultContent`). It's
   "Drinkware", never "Glassware".
+- The forms' Start/End time fill a draft's Time ("5:00 to 9:00 PM") and Service window ("4 hours"),
+  via `timeRange` / `hoursBetween` in `lib/dates.ts`. Proposals are read back through
+  `normalizeContent`, so ones saved before a field existed get it blank instead of missing.
 - `/admin` lists drafts and sent proposals (password: `ADMIN_PASSWORD`, `lib/admin-auth.ts`).
   `/admin/<id>` is the builder (`components/proposal/ProposalBuilder.tsx`): the artifact's form,
   saving as Helen types. **Send to client** emails the client a link (`lib/proposal-email.ts`) and

@@ -1,6 +1,6 @@
 "use server";
 
-import { formatDate, isIsoDate } from "@/lib/dates";
+import { formatDate, isIsoDate, timeRange } from "@/lib/dates";
 import { inquiryEmail } from "@/lib/inquiry-email";
 import { siteOrigin } from "@/lib/origin";
 import { newProposalId, saveProposal, storeConfigured } from "@/lib/proposal-store";
@@ -79,6 +79,7 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
     ["Email", email],
     ["Cell phone", field("phone").slice(0, 40)],
     ["Event date", dateAnswer],
+    ["Event time", timeRange(field("start"), field("end"))],
     ["Guest count", field("guests")],
     ["What kind of event is it?", field("kind")],
     ["What are you thinking for drinks?", drinkLabels[field("drinks")] ?? ""],
@@ -102,6 +103,8 @@ export async function sendInquiry(formData: FormData): Promise<InquiryResult> {
       guests: field("guests"),
       kind: field("kind"),
       drinks: field("drinks"),
+      start: field("start"),
+      end: field("end"),
       vibe: field("vibe"),
     },
     answers,

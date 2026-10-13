@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import type { Proposal } from "@/lib/proposals";
+import { normalizeContent, type Proposal } from "@/lib/proposals";
 import { listJson, parseJson, pipeline } from "@/lib/redis";
 
 export { storeConfigured } from "@/lib/redis";
@@ -12,6 +12,9 @@ export { storeConfigured } from "@/lib/redis";
 const key = (id: string) => `proposal:${id}`;
 const INDEX = "proposals";
 
+/** Fills in fields added since a proposal was saved (like `time`), so pages can rely on every field */
+const complete = (p: Proposal | null): Proposal | null => p && { ...p, content: normalizeContent(p.content) };
+
 /** An unguessable id: the client's link is the only way to their proposal. */
 export const newProposalId = () => randomBytes(12).toString("base64url");
 
@@ -21,7 +24,7 @@ const validId = (id: string) => /^[A-Za-z0-9_-]{16}$/.test(id);
 export async function getProposal(id: string): Promise<Proposal | null> {
   if (!validId(id)) return null;
   const [raw] = await pipeline([["GET", key(id)]]);
-  return parseJson<Proposal>(raw);
+  return complete(parseJson<Proposal>(raw));
 }
 
 export async function saveProposal(proposal: Proposal) {
@@ -33,7 +36,7 @@ export async function saveProposal(proposal: Proposal) {
 
 /** Every proposal, newest first. */
 export async function listProposals(): Promise<Proposal[]> {
-  return listJson<Proposal>(INDEX, key);
+  return (await listJson<Proposal>(INDEX, key)).map((p) => complete(p) as Proposal);
 }
 
 export async function deleteProposal(id: string) {
