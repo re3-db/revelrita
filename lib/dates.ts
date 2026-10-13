@@ -12,8 +12,8 @@ export function formatDate(value: string) {
 
 export const isIsoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
 
-/** HH:MM, what a time input sends */
-export const isClockTime = (value: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+/** HH:MM, what a time input sends (some browsers add seconds: HH:MM:SS or HH:MM:SS.sss) */
+export const isClockTime = (value: string) => /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?$/.test(value);
 
 const clock = (value: string) => {
   const [h, m] = value.split(":").map(Number);

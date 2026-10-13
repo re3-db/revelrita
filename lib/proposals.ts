@@ -214,16 +214,18 @@ export function pricedRows(pricing: PriceLine[]) {
  * Every proposal shows every section. One missing its quote, its menu or a price line (made
  * before those were standard, or started by hand) gets the standard one when it's opened:
  * Grace Kelly's quote, a mock-up menu from their inquiry (or the event type and date), and a
- * "Bar cart and two bartenders" line for Helen to price. Clearing one brings it back.
+ * "Bar cart and two bartenders" line for Helen to price. A blank time takes the one from their
+ * inquiry, if they gave one (the proposal shows "TBD" otherwise). Clearing one brings it back.
  */
 export function withAllSections(content: ProposalContent, inquiry?: Proposal["inquiry"]): ProposalContent {
   const c = { ...content };
+  const said = (question: string) => inquiry?.answers.find(([q]) => q === question)?.[1] ?? "";
+  if (!c.time.trim()) c.time = said("Event time");
   if (!c.quote.trim()) {
     c.quote = standardQuote.quote;
     c.quoteBy = c.quoteBy.trim() || `${standardQuote.name}, Google review`;
   }
   if (!c.menu.trim()) {
-    const said = (question: string) => inquiry?.answers.find(([q]) => q === question)?.[1] ?? "";
     const drinksLabel = said("What are you thinking for drinks?");
     const menu = mockMenu({
       drinks: Object.keys(drinkLabels).find((k) => drinkLabels[k] === drinksLabel) ?? "",

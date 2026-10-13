@@ -123,7 +123,8 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   proposal is read) fills an empty quote (Grace Kelly's review), menu (built from the inquiry, or the
   event type and date) or price list (a "Bar cart and two bartenders" line, shown as "TBD" until
   priced). The numbers slide (pricing, "What's in the number", the alcohol) shows if any of it has
-  content. It's "Drinkware", never "Glassware".
+  content. The first slide always shows the party's Time: a blank one takes the inquiry's
+  "Event time", and shows "TBD" if there's none. It's "Drinkware", never "Glassware".
 - In the Preview (and Helen's view of `/proposal/<id>`), the "Back to editor" bar
   (`components/proposal/PreviewBar.tsx`, the `.pbar` rules) is sticky, and those views don't snap,
   because the slides' scroll-snap would otherwise scroll it out of reach. It's styled like the

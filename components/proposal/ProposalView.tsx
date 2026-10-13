@@ -98,7 +98,8 @@ export default function ProposalView({
     [
       ["Occasion", d.occasion],
       ["Date", d.date],
-      ["Time", d.time],
+      // Always on the first slide, so a proposal never goes out without the party's time
+      ["Time", d.time.trim() || "TBD"],
       ["Where", d.venue],
       ["Guests", d.guests],
       ["Service", d.serviceWindow],
