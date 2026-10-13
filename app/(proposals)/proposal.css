@@ -625,6 +625,16 @@
   .sendbox .ebtn.ghost{color:var(--ink);border-color:rgba(23,61,87,.3)}
   .sendbox .ebtn.ghost:hover{border-color:var(--ink);background:transparent}
   .esend-alt{margin:0;font-size:13.5px;color:var(--muted)}
+  /* after "Send it": the confirmation */
+  .sendbox.esent{max-width:480px;text-align:center}
+  .esent-check{
+    display:inline-grid;place-items:center;width:56px;height:56px;margin:0 0 14px;border-radius:50%;
+    background:rgba(120,184,205,.38);color:var(--deep-2);font-size:28px;line-height:1;
+  }
+  .esent h2{margin:0 0 12px}
+  .esent p{margin:0 0 10px;font-size:15px;line-height:1.55;color:var(--body-ink);overflow-wrap:anywhere}
+  .esent strong{color:var(--ink);font-weight:500}
+  .esent .esend-actions{justify-content:center;margin:20px 0 0}
 
   /* the editor (/admin/<id>): the list page's look, with the artifact's fields in cream cards */
   .ed-wrap{max-width:920px;margin:0 auto;padding:22px 20px 130px}
@@ -886,7 +896,7 @@
     .pbar-inner{padding:10px 12px}
     .pbar-note{font-size:13.5px}
     .pbar-actions{flex:1 1 100%}
-    .pbar .ebtn{flex:1;padding:8px 12px}
+    .pbar .ebtn{flex:1;padding:8px 6px;font-size:13.5px;white-space:nowrap}
   }
 
   /* The client quote, redesigned at Helen's request. In the artifact's stylesheet `.col-text p`

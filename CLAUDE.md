@@ -106,7 +106,8 @@ Env vars (see `.env.example`; set them in Vercel for Production and Preview):
   Redis is connected in Vercel (Storage tab). `UPSTASH_REDIS_REST_URL` / `_TOKEN` also work. Without
   them, inquiries still email as before but no drafts are saved.
 
-Sending a proposal also goes through Resend, from `INQUIRY_FROM`.
+Sending a proposal also goes through Resend, from `INQUIRY_FROM`, with a BCC to `INQUIRY_TO`: Helen's
+copy, which Gmail files under Sent (it's from her own address), threaded with the client's reply.
 
 The form has a hidden `company` honeypot field. If a bot fills it, the action returns success without sending.
 
@@ -134,8 +135,13 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   `normalizeContent`, so ones saved before a field existed get it blank instead of missing.
 - `/admin` lists drafts and sent proposals (password: `ADMIN_PASSWORD`, `lib/admin-auth.ts`).
   `/admin/<id>` is the builder (`components/proposal/ProposalBuilder.tsx`): the artifact's form,
-  saving as Helen types. **Send to client** emails the client a link (`lib/proposal-email.ts`) and
-  marks it sent. Or "Mark it sent and copy the link" if she'd rather text it.
+  saving as Helen types. **Send to client** emails the client a link (`lib/proposal-email.ts`), marks
+  it sent and shows a "Sent!" confirmation. Or "Mark it sent and copy the link" if she'd rather text it.
+- **Share link** (`components/proposal/ShareLinkButton.tsx`, in the editor's bottom bar and the preview
+  bar) hands over just the client link: the share sheet on phones, the clipboard on computers. On a
+  draft it also marks it sent, so the link opens. It starts the share/copy before awaiting anything,
+  because Safari refuses both once the tap is over. `/proposal/<id>` has Open Graph tags (title,
+  description, the cart photo), so a pasted link previews as the proposal, not the page's first text.
 - `/proposal/<id>` is what the client sees (`components/proposal/ProposalView.tsx`, a port of the
   artifact's `render()`). Drafts 404 unless Helen is logged in. Edits after sending show up live.
 - Styling: `app/(proposals)/proposal.css` is the artifact's stylesheet, unchanged, with site-only

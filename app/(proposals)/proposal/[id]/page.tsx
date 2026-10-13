@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
 import ProposalView from "@/components/proposal/ProposalView";
+import ShareLinkButton from "@/components/proposal/ShareLinkButton";
 import { isAdmin } from "@/lib/admin-auth";
+import { siteOrigin } from "@/lib/origin";
 import { getProposal } from "@/lib/proposal-store";
 
 /**
@@ -18,24 +21,39 @@ const load = cache(async (id: string) => {
   return proposal;
 });
 
+// What a text or email shows when the link is pasted in (instead of whatever is at the top of the page)
+const description = "What's included, the drinks and the numbers, all in one place.";
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const proposal = await load((await params).id);
-  const name = proposal?.content.name.trim();
-  return { title: name ? `Revelrita, ${name}` : "Revelrita proposal" };
+  if (!proposal) return { title: "Revelrita proposal" };
+  const name = proposal.content.name.trim();
+  const { src, alt } = photos.cart;
+  return {
+    title: name ? `Revelrita, ${name}` : "Revelrita proposal",
+    description,
+    openGraph: {
+      title: name ? `A Revelrita proposal for ${name}` : "Your Revelrita proposal",
+      description,
+      url: `/proposal/${proposal.id}`,
+      siteName: "Revelrita",
+      type: "website",
+      images: [{ url: src.src, width: src.width, height: src.height, alt }],
+    },
+    twitter: { card: "summary_large_image" },
+  };
 }
 
 export default async function ProposalPage({ params }: { params: Promise<{ id: string }> }) {
   const proposal = await load((await params).id);
   if (!proposal) notFound();
 
+  const draft = proposal.status !== "sent";
   const topbar = (await isAdmin()) ? (
     <PreviewBar
-      tag={proposal.status === "sent" ? "Sent" : "Draft"}
-      note={
-        proposal.status === "sent"
-          ? "This is what your client sees."
-          : "Only you can open this link until you send it."
-      }
+      tag={draft ? "Draft" : "Sent"}
+      note={draft ? "Only you can open this link until you share or send it." : "This is what your client sees."}
+      share={<ShareLinkButton id={proposal.id} link={`${await siteOrigin()}/proposal/${proposal.id}`} draft={draft} />}
       back={
         <Link href={`/admin/${proposal.id}`} className="ebtn primary">
           Back to editor

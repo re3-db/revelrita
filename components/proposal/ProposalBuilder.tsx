@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactN
 import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } from "@/app/(proposals)/admin/actions";
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
+import ShareLinkButton from "@/components/proposal/ShareLinkButton";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
@@ -35,6 +36,8 @@ type SaveState = "saved" | "unsaved" | "saving" | "error";
 const emptyRow = (): PriceLine => ({ label: "", amount: "", note: "" });
 
 // Pacific time, so the server's render and the browser's agree
+const clock = (ms: number) =>
+  new Date(ms).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "2-digit" });
 const day = (ms: number) =>
   new Date(ms).toLocaleDateString("en-US", {
     timeZone: "America/Los_Angeles",
@@ -146,6 +149,11 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
 
   /* ---------- buttons ---------- */
 
+  /** Marks it sent, so the link opens for whoever she shares it with */
+  const goLive = async (to = clientEmail) =>
+    (await run(() => markSent(proposal.id, content, to), "That didn't work. Check your connection and try again.")).ok;
+  const share = <ShareLinkButton id={proposal.id} link={link} draft={!sent} markSent={goLive} />;
+
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(link);
@@ -175,6 +183,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           <PreviewBar
             tag="Preview"
             note="This is what your client sees."
+            share={share}
             back={
               <button
                 type="button"
@@ -220,7 +229,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           </h1>
           <p className="ahero-sub">
             {sent
-              ? `${meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}${meta.sentAt ? ` on ${day(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.`
+              ? `${meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}${meta.sentAt ? ` on ${day(meta.sentAt)} at ${clock(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.`
               : `${proposal.inquiry ? `Made from the inquiry ${proposal.inquiry.answers[0]?.[1] || "someone"} sent on ${day(proposal.inquiry.receivedAt)}. ` : ""}It saves as you type, and nothing goes to the client until you hit Send.`}
           </p>
           {sent && (
@@ -532,11 +541,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                   : "Save"}
           </button>
           <span className="ebar-space" />
-          {sent && (
-            <button type="button" className="ebtn ghost" onClick={copyLink}>
-              Copy client link
-            </button>
-          )}
+          {share}
           <button type="button" className="ebtn primary" onClick={() => setSending(true)}>
             {sent ? "Send again" : "Send to client"}
           </button>
@@ -556,18 +561,16 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
               () => sendProposal(proposal.id, { content, clientEmail: to, subject, message }),
               "That didn't send. Check your connection and try again.",
             );
-            say(result.message);
-            if (result.ok) setSending(false);
+            if (!result.ok) say(result.message);
+            return result.ok;
           }}
           onCopyInstead={async (to) => {
+            // Copy first, while it's still part of the click (Safari won't copy after a wait)
+            const copied = copyLink();
             setClientEmail(to);
-            const result = await run(
-              () => markSent(proposal.id, content, to),
-              "That didn't work. Check your connection and try again.",
-            );
-            if (!result.ok) return say(result.message);
+            if (!(await goLive(to))) return;
             setSending(false);
-            await copyLink();
+            await copied;
           }}
         />
       )}
@@ -630,13 +633,16 @@ function SendPanel({
   subject: string;
   message: string;
   onClose: () => void;
-  onSend: (email: { to: string; subject: string; message: string }) => Promise<void>;
+  /** True once it's sent */
+  onSend: (email: { to: string; subject: string; message: string }) => Promise<boolean>;
   onCopyInstead: (to: string) => Promise<void>;
 }) {
   const [to, setTo] = useState(email);
   const [subject, setSubject] = useState(initialSubject);
   const [message, setMessage] = useState(initialMessage);
   const [busy, setBusy] = useState(false);
+  /** Who it went to, once it's sent */
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && onClose();
@@ -653,6 +659,31 @@ function SendPanel({
     }
   }
 
+  if (sentTo) {
+    return (
+      <div className="modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="sendbox esent" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+          <span className="esent-check" aria-hidden="true">
+            &#10003;
+          </span>
+          <h2 id="sendTitle">Sent{name.trim() ? ` to ${name.trim()}` : ""}!</h2>
+          <p>
+            Their proposal is on its way to <strong>{sentTo}</strong>, from fun@revelrita.com.
+          </p>
+          <p>
+            You got a copy too: it&apos;s in your mail under <strong>Sent</strong>. When they reply, it lands in
+            your inbox.
+          </p>
+          <div className="esend-actions">
+            <button type="button" className="ebtn primary" onClick={onClose} autoFocus>
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && !busy && onClose()}>
       <form
@@ -662,7 +693,9 @@ function SendPanel({
         aria-labelledby="sendTitle"
         onSubmit={(e) => {
           e.preventDefault();
-          run(() => onSend({ to: to.trim(), subject, message }));
+          run(async () => {
+            if (await onSend({ to: to.trim(), subject, message })) setSentTo(to.trim());
+          });
         }}
       >
         <h2 id="sendTitle">Send it{name.trim() ? ` to ${name.trim()}` : ""}</h2>
@@ -675,7 +708,7 @@ function SendPanel({
         <Field
           label="Message"
           htmlFor="s_message"
-          hint="They get this with a button to their proposal. It comes from fun@revelrita.com, so replies land in your inbox."
+          hint="They get this with a button to their proposal. It comes from fun@revelrita.com, you get a copy, and replies land in your inbox."
         >
           <textarea id="s_message" rows={9} value={message} onChange={(e) => setMessage(e.target.value)} />
         </Field>

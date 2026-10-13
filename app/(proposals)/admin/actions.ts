@@ -94,6 +94,8 @@ export async function sendProposal(
   const sent = await sendEmail({
     from: process.env.INQUIRY_FROM || "Revelrita <fun@revelrita.com>",
     to: [to],
+    // Helen's copy. Gmail files mail from her own address under Sent, next to the client's reply.
+    bcc: [process.env.INQUIRY_TO || "fun@revelrita.com"],
     subject,
     ...proposalEmail({ message, link }),
   });
@@ -111,6 +113,15 @@ export async function markSent(id: string, content: unknown, clientEmail: unknow
   if (!proposal) return { ok: false, message: "This proposal was deleted." };
   const result = await store(proposal, content, clientEmail, { status: "sent", sentAt: Date.now(), sentTo: "" });
   return result.ok ? { ...result, message: "Marked as sent. The link is live." } : result;
+}
+
+/** "Share link" on the proposal page: a draft's link only opens for Helen, so it's marked sent. */
+export async function shareProposal(id: string): Promise<SaveResult> {
+  if (!(await isAdmin())) return loggedOut;
+  const proposal = await getProposal(String(id));
+  if (!proposal) return { ok: false, message: "This proposal was deleted." };
+  if (proposal.status === "sent") return { ok: true, message: "" };
+  return store(proposal, proposal.content, proposal.clientEmail, { status: "sent", sentAt: Date.now(), sentTo: "" });
 }
 
 export async function removeProposal(id: string) {
