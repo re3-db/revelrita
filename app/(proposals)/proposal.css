@@ -642,7 +642,12 @@
   .ed-hero .ahero-title{margin-top:30px}
   .ed-hero .apill.draft{background:rgba(255,246,228,.16);color:var(--cream)}
   .ed-hero .apill.sent{background:var(--cream);color:var(--deep-2)}
-  .ed-open{margin:14px 0 0}
+  /* the client's link, in plain view to copy */
+  .ed-link{margin:20px 0 0;max-width:34em}
+  .ed .ed-link label{display:block;margin:0 0 6px;font-size:13.5px;color:var(--cream);opacity:.85}
+  .ed-link-row{display:flex;gap:8px;align-items:center}
+  .ed #clientLink{flex:1;min-width:0;margin:0;padding:9px 16px;border-radius:999px;font-size:14px}
+  .ed-link .ebtn{padding:9px 16px;font-size:14px;text-decoration:none;white-space:nowrap}
 
   .ecard{background:var(--cream);border-radius:10px;padding:26px 30px 28px;margin:0 0 14px}
   @media (max-width:700px){ .ecard{padding:22px 18px 22px} }

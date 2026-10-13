@@ -48,12 +48,13 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
   const proposal = await load((await params).id);
   if (!proposal) notFound();
 
-  const draft = proposal.status !== "sent";
-  const topbar = (await isAdmin()) ? (
+  // Once it's sent, Helen sees exactly what the client sees: the link is hers to pass around too.
+  // A draft (which only opens for her) gets the bar, with Share link to put it live.
+  const topbar = proposal.status !== "sent" ? (
     <PreviewBar
-      tag={draft ? "Draft" : "Sent"}
-      note={draft ? "Only you can open this link until you share or send it." : "This is what your client sees."}
-      share={<ShareLinkButton id={proposal.id} link={`${await siteOrigin()}/proposal/${proposal.id}`} draft={draft} />}
+      tag="Draft"
+      note="Only you can open this link until you share or send it."
+      share={<ShareLinkButton id={proposal.id} link={`${await siteOrigin()}/proposal/${proposal.id}`} draft />}
       back={
         <Link href={`/admin/${proposal.id}`} className="ebtn primary">
           Back to editor

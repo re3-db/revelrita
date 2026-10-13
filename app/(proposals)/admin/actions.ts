@@ -94,12 +94,20 @@ export async function sendProposal(
   const sent = await sendEmail({
     from: process.env.INQUIRY_FROM || "Revelrita <fun@revelrita.com>",
     to: [to],
-    // Helen's copy. Gmail files mail from her own address under Sent, next to the client's reply.
-    bcc: [process.env.INQUIRY_TO || "fun@revelrita.com"],
     subject,
     ...proposalEmail({ message, link }),
   });
   if (!sent) return { ok: false, message: "The email didn't send. Your changes are saved, so try again in a minute." };
+
+  // Helen's copy, its own email from website@ like her inquiry copies: a BCC from fun@ to fun@
+  // never reaches her inbox. Replying to it writes to the client.
+  await sendEmail({
+    from: process.env.INQUIRY_NOTIFY_FROM || "Revelrita website <website@revelrita.com>",
+    to: [process.env.INQUIRY_TO || "fun@revelrita.com"],
+    reply_to: to,
+    subject: `Sent to ${to}: ${subject}`,
+    ...proposalEmail({ message, link, note: `Your proposal went to ${to}. This is your copy; hit reply to write to them.` }),
+  });
 
   const latest = (await getProposal(proposal.id)) ?? proposal;
   const result = await store(latest, latest.content, to, { status: "sent", sentAt: Date.now(), sentTo: to });

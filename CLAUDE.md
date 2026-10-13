@@ -106,8 +106,8 @@ Env vars (see `.env.example`; set them in Vercel for Production and Preview):
   Redis is connected in Vercel (Storage tab). `UPSTASH_REDIS_REST_URL` / `_TOKEN` also work. Without
   them, inquiries still email as before but no drafts are saved.
 
-Sending a proposal also goes through Resend, from `INQUIRY_FROM`, with a BCC to `INQUIRY_TO`: Helen's
-copy, which Gmail files under Sent (it's from her own address), threaded with the client's reply.
+Sending a proposal also goes through Resend, from `INQUIRY_FROM`. Helen's copy is a separate email to
+`INQUIRY_TO` from `INQUIRY_NOTIFY_FROM` (reply-to the client, note on top), for the same BCC reason.
 
 The form has a hidden `company` honeypot field. If a bot fills it, the action returns success without sending.
 
@@ -126,7 +126,7 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   priced). The numbers slide (pricing, "What's in the number", the alcohol) shows if any of it has
   content. The first slide always shows the party's Time: a blank one takes the inquiry's
   "Event time", and shows "TBD" if there's none. It's "Drinkware", never "Glassware".
-- In the Preview (and Helen's view of `/proposal/<id>`), the "Back to editor" bar
+- In the Preview (and Helen's view of a draft's `/proposal/<id>`), the "Back to editor" bar
   (`components/proposal/PreviewBar.tsx`, the `.pbar` rules) is sticky, and those views don't snap,
   because the slides' scroll-snap would otherwise scroll it out of reach. It's styled like the
   editor's bottom bar and lines up with the slides.
@@ -143,7 +143,9 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   because Safari refuses both once the tap is over. `/proposal/<id>` has Open Graph tags (title,
   description, the cart photo), so a pasted link previews as the proposal, not the page's first text.
 - `/proposal/<id>` is what the client sees (`components/proposal/ProposalView.tsx`, a port of the
-  artifact's `render()`). Drafts 404 unless Helen is logged in. Edits after sending show up live.
+  artifact's `render()`). Drafts 404 unless Helen is logged in. Once sent, it looks the same for her
+  as for the client (no bar), so she can pass the link around. Edits after sending show up live. The
+  editor's header shows the link in a box to copy, with an Open button.
 - Styling: `app/(proposals)/proposal.css` is the artifact's stylesheet, unchanged, with site-only
   additions at the bottom. Its class names clash with `globals.css`, which is why it has its own root
   layout. Fonts are the artifact's (Fraunces, DM Sans). The client's page (and the builder's Preview)

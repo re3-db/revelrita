@@ -232,13 +232,17 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
               ? `${meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}${meta.sentAt ? ` on ${day(meta.sentAt)} at ${clock(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.`
               : `${proposal.inquiry ? `Made from the inquiry ${proposal.inquiry.answers[0]?.[1] || "someone"} sent on ${day(proposal.inquiry.receivedAt)}. ` : ""}It saves as you type, and nothing goes to the client until you hit Send.`}
           </p>
-          {sent && (
-            <p className="ed-open">
-              <a className="alink" href={link} target="_blank" rel="noreferrer">
-                Open their page &#8599;
+          <div className="ed-link">
+            <label htmlFor="clientLink">
+              Their link{sent ? "" : ": it opens for them once you share or send it"}
+            </label>
+            <div className="ed-link-row">
+              <input id="clientLink" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+              <a className="ebtn ghost" href={link} target="_blank" rel="noreferrer">
+                Open &#8599;
               </a>
-            </p>
-          )}
+            </div>
+          </div>
         </header>
 
         {answers.length > 0 && (
@@ -671,8 +675,8 @@ function SendPanel({
             Their proposal is on its way to <strong>{sentTo}</strong>, from fun@revelrita.com.
           </p>
           <p>
-            You got a copy too: it&apos;s in your mail under <strong>Sent</strong>. When they reply, it lands in
-            your inbox.
+            Your copy is on its way to your inbox, from website@revelrita.com. When they reply, it lands in your
+            inbox too.
           </p>
           <div className="esend-actions">
             <button type="button" className="ebtn primary" onClick={onClose} autoFocus>
@@ -708,7 +712,7 @@ function SendPanel({
         <Field
           label="Message"
           htmlFor="s_message"
-          hint="They get this with a button to their proposal. It comes from fun@revelrita.com, you get a copy, and replies land in your inbox."
+          hint="They get this with a button to their proposal. It comes from fun@revelrita.com, a copy comes to your inbox, and so do their replies."
         >
           <textarea id="s_message" rows={9} value={message} onChange={(e) => setMessage(e.target.value)} />
         </Field>

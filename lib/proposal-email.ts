@@ -15,6 +15,7 @@ const c = {
   orange: "#FB5718",
   ember: "#C4400D",
   muted: "#45606F",
+  blush: "#FFB59A",
 };
 const sans = "'Bricolage Grotesque',Helvetica,Arial,sans-serif";
 const serif = "'Newsreader',Georgia,'Times New Roman',serif";
@@ -22,7 +23,16 @@ const serif = "'Newsreader',Georgia,'Times New Roman',serif";
 const escape = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export function proposalEmail({ message, link }: { message: string; link: string }) {
+export function proposalEmail({
+  message,
+  link,
+  note,
+}: {
+  message: string;
+  link: string;
+  /** Shown in a banner above everything else (Helen's copy uses it, like her inquiry copies) */
+  note?: string;
+}) {
   const paragraphs = message
     .split(/\n{2,}/)
     .map((p) => p.trim())
@@ -51,6 +61,16 @@ export function proposalEmail({ message, link }: { message: string; link: string
     <tr>
       <td align="center" style="padding:32px 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
+${
+            note
+              ? `
+          <tr>
+            <td style="padding:0 0 24px;">
+              <div style="background:${c.blush};border-radius:14px;padding:14px 18px;font-family:${sans};font-size:15px;line-height:1.5;font-weight:700;color:${c.ink};">${escape(note)}</div>
+            </td>
+          </tr>`
+              : ""
+          }
           <tr>
             <td align="center" style="padding:0 0 24px;">
               <a href="https://revelrita.com" style="text-decoration:none;">
@@ -90,6 +110,7 @@ export function proposalEmail({ message, link }: { message: string; link: string
 </html>`;
 
   const text = [
+    ...(note ? [note, "", "========================================", ""] : []),
     paragraphs.join("\n\n"),
     "",
     `See your proposal: ${link}`,
