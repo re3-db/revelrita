@@ -117,6 +117,8 @@ const NUMBER_JUICE =
 const NUMBER_CART = "The cart, setup and pack-out, everything you'd need for a bar |";
 const NUMBER_ALCOHOL = "The alcohol is separate, and you buy it at store prices |";
 
+const INCLUDED_ALCOHOL = "All of your alcohol ordered, prepared, delivered, and iced down for the event";
+
 /** In What's included for every package but beer and wine */
 export const MENU_INCLUDED = "Custom menu printed and framed";
 
@@ -126,7 +128,7 @@ export function standardIncluded(withMenu = true) {
     "The bar cart, styled and ready to go",
     "4 hours of bar service",
     "Bartending for the full service window",
-    "All of your alcohol ordered and delivered to the event",
+    INCLUDED_ALCOHOL,
     "Drinkware",
     "Ice",
     "Fresh citrus, herbs and garnishes",
@@ -256,9 +258,12 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
     const drinksLabel = said("What are you thinking for drinks?");
     const menu = mockMenu({
       drinks: Object.keys(drinkLabels).find((k) => drinkLabels[k] === drinksLabel) ?? "",
-      kind: [said("What kind of event is it?"), c.occasion, eventTypes.find((t) => t.value === c.eventType)?.label ?? ""].join(" "),
+      kind: [said("What kind of event is it?"), c.occasion].join(" "),
       vibe: [said("Where is it, and what's the vibe?"), c.venue].join(" "),
+      name: c.name,
+      eventType: c.eventType,
       month: monthIn(c.date) ?? monthIn(said("Event date")),
+      year: Number(`${c.date} ${said("Event date")}`.match(/\b20\d\d\b/)?.[0]) || null,
     });
     c.menu = menu.menu;
     c.menuTitle = c.menuTitle.trim() || menu.menuTitle;
@@ -294,7 +299,10 @@ const oldIncluded = (sound: boolean, menu: boolean) =>
 const oldIncludedLists = [true, false].flatMap((sound) => [true, false].map((menu) => oldIncluded(sound, menu)));
 
 const retired: Record<"included" | "inTheNumber", [old: string, now: string | null][]> = {
-  included: [["Commercial sound system", null]],
+  included: [
+    ["Commercial sound system", null],
+    ["All of your alcohol ordered and delivered to the event", INCLUDED_ALCOHOL],
+  ],
   inTheNumber: [
     [
       "Fresh juice, real citrus, pebble and block ice | The good stuff costs more than sour mix and a bag from the gas station, and you can taste the difference.",
@@ -432,7 +440,17 @@ export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   const menuIncluded = inquiry.drinks !== "beer-wine";
   if (!menuIncluded) content.included = standardIncluded(false);
   content.addOns = standardAddOns({ guests: guestCount(guests), menuIncluded });
-  Object.assign(content, mockMenu({ drinks: inquiry.drinks, kind, vibe: inquiry.vibe, date: inquiry.dates[0] }));
+  Object.assign(
+    content,
+    mockMenu({
+      drinks: inquiry.drinks,
+      kind,
+      vibe: inquiry.vibe,
+      name: firstName,
+      eventType: content.eventType,
+      date: inquiry.dates[0],
+    }),
+  );
   return content;
 }
 

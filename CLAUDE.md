@@ -119,9 +119,12 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
 - Every inquiry (`sendInquiry`) also saves a **draft** proposal, prefilled from the form
   (`contentFromInquiry` in `lib/proposals.ts`), and Helen's notification email links to it. The
   visitor is never sent anything about it. If saving fails, the inquiry emails still go out.
-- Inquiry drafts get a mock-up menu from `lib/menu.ts`: their drinks choice sets the shape, and the
-  season of their date, their event type and words in their "vibe" pick from a fixed list of drinks
-  (deterministic, no AI). Add or retune drinks there.
+- Inquiry drafts get a mock-up menu from `lib/menu.ts` (deterministic, no AI). The occasion (birthday
+  with its age, wedding, shower, holiday, work party...) picks a theme: the menu's title ("Cassie
+  Turns Thirty-Five") and the drink names ("Make-a-Wish Watermelon Marg"). The season of their date
+  picks the flavors. Cocktail packages get Helen's three signatures, a seasonal marg, a bourbon drink
+  and the Stoli Olli (`STOLI`, her classic: vodka soaked with pineapple for two weeks), plus a zero
+  proof drink, beer and wine. Add themes or retune flavors there.
 - **Every proposal shows every section.** `withAllSections` (`lib/proposals.ts`, applied whenever a
   proposal is read) fills an empty quote (Grace Kelly's review), menu (built from the inquiry, or the
   event type and date) or price list (a "Bar cart and two bartenders" line, shown as "TBD" until
