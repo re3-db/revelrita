@@ -139,6 +139,9 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   from the guest count when there is one (the ice supplier's costs and $20 delivery are noted there).
   Cocktail and mocktail packages include "Custom menu printed and framed" in What's included instead
   of offering signage; beer and wine offers "Custom menu signage" as an add-on (`contentFromInquiry`).
+  Proposals from before the prices (`ADD_ON_PRICES_LIVE`), or with no add-on priced at all, get the
+  standard price on every blank standard add-on when read (`withStandardPrices`); drafts from before
+  add-ons existed (`ADD_ONS_LIVE`) get the whole priced list (`lib/proposal-store.ts`).
 - **Standard wording** for What's included (`standardIncluded`) and What's in the number is Helen's.
   When she changes it, add the old version to `withCurrentWording` (`lib/proposals.ts`, applied on
   read in `lib/proposal-store.ts`): every proposal, sent ones too (her call), then gets the new

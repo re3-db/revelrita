@@ -350,6 +350,37 @@ export function withCurrentWording(content: ProposalContent, inquiry?: Proposal[
   };
 }
 
+/** When Helen's add-on prices were surely live (pushed Oct 14, 2026 at 9:39 AM Pacific) */
+export const ADD_ON_PRICES_LIVE = Date.UTC(2026, 9, 14, 17, 30);
+
+/** When add-ons first went live (pushed Oct 14, 2026 at 9:12 AM Pacific) */
+export const ADD_ONS_LIVE = Date.UTC(2026, 9, 14, 16, 30);
+
+/** Proposals from before the prices, or with no add-on priced at all, get the standard prices */
+export const needsAddOnPrices = (p: Proposal) =>
+  p.createdAt < ADD_ON_PRICES_LIVE || (p.content.addOns.length > 0 && p.content.addOns.every((r) => !r.amount.trim()));
+
+/**
+ * Proposals made before Helen set her add-on prices (see ADD_ON_PRICES_LIVE) got blank ones. A
+ * standard add-on with no price gets its standard price (sized for the guest count) and note; the
+ * old "Extra hours or bartenders" line becomes the extra hour and extra bartender; and "Custom
+ * menu signage" goes where What's included already has the custom menu. Prices she typed are
+ * never touched, and newer proposals are left alone, so she can still leave a price blank.
+ */
+export function withStandardPrices(c: ProposalContent): PriceLine[] {
+  const menuIncluded = includesMenu(c.included);
+  const standard = standardAddOns({ guests: guestCount(c.guests), menuIncluded });
+  const has = (label: string) => c.addOns.some((r) => r.label.trim() === label);
+  return c.addOns.flatMap((r) => {
+    const label = r.label.trim();
+    if (r.amount.trim()) return [r];
+    if (label === "Extra hours or bartenders") return standard.filter((s) => /^Extra (hour|bartender)$/.test(s.label) && !has(s.label));
+    if (label === CUSTOM_MENU && menuIncluded) return [];
+    const std = standard.find((s) => s.label === label);
+    return std ? [{ ...r, amount: std.amount, note: r.note.trim() || std.note }] : [r];
+  });
+}
+
 /* ---------- untrusted input (server actions) ---------- */
 
 const text = (value: unknown, max = 5000) => (typeof value === "string" ? value.slice(0, max) : "");
