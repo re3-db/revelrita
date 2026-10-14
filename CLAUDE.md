@@ -135,13 +135,12 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   content. The first slide always shows the party's Time: a blank one takes the inquiry's
   "Event time", and shows "TBD" if there's none. It's "Drinkware", never "Glassware".
 - **Add ons.** New proposals offer every add-on in `lib/addons.ts` (an "Add ons" card in the builder:
-  label, price, note per line), at Helen's standard prices. Pebble ice and whiskey blocks are priced
-  from the guest count when there is one (the ice supplier's costs and $20 delivery are noted there).
-  Cocktail and mocktail packages include "Custom menu printed and framed" in What's included instead
-  of offering signage; beer and wine offers "Custom menu signage" as an add-on (`contentFromInquiry`).
-  Proposals from before the prices (`ADD_ON_PRICES_LIVE`), or with no add-on priced at all, get the
-  standard price on every blank standard add-on when read (`withStandardPrices`); drafts from before
-  add-ons existed (`ADD_ONS_LIVE`) get the whole priced list (`lib/proposal-store.ts`).
+  label, price, note per line), at Helen's prices, shown exactly as she wrote them ("$1.75 per cube",
+  "$35 per 40 drinks", "$3 per guest"); never multiply them out. A plain number ("200") also adds to
+  the client's running total. The custom menu is included, never an add-on. When the standard
+  add-ons change, bump `ADD_ONS_VERSION` and teach `migrateAddOns` (`lib/proposals.ts`) the change:
+  older proposals are brought up to date once when read (prices she typed stay), and the version is
+  stamped on their next save, so lines she removes afterwards stay removed.
 - **Standard wording** for What's included (`standardIncluded`) and What's in the number is Helen's.
   When she changes it, add the old version to `withCurrentWording` (`lib/proposals.ts`, applied on
   read in `lib/proposal-store.ts`): every proposal, sent ones too (her call), then gets the new

@@ -5,7 +5,7 @@ import { inquiryEmail } from "@/lib/inquiry-email";
 import { drinkLabels } from "@/lib/menu";
 import { siteOrigin } from "@/lib/origin";
 import { newProposalId, saveProposal, storeConfigured } from "@/lib/proposal-store";
-import { contentFromInquiry, type InquiryDetails } from "@/lib/proposals";
+import { ADD_ONS_VERSION, contentFromInquiry, type InquiryDetails } from "@/lib/proposals";
 import { sendEmail } from "@/lib/resend";
 
 export type InquiryResult = { ok: boolean; message: string };
@@ -32,6 +32,7 @@ async function createDraft(details: InquiryDetails, answers: [string, string][])
       clientEmail: details.email,
       inquiry: { answers, receivedAt: now },
       content: contentFromInquiry(details),
+      addOnsVersion: ADD_ONS_VERSION,
     });
     return id;
   } catch (error) {

@@ -5,7 +5,7 @@ import { checkPassword, endSession, isAdmin, requireAdmin, startSession } from "
 import { siteOrigin } from "@/lib/origin";
 import { proposalEmail } from "@/lib/proposal-email";
 import { deleteProposal, getProposal, newProposalId, saveProposal } from "@/lib/proposal-store";
-import { defaultContent, isEmail, normalizeContent, type Proposal } from "@/lib/proposals";
+import { ADD_ONS_VERSION, defaultContent, isEmail, normalizeContent, type Proposal } from "@/lib/proposals";
 import { sendEmail } from "@/lib/resend";
 
 /** What the builder needs back after a save or send */
@@ -42,7 +42,15 @@ export async function createProposal() {
   await requireAdmin();
   const now = Date.now();
   const id = newProposalId();
-  await saveProposal({ id, status: "draft", createdAt: now, updatedAt: now, clientEmail: "", content: defaultContent() });
+  await saveProposal({
+    id,
+    status: "draft",
+    createdAt: now,
+    updatedAt: now,
+    clientEmail: "",
+    content: defaultContent(),
+    addOnsVersion: ADD_ONS_VERSION,
+  });
   redirect(`/admin/${id}`);
 }
 

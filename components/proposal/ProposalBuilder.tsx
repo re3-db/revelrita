@@ -7,13 +7,12 @@ import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } fr
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
 import ShareLinkButton from "@/components/proposal/ShareLinkButton";
-import { guestCount, standardAddOns } from "@/lib/addons";
+import { standardAddOns } from "@/lib/addons";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
   defaultSubject,
   eventTypes,
-  includesMenu,
   menuFor,
   money,
   photoKeys,
@@ -568,14 +567,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                 <button
                   type="button"
                   className="elink"
-                  onClick={() =>
-                    change({
-                      addOns: standardAddOns({
-                        guests: guestCount(content.guests),
-                        menuIncluded: includesMenu(content.included),
-                      }),
-                    })
-                  }
+                  onClick={() => change({ addOns: standardAddOns() })}
                 >
                   Use my standard add-ons
                 </button>

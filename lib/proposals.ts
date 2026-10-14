@@ -1,4 +1,4 @@
-import { CUSTOM_MENU, guestCount, standardAddOns } from "@/lib/addons";
+import { CUSTOM_MENU, guestCount, ICED_TEA, standardAddOns } from "@/lib/addons";
 import { hoursBetween, timeRange } from "@/lib/dates";
 import { drinkLabels, mockMenu, monthIn } from "@/lib/menu";
 import { reviewsBy } from "@/lib/reviews";
@@ -101,6 +101,8 @@ export type Proposal = {
   content: ProposalContent;
   /** The add-ons the client ticked and sent from their page (labels from content.addOns) */
   picks?: { labels: string[]; at: number };
+  /** Which standard add-ons it has been brought up to (see ADD_ONS_VERSION) */
+  addOnsVersion?: number;
 };
 
 /* ---------- the artifact's standard wording ---------- */
@@ -350,35 +352,57 @@ export function withCurrentWording(content: ProposalContent, inquiry?: Proposal[
   };
 }
 
-/** When Helen's add-on prices were surely live (pushed Oct 14, 2026 at 9:39 AM Pacific) */
-export const ADD_ON_PRICES_LIVE = Date.UTC(2026, 9, 14, 17, 30);
-
 /** When add-ons first went live (pushed Oct 14, 2026 at 9:12 AM Pacific) */
 export const ADD_ONS_LIVE = Date.UTC(2026, 9, 14, 16, 30);
 
-/** Proposals from before the prices, or with no add-on priced at all, get the standard prices */
-export const needsAddOnPrices = (p: Proposal) =>
-  p.createdAt < ADD_ON_PRICES_LIVE || (p.content.addOns.length > 0 && p.content.addOns.every((r) => !r.amount.trim()));
+/**
+ * Bumped when the standard add-ons change. A proposal saved at an older version gets
+ * migrateAddOns once when read, and is stamped with this version the next time it's saved.
+ */
+export const ADD_ONS_VERSION = 2;
+
+// Prices the first versions filled in for a party of `g` guests (they multiplied rates out)
+const oldPrices: Record<string, (g: number | null) => string[]> = {
+  "Whiskey blocks": (g) => ["$45 per bag of 15", ...(g ? [String(45 * Math.max(1, Math.ceil(g / 30)))] : [])],
+  "Pebble ice": (g) => ["$2.50 per guest ($75 minimum)", ...(g ? [String(Math.max(75, Math.ceil(g * 2.5)))] : [])],
+  "Sodas, seltzers and waters, stocked": (g) => ["$2.50 per guest", ...(g ? [String(Math.ceil(g * 2.5))] : [])],
+  "Champagne toast service": (g) => ["$3 per guest", ...(g ? [String(Math.ceil(g * 3))] : [])],
+};
+const renamed: Record<string, string> = {
+  "Sodas, seltzers and waters, stocked": "Sodas, seltzers and waters, stocked on ice",
+};
+const oldNote = /^(A bag|\d+ bags) of 15 big clear cubes, for drinks served down$/;
 
 /**
- * Proposals made before Helen set her add-on prices (see ADD_ON_PRICES_LIVE) got blank ones. A
- * standard add-on with no price gets its standard price (sized for the guest count) and note; the
- * old "Extra hours or bartenders" line becomes the extra hour and extra bartender; and "Custom
- * menu signage" goes where What's included already has the custom menu. Prices she typed are
- * never touched, and newer proposals are left alone, so she can still leave a price blank.
+ * Brings an older proposal's add-ons up to Helen's current ones: cubed ice and custom menu
+ * signage come out; a standard add-on with no price, or a price an earlier version filled in,
+ * gets her current price (and name, and note); "Extra hours or bartenders" becomes the extra
+ * hour and extra bartender; and Iced Tea + Lemonade is added. Prices she typed stay. A draft
+ * from before add-ons existed gets the whole list; a sent one stays as the client saw it.
  */
-export function withStandardPrices(c: ProposalContent): PriceLine[] {
-  const menuIncluded = includesMenu(c.included);
-  const standard = standardAddOns({ guests: guestCount(c.guests), menuIncluded });
+export function migrateAddOns(p: Proposal): PriceLine[] {
+  const c = p.content;
+  if (!c.addOns.length) return p.status === "draft" && p.createdAt < ADD_ONS_LIVE ? standardAddOns() : [];
+  const standard = standardAddOns();
+  const guests = guestCount(c.guests);
   const has = (label: string) => c.addOns.some((r) => r.label.trim() === label);
-  return c.addOns.flatMap((r) => {
+  const out = c.addOns.flatMap((r): PriceLine[] => {
     const label = r.label.trim();
-    if (r.amount.trim()) return [r];
-    if (label === "Extra hours or bartenders") return standard.filter((s) => /^Extra (hour|bartender)$/.test(s.label) && !has(s.label));
-    if (label === CUSTOM_MENU && menuIncluded) return [];
-    const std = standard.find((s) => s.label === label);
-    return std ? [{ ...r, amount: std.amount, note: r.note.trim() || std.note }] : [r];
+    const amount = r.amount.trim();
+    if (/cubed ice/i.test(label) || label === CUSTOM_MENU) return [];
+    if (label === "Extra hours or bartenders") {
+      return amount ? [r] : standard.filter((s) => /^Extra (hour|bartender)$/.test(s.label) && !has(s.label));
+    }
+    const now = standard.find((s) => s.label === (renamed[label] ?? label));
+    if (!now || (amount && !(oldPrices[label]?.(guests) ?? []).includes(amount))) return [r];
+    const note = !r.note.trim() || oldNote.test(r.note.trim()) ? now.note : r.note;
+    return [{ label: now.label, amount: now.amount, note }];
   });
+  if (!out.some((r) => r.label.trim() === ICED_TEA)) {
+    const sodas = out.findIndex((r) => /^Sodas/.test(r.label.trim()));
+    out.splice(sodas >= 0 ? sodas + 1 : out.length, 0, standard.find((s) => s.label === ICED_TEA)!);
+  }
+  return out;
 }
 
 /* ---------- untrusted input (server actions) ---------- */
@@ -476,7 +500,6 @@ export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   // Cocktail and mocktail packages come with a custom menu sign; beer and wine can add one
   const menuIncluded = inquiry.drinks !== "beer-wine";
   if (!menuIncluded) content.included = standardIncluded(false);
-  content.addOns = standardAddOns({ guests: guestCount(guests), menuIncluded });
   Object.assign(
     content,
     mockMenu({

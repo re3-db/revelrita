@@ -91,7 +91,7 @@ export default function AddOnsSlide({
                     : <strong>{money(addOnTotal)}</strong>
                   </>
                 )}
-                {unpriced && addOnTotal > 0 && " plus what's priced as written"}
+                {unpriced && (addOnTotal > 0 ? " plus what's priced as listed" : ", priced as listed")}
               </span>
               {addOnTotal > 0 && service.counted.length > 0 && (
                 <span>

@@ -1,15 +1,12 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { guestCount, standardAddOns } from "@/lib/addons";
 import { isOldMockUp } from "@/lib/menu";
 import {
-  ADD_ONS_LIVE,
-  includesMenu,
-  needsAddOnPrices,
+  ADD_ONS_VERSION,
+  migrateAddOns,
   normalizeContent,
   withAllSections,
   withCurrentWording,
-  withStandardPrices,
   type Proposal,
 } from "@/lib/proposals";
 import { listJson, parseJson, pipeline } from "@/lib/redis";
@@ -28,20 +25,15 @@ const INDEX = "proposals";
  * and the standard quote, menu and price line where a proposal has none (see withAllSections).
  * Standard wording that changed gets the current version (see withCurrentWording), and a draft
  * whose menu is an untouched one from the first generator gets a themed one (sent ones keep theirs).
- * Add-ons on proposals from before the standard prices get them (see withStandardPrices), and a
- * draft from before add-ons existed gets the standard list.
+ * Older proposals' add-ons are brought up to Helen's current ones once (see migrateAddOns); the
+ * version stamp is saved with the next save, so lines she removes after that stay removed.
  */
 const complete = (p: Proposal | null): Proposal | null => {
   if (!p) return null;
   let content = withCurrentWording(normalizeContent(p.content), p.inquiry);
   if (p.status === "draft" && isOldMockUp(content.menuTitle, content.menu)) content = { ...content, menuTitle: "", menu: "" };
-  if (needsAddOnPrices({ ...p, content })) content = { ...content, addOns: withStandardPrices(content) };
-  // A draft from before add-ons existed gets the standard ones, priced (a sent one stays as the client saw it)
-  if (p.status === "draft" && p.createdAt < ADD_ONS_LIVE && !content.addOns.length) {
-    const guests = guestCount(content.guests);
-    content = { ...content, addOns: standardAddOns({ guests, menuIncluded: includesMenu(content.included) }) };
-  }
-  return { ...p, content: withAllSections(content, p.inquiry) };
+  if ((p.addOnsVersion ?? 1) < ADD_ONS_VERSION) content = { ...content, addOns: migrateAddOns({ ...p, content }) };
+  return { ...p, addOnsVersion: ADD_ONS_VERSION, content: withAllSections(content, p.inquiry) };
 };
 
 /** An unguessable id: the client's link is the only way to their proposal. */
