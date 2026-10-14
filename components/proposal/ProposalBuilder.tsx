@@ -14,6 +14,7 @@ import {
   defaultSubject,
   eventTypes,
   includesMenu,
+  menuFor,
   money,
   photoKeys,
   photoLabels,
@@ -399,14 +400,32 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           </div>
         </Card>
 
-        <Card title="The menu" note="A starting point, built from their inquiry (or the event type and date). Edit it freely.">
+        <Card
+          title="The menu"
+          note="A starting point, themed for their occasion and the season of their date. Edit it freely."
+        >
           <Field label="Menu heading" htmlFor="f_menuTitle">
             <input {...bind("menuTitle")} placeholder="e.g. Two signature drinks, beer and wine" />
           </Field>
           <Field
             label="Drinks, one per line: the name, then | and the ingredients"
             htmlFor="f_menu"
-            hint="Names and ingredients only, no descriptions."
+            hint={
+              <>
+                Names and ingredients only, no descriptions.{" "}
+                <button
+                  type="button"
+                  className="elink"
+                  onClick={() => {
+                    if (content.menu.trim() && !window.confirm("Replace this menu with a fresh one from their inquiry?")) return;
+                    change(menuFor(content, proposal.inquiry));
+                    say("Fresh menu made");
+                  }}
+                >
+                  Make a fresh one from their inquiry
+                </button>
+              </>
+            }
           >
             <textarea
               {...bind("menu")}

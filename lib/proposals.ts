@@ -239,6 +239,21 @@ export function pricedRows(pricing: PriceLine[], blank = "TBD") {
 
 /* ---------- every section, every time ---------- */
 
+/** A mock-up menu for this proposal: from its inquiry, or its occasion, event type and date (lib/menu.ts) */
+export function menuFor(c: ProposalContent, inquiry?: Proposal["inquiry"]) {
+  const said = (question: string) => inquiry?.answers.find(([q]) => q === question)?.[1] ?? "";
+  const drinksLabel = said("What are you thinking for drinks?");
+  return mockMenu({
+    drinks: Object.keys(drinkLabels).find((k) => drinkLabels[k] === drinksLabel) ?? "",
+    kind: [said("What kind of event is it?"), c.occasion].join(" "),
+    vibe: [said("Where is it, and what's the vibe?"), c.venue].join(" "),
+    name: c.name,
+    eventType: c.eventType,
+    month: monthIn(c.date) ?? monthIn(said("Event date")),
+    year: Number(`${c.date} ${said("Event date")}`.match(/\b20\d\d\b/)?.[0]) || null,
+  });
+}
+
 /**
  * Every proposal shows every section. One missing its quote, its menu or a price line (made
  * before those were standard, or started by hand) gets the standard one when it's opened:
@@ -255,16 +270,7 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
     c.quoteBy = c.quoteBy.trim() || `${standardQuote.name}, Google review`;
   }
   if (!c.menu.trim()) {
-    const drinksLabel = said("What are you thinking for drinks?");
-    const menu = mockMenu({
-      drinks: Object.keys(drinkLabels).find((k) => drinkLabels[k] === drinksLabel) ?? "",
-      kind: [said("What kind of event is it?"), c.occasion].join(" "),
-      vibe: [said("Where is it, and what's the vibe?"), c.venue].join(" "),
-      name: c.name,
-      eventType: c.eventType,
-      month: monthIn(c.date) ?? monthIn(said("Event date")),
-      year: Number(`${c.date} ${said("Event date")}`.match(/\b20\d\d\b/)?.[0]) || null,
-    });
+    const menu = menuFor(c, inquiry);
     c.menu = menu.menu;
     c.menuTitle = c.menuTitle.trim() || menu.menuTitle;
   }

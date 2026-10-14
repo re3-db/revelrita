@@ -185,9 +185,9 @@ function themeOf(said: string, eventType: string, month: number | null): ThemeKe
   ];
   const hit = rules.find(([re]) => re.test(said));
   if (hit) return hit[1];
+  // Not "wedding": it's the event type a proposal gets when nothing says otherwise
   if (eventType === "corporate") return month === 12 ? "holiday" : "work";
   if (eventType === "popup") return "launch";
-  if (eventType === "wedding") return "wedding";
   return month === 12 ? "holiday" : "party";
 }
 
@@ -226,7 +226,7 @@ export function mockMenu({
   vibe: string;
   /** Their first name, for a birthday's title */
   name?: string;
-  /** The proposal's event type (wedding, private, corporate, popup), when the words don't say */
+  /** The proposal's event type (private, corporate, popup), when the words don't say */
   eventType?: string;
   /** YYYY-MM-DD of their (first) date, for the season */
   date?: string;
@@ -253,7 +253,7 @@ export function mockMenu({
   const marg = `${theme.marg} ${f.fruit} Marg | ${f.marg}`;
   const bourbon = `${f.bourbon === "Old Fashioned" && theme.oldFashioned ? theme.oldFashioned : `${theme.bourbon} ${f.bourbon}`} | ${f.bourbonIng}`;
   const zero = `${theme.zero} ${f.zero} | ${f.zeroIng}`;
-  const wedding = /wedding|reception|rehearsal|elop|vow/.test(said) || eventType === "wedding";
+  const wedding = /wedding|reception|rehearsal|elop|vow/.test(said);
   const pours = wedding ? [...beerAndWine, "Sparkling for the toast"] : beerAndWine;
   const noBooze =
     drinks === "mocktails" ||
@@ -278,4 +278,52 @@ export function mockMenu({
     menuTitle,
     menu: ["# Signature cocktails", marg, bourbon, STOLI_LINE, "# Zero proof", zero, "# Beer and wine", ...pours].join("\n"),
   };
+}
+
+/* ---------- menus from the first generator ---------- */
+
+const OLD_TITLES = ["Two signature cocktails, beer and wine", "Beer and wine, plus a zero-proof pick", "Three zero-proof signatures"];
+const OLD_DRINKS = new Set([
+  "Passion Fruit Marg | tequila blanco, passion fruit, lime, agave",
+  "Cucumber Cooler | cucumber vodka infused overnight, mint, lime, soda",
+  "Spicy Cucumber Marg | jalapeño tequila, cucumber, lime, agave, tajín rim",
+  "Charcoal Marg | tequila blanco, activated charcoal, lime, agave, black salt rim",
+  "Hibiscus Marg | tequila blanco, hibiscus, lime, agave",
+  "Lavender Gin Fizz | gin, lavender honey syrup, lemon, soda",
+  "Elderflower Spritz | elderflower liqueur, sparkling wine, soda, lemon twist",
+  "Aperol Spritz | Aperol, prosecco, soda, orange",
+  "Paloma | tequila blanco, fresh grapefruit, lime, soda, salt rim",
+  "Ranch Water | tequila blanco, fresh lime, Topo Chico",
+  "Whiskey Smash | bourbon, lemon, mint, simple syrup",
+  "Pineapple Rum Smash | rum, pineapple, lime, mint",
+  "Moscow Mule | vodka, ginger beer, fresh lime",
+  "Spiced Apple Mule | bourbon, apple cider, ginger beer, cinnamon",
+  "Cranberry Rosemary Mule | vodka, cranberry, ginger beer, lime, rosemary",
+  "Espresso Martini | vodka, fresh espresso, coffee liqueur",
+  "French 75 | gin, lemon, sparkling wine",
+  "Hibiscus Lemonade | hibiscus, lemon, agave, soda",
+  "Cucumber Mint Cooler | cucumber, mint, lime, soda",
+  "Passion Fruit Spritz | passion fruit, lime, agave, soda",
+  "Spicy Pineapple Fresca | pineapple, jalapeño, lime, agave, soda",
+  "Ginger Mint Mule | ginger beer, lime, mint",
+  "Lavender Lemonade | lavender syrup, lemon, soda",
+  "Cranberry Ginger Fizz | cranberry, ginger beer, lime, rosemary",
+  "Spiced Apple Cider Spritz | apple cider, cinnamon, lemon, soda",
+]);
+const OLD_LINES = new Set(["# Signature cocktails", "# Zero proof", "# Beer and wine", ...beerAndWine, "Sparkling for the toast"]);
+
+/**
+ * A mock-up menu the first generator made (before the themed ones) that Helen hasn't touched:
+ * its heading, and every line, word for word, one it could have written. Drafts swap these for
+ * a themed menu.
+ */
+export function isOldMockUp(title: string, menu: string) {
+  return (
+    OLD_TITLES.includes(title.trim()) &&
+    menu
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .every((l) => OLD_LINES.has(l) || OLD_DRINKS.has(l))
+  );
 }

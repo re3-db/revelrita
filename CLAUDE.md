@@ -124,7 +124,10 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   Turns Thirty-Five") and the drink names ("Make-a-Wish Watermelon Marg"). The season of their date
   picks the flavors. Cocktail packages get Helen's three signatures, a seasonal marg, a bourbon drink
   and the Stoli Olli (`STOLI`, her classic: vodka soaked with pineapple for two weeks), plus a zero
-  proof drink, beer and wine. Add themes or retune flavors there.
+  proof drink, beer and wine. Add themes or retune flavors there. Drafts whose menu is still an
+  untouched one from the first generator (`isOldMockUp`) get a themed one when read; sent ones keep
+  theirs. The builder's "Make a fresh one from their inquiry" (`menuFor`) rebuilds any proposal's.
+  The event type "wedding" is the default, so it never makes a menu wedding-themed on its own.
 - **Every proposal shows every section.** `withAllSections` (`lib/proposals.ts`, applied whenever a
   proposal is read) fills an empty quote (Grace Kelly's review), menu (built from the inquiry, or the
   event type and date) or price list (a "Bar cart and two bartenders" line, shown as "TBD" until

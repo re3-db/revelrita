@@ -1,5 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { isOldMockUp } from "@/lib/menu";
 import { normalizeContent, withAllSections, withCurrentWording, type Proposal } from "@/lib/proposals";
 import { listJson, parseJson, pipeline } from "@/lib/redis";
 
@@ -15,10 +16,15 @@ const INDEX = "proposals";
 /**
  * Fills in fields added since a proposal was saved (like `time`), so pages can rely on every field,
  * and the standard quote, menu and price line where a proposal has none (see withAllSections).
- * Standard lines that are add-ons now come out (see withCurrentWording).
+ * Standard wording that changed gets the current version (see withCurrentWording), and a draft
+ * whose menu is an untouched one from the first generator gets a themed one (sent ones keep theirs).
  */
-const complete = (p: Proposal | null): Proposal | null =>
-  p && { ...p, content: withAllSections(withCurrentWording(normalizeContent(p.content), p.inquiry), p.inquiry) };
+const complete = (p: Proposal | null): Proposal | null => {
+  if (!p) return null;
+  let content = withCurrentWording(normalizeContent(p.content), p.inquiry);
+  if (p.status === "draft" && isOldMockUp(content.menuTitle, content.menu)) content = { ...content, menuTitle: "", menu: "" };
+  return { ...p, content: withAllSections(content, p.inquiry) };
+};
 
 /** An unguessable id: the client's link is the only way to their proposal. */
 export const newProposalId = () => randomBytes(12).toString("base64url");
