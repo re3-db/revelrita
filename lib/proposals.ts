@@ -132,7 +132,6 @@ export function defaultContent(): ProposalContent {
       "Mixers, juices and everything non-alcoholic",
       // Every package but beer and wine (contentFromInquiry takes it out for those)
       CUSTOM_MENU,
-      "Commercial sound system",
       "Setup and pack-out, we leave it cleaner than we found it",
       "Your shopping list, built and managed by me",
       "Coordination with your planner or venue",
@@ -166,7 +165,7 @@ export function defaultContent(): ProposalContent {
       "Fresh juice and real citrus | The good stuff costs more than sour mix, and you can taste the difference.",
       "A prep day before your event | Shopping, batching, ice pickup. Everything ready before we pull up.",
       "Bartenders who are actually good | Paid properly, which is why they're fun.",
-      "The cart, the sound system, setup and pack-out |",
+      "The cart, setup and pack-out |",
       "The alcohol is separate, and you buy it at store prices | So the total usually lands under what a catered bar charges for the same night.",
     ].join("\n"),
     pricingNote: "",

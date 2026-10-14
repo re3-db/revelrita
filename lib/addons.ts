@@ -17,6 +17,8 @@ type AddOn = {
   forGuests?: (guests: number) => { price: number; note?: string };
   /** Not on the Packages page */
   site?: false;
+  /** Only on the Packages page (proposals split it into lines that each have a price) */
+  proposals?: false;
   /** Comes with cocktail and mocktail packages (in "What's included"), so only beer and wine offers it */
   inCocktails?: true;
 };
@@ -29,14 +31,21 @@ type AddOn = {
  * Whiskey blocks: $15 for a bag of 15 ($1 a cube), sold at $45 a bag, one bag per 30 guests
  * (a stirred drink for about half of them).
  */
-const PEBBLE_PER_GUEST = 2.5;
-const PEBBLE_MIN = 75;
 const BLOCKS_PER_BAG = 45;
 
+/** A price per guest (with an optional minimum): "$2.50 per guest", or the total for the party */
+const perGuest = (rate: number, min = 0) => ({
+  price: `$${rate % 1 ? rate.toFixed(2) : rate} per guest${min ? ` ($${min} minimum)` : ""}`,
+  forGuests: (guests: number) => ({ price: Math.max(min, Math.ceil(guests * rate)) }),
+});
+
+// Everything not about ice was priced from what nearby bars charge (Cheers SD's extra bartender
+// and servers, TOAST's $3 champagne toast) and what each takes in supplies and time.
+
 export const addOns: AddOn[] = [
-  { name: "Custom cups", price: "" },
+  { name: "Custom cups", price: "$2.50 per cup (50 minimum)" },
   { name: "Custom napkins", price: "$85 per 100" },
-  { name: "Custom menu signage", price: "", inCocktails: true },
+  { name: "Custom menu signage", price: "95", note: "Printed and framed", inCocktails: true },
   {
     name: "Whiskey blocks",
     price: `$${BLOCKS_PER_BAG} per bag of 15`,
@@ -51,19 +60,28 @@ export const addOns: AddOn[] = [
   },
   {
     name: "Pebble ice",
-    price: `$${PEBBLE_PER_GUEST.toFixed(2)} per guest ($${PEBBLE_MIN} minimum)`,
     note: "The soft, chewable ice, for the long drinks",
-    forGuests: (guests) => ({ price: Math.max(PEBBLE_MIN, Math.ceil(guests * PEBBLE_PER_GUEST)) }),
+    ...perGuest(2.5, 75),
   },
   // Helen named it with pebble ice for proposals; the Packages page doesn't list it
-  { name: "Cubed ice", price: "", site: false },
-  { name: "Sodas, seltzers and waters, stocked", price: "" },
-  { name: "Tray-passed welcome champagne", price: "" },
-  { name: "Champagne toast service", price: "" },
-  { name: "A zero proof menu alongside", price: "" },
+  { name: "Cubed ice", price: "$50 per 100 lbs", note: "For coolers of beer, wine and water", site: false },
+  { name: "Sodas, seltzers and waters, stocked", ...perGuest(2.5) },
+  {
+    name: "Tray-passed welcome champagne",
+    price: "200",
+    note: "Passed as guests arrive. The bubbly goes on your alcohol order",
+  },
+  {
+    name: "Champagne toast service",
+    note: "Poured and passed for the toast. The bubbly goes on your alcohol order",
+    ...perGuest(3),
+  },
+  { name: "A zero proof menu alongside", price: "150", note: "Two mocktails, with their syrups and garnish" },
   { name: "Cart styling, flowers or greenery", price: "75" },
   { name: "Commercial grade sound", price: "75" },
-  { name: "Extra hours or bartenders", price: "" },
+  { name: "Extra hours or bartenders", price: "", proposals: false },
+  { name: "Extra hour", price: "175", note: "The cart and two bartenders", site: false },
+  { name: "Extra bartender", price: "250", site: false },
 ];
 
 /** The Packages page's list */
@@ -85,7 +103,7 @@ export function guestCount(text: string) {
  */
 export function standardAddOns({ guests = null, menuIncluded = true }: { guests?: number | null; menuIncluded?: boolean } = {}): PriceLine[] {
   return addOns
-    .filter((a) => !(menuIncluded && a.inCocktails))
+    .filter((a) => a.proposals !== false && !(menuIncluded && a.inCocktails))
     .map((a) => {
       const sized = guests && a.forGuests ? a.forGuests(guests) : null;
       return {

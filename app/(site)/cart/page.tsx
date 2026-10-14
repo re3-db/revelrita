@@ -7,7 +7,7 @@ import { delay } from "@/lib/site";
 export const metadata: Metadata = {
   title: "The cart",
   description:
-    "Meet the Revelrita bar cart: a restored sky blue pony trailer with a live edge bar top, fresh juice and a commercial sound system.",
+    "Meet the Revelrita bar cart: a restored sky blue pony trailer with a live edge bar top, fresh juice and proper ice.",
   alternates: { canonical: "/cart" },
 };
 
@@ -84,7 +84,7 @@ export default function CartPage() {
             </div>
             <div className="reveal" style={delay(220)}>
               <h3>Music</h3>
-              <p>A commercial sound system comes with the cart, so the bar is also where the party sounds best.</p>
+              <p>Add the commercial sound system, and the bar is also where the party sounds best.</p>
             </div>
           </div>
         </div>
