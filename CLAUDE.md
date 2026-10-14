@@ -44,6 +44,8 @@ deploy. A bug that builds does go live.
 - `lib/press.ts` has every article/interview featuring Revelrita (newest first). `PressCards` renders
   them on `/press` and in the home page "In the press" section (`#press`).
 - `lib/images.ts` re-exports every photo in `public/images/` as a static import.
+- `lib/addons.ts` has every add-on with its standard price: the Packages page lists them, and every
+  new proposal offers them (see "Proposals").
 
 ## Styling rules
 
@@ -126,6 +128,14 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   priced). The numbers slide (pricing, "What's in the number", the alcohol) shows if any of it has
   content. The first slide always shows the party's Time: a blank one takes the inquiry's
   "Event time", and shows "TBD" if there's none. It's "Drinkware", never "Glassware".
+- **Add ons.** New proposals offer every add-on in `lib/addons.ts` (an "Add ons" card in the builder:
+  label, price, note per line). The client's page shows them on a "Make it yours" slide after the
+  numbers (`components/proposal/AddOnsSlide.tsx`): they tick rows, see a running total, and **Send my
+  picks** (`sendPicks` in `app/(proposals)/proposal/actions.ts`, callable by anyone with the link, so it
+  only keeps add-ons the proposal offers). Picks are saved on the proposal (`picks`, outside `content`
+  so the builder's saves keep them) and emailed to Helen from `INQUIRY_NOTIFY_FROM`; the builder shows
+  them. Proposals saved before add-ons existed get none (`normalizeContent`), so a sent one doesn't
+  change in front of its client; the builder offers "Use my standard add-ons".
 - In the Preview (and Helen's view of a draft's `/proposal/<id>`), the "Back to editor" bar
   (`components/proposal/PreviewBar.tsx`, the `.pbar` rules) is sticky, and those views don't snap,
   because the slides' scroll-snap would otherwise scroll it out of reach. It's styled like the
@@ -151,7 +161,7 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   layout. Fonts are the artifact's (Fraunces, DM Sans). The client's page (and the builder's Preview)
   must keep looking like the artifact, except the client quote slide, which Helen asked to have
   restyled (big quote mark, large italic, stars, name; the `.quote-slide` rules at the bottom of
-  `proposal.css`). The list, login and editor have their own look (the `.a*` and
+  `proposal.css`), and the add-ons slide, which is new (the `.addon*` rules, in the artifact's look). The list, login and editor have their own look (the `.a*` and
   `.e*` classes at the bottom): the proposal hero's gradient and cream cards.
 - Photos: `public/images/proposal/` (the artifact's full-size copies), exported from `lib/images.ts`.
 - Storage: one JSON value per proposal in Upstash Redis (`lib/proposal-store.ts` on top of `lib/redis.ts`,

@@ -27,11 +27,14 @@ export function proposalEmail({
   message,
   link,
   note,
+  cta = "See your proposal",
 }: {
   message: string;
   link: string;
   /** Shown in a banner above everything else (Helen's copy uses it, like her inquiry copies) */
   note?: string;
+  /** The button's words */
+  cta?: string;
 }) {
   const paragraphs = message
     .split(/\n{2,}/)
@@ -84,7 +87,7 @@ ${
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px;">
                 <tr>
                   <td style="background:${c.orange};border-radius:999px;">
-                    <a href="${escape(link)}" style="display:inline-block;padding:15px 30px;font-family:${sans};font-size:17px;font-weight:800;color:${c.cream};text-decoration:none;">See your proposal</a>
+                    <a href="${escape(link)}" style="display:inline-block;padding:15px 30px;font-family:${sans};font-size:17px;font-weight:800;color:${c.cream};text-decoration:none;">${escape(cta)}</a>
                   </td>
                 </tr>
               </table>
@@ -113,7 +116,7 @@ ${
     ...(note ? [note, "", "========================================", ""] : []),
     paragraphs.join("\n\n"),
     "",
-    `See your proposal: ${link}`,
+    `${cta}: ${link}`,
     "",
     "----------------------------------------",
     "Questions? Just reply to this email.",

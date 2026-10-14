@@ -7,6 +7,7 @@ import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } fr
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
 import ShareLinkButton from "@/components/proposal/ShareLinkButton";
+import { standardAddOns } from "@/lib/addons";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
@@ -147,6 +148,13 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
     change({ pricing: rows.length ? rows : [emptyRow()] });
   };
 
+  /* ---------- add-on rows ---------- */
+
+  const setAddOn = (i: number, next: Partial<PriceLine>) =>
+    change({ addOns: content.addOns.map((r, j) => (j === i ? { ...r, ...next } : r)) });
+  const picks = proposal.picks;
+  const picked = new Set(picks?.labels ?? []);
+
   /* ---------- buttons ---------- */
 
   /** Marks it sent, so the link opens for whoever she shares it with */
@@ -179,6 +187,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
     return (
       <ProposalView
         content={content}
+        picks={picks?.labels}
         topbar={
           <PreviewBar
             tag="Preview"
@@ -475,6 +484,73 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           <Field label="Pricing note" htmlFor="f_pricingNote">
             <input {...bind("pricingNote")} placeholder="e.g. Final count confirmed two weeks out" />
           </Field>
+        </Card>
+
+        <Card
+          title="Add ons"
+          note="They show on their own slide after the numbers, for the client to tick and send back. A price that's a number adds to their total; anything else (“$3 per guest”) shows as typed."
+        >
+          {picks && (
+            <p className="epicks">
+              {who || "Your client"}{" "}
+              {picks.labels.length
+                ? `picked ${picks.labels.join(", ")}`
+                : "sent back no add-ons"}{" "}
+              on {day(picks.at)} at {clock(picks.at)}.
+            </p>
+          )}
+          <div className="eprice">
+            {content.addOns.length > 0 && (
+              <div className="prhead">
+                <span>Add on</span>
+                <span>Price</span>
+                <span>Note (optional)</span>
+                <span></span>
+              </div>
+            )}
+            {content.addOns.map((row, i) => (
+              <div className={`prrow${picked.has(row.label.trim()) ? " picked" : ""}`} key={i}>
+                <input
+                  className="pr-l"
+                  aria-label="Add on"
+                  placeholder="e.g. Pebble ice"
+                  value={row.label}
+                  onChange={(e) => setAddOn(i, { label: e.target.value })}
+                />
+                <input
+                  className="pr-a"
+                  aria-label="Price"
+                  placeholder="e.g. 150"
+                  value={row.amount}
+                  onChange={(e) => setAddOn(i, { amount: e.target.value })}
+                />
+                <input
+                  className="pr-n"
+                  aria-label="Note"
+                  value={row.note}
+                  onChange={(e) => setAddOn(i, { note: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="pr-x"
+                  aria-label="Remove this add on"
+                  onClick={() => change({ addOns: content.addOns.filter((_, j) => j !== i) })}
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+            <div className="eprice-foot">
+              <button type="button" className="elink" onClick={() => change({ addOns: [...content.addOns, emptyRow()] })}>
+                + Add another add on
+              </button>
+              {content.addOns.length === 0 && (
+                <button type="button" className="elink" onClick={() => change({ addOns: standardAddOns() })}>
+                  Use my standard add-ons
+                </button>
+              )}
+            </div>
+          </div>
         </Card>
 
         <Card title="The alcohol">

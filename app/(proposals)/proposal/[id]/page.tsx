@@ -63,5 +63,13 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
     />
   ) : undefined;
 
-  return <ProposalView content={proposal.content} topbar={topbar} preload />;
+  return (
+    <ProposalView
+      content={proposal.content}
+      topbar={topbar}
+      preload
+      picks={proposal.picks?.labels}
+      proposalId={proposal.id}
+    />
+  );
 }

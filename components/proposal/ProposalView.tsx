@@ -1,5 +1,6 @@
 import Image, { type StaticImageData } from "next/image";
 import { Fragment, type ReactNode } from "react";
+import AddOnsSlide from "@/components/proposal/AddOnsSlide";
 import {
   logoCream,
   proposalBar,
@@ -79,12 +80,18 @@ export default function ProposalView({
   content: d,
   topbar,
   preload = false,
+  picks,
+  proposalId,
 }: {
   content: ProposalContent;
   /** The admin's "This is what your client sees" bar */
   topbar?: ReactNode;
   /** Preload the hero photo and logo (the client's page, where they're above the fold) */
   preload?: boolean;
+  /** The add-ons the client already sent, ticked on "Make it yours" */
+  picks?: string[];
+  /** The client's page passes it so "Send my picks" can save; the builder's Preview doesn't */
+  proposalId?: string;
 }) {
   const type = d.eventType || "wedding";
   const greetWord = type === "corporate" || type === "popup" ? "Hi" : "Hey";
@@ -364,6 +371,11 @@ export default function ProposalView({
               </div>
             </div>
           </section>
+        )}
+
+        {/* ---------- 5b. add ons (a site addition: the artifact has no such slide) ---------- */}
+        {pricedRows(d.addOns, "").rows.length > 0 && (
+          <AddOnsSlide addOns={d.addOns} pricing={d.pricing} picked={picks ?? []} proposalId={proposalId} />
         )}
 
         {/* ---------- 6b. questions people ask ---------- */}

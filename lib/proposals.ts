@@ -1,3 +1,4 @@
+import { standardAddOns } from "@/lib/addons";
 import { hoursBetween, timeRange } from "@/lib/dates";
 import { drinkLabels, mockMenu, monthIn } from "@/lib/menu";
 import { reviewsBy } from "@/lib/reviews";
@@ -42,6 +43,8 @@ export type ProposalContent = {
   /** "name | ingredients" per line; "# Group" starts a group, a name alone joins a dotted line */
   menu: string;
   pricing: PriceLine[];
+  /** What the client can tick on the "Make it yours" slide (skipped when empty), see lib/addons.ts */
+  addOns: PriceLine[];
   deposit: string;
   holdsFor: string;
   peak: string;
@@ -96,6 +99,8 @@ export type Proposal = {
   /** The inquiry form answers this draft was made from, shown in the builder for reference */
   inquiry?: { answers: [question: string, answer: string][]; receivedAt: number };
   content: ProposalContent;
+  /** The add-ons the client ticked and sent from their page (labels from content.addOns) */
+  picks?: { labels: string[]; at: number };
 };
 
 /* ---------- the artifact's standard wording ---------- */
@@ -151,6 +156,7 @@ export function defaultContent(): ProposalContent {
     menuTitle: "",
     menu: "",
     pricing: [],
+    addOns: standardAddOns(),
     deposit: "",
     holdsFor: "",
     peak: "",
@@ -181,9 +187,10 @@ export const money = (n: number) => "$" + n.toLocaleString("en-US", { maximumFra
 
 /**
  * The pricing lines as the client's page shows them (the artifact's rules): amounts that are
- * numbers get formatted and added up, anything else ("Included", "TBD") shows as typed.
+ * numbers get formatted and added up, anything else ("Included", "TBD") shows as typed, and a
+ * blank one shows `blank`. Add-ons use the same rules, with no "TBD".
  */
-export function pricedRows(pricing: PriceLine[]) {
+export function pricedRows(pricing: PriceLine[], blank = "TBD") {
   const rows = pricing
     .map((row) => {
       const r = { label: row.label.trim(), amount: row.amount.trim(), note: row.note.trim() };
@@ -200,7 +207,7 @@ export function pricedRows(pricing: PriceLine[]) {
       }
       const raw = r.amount.replace(/[$,\s]/g, "");
       const num = raw !== "" && /^[0-9.]+$/.test(raw) ? parseFloat(raw) : null;
-      return { ...r, num, display: num !== null ? money(num) : r.amount || "TBD" };
+      return { ...r, num, display: num !== null ? money(num) : r.amount || blank };
     })
     .filter((r) => r.label || r.amount);
   const counted = rows.filter((r) => r.num !== null);
@@ -253,19 +260,24 @@ export function normalizeContent(input: unknown): ProposalContent {
   const base = defaultContent();
   const out = { ...base } as Record<string, unknown>;
   for (const key of Object.keys(base) as (keyof ProposalContent)[]) {
-    if (key === "photos" || key === "pricing" || key === "eventType") continue;
+    if (key === "photos" || key === "pricing" || key === "addOns" || key === "eventType") continue;
     out[key] = text(raw[key]);
   }
   const type = eventTypes.find((t) => t.value === raw.eventType);
   out.eventType = type ? type.value : base.eventType;
   const photos: unknown[] = Array.isArray(raw.photos) ? raw.photos : [];
   out.photos = photoKeys.filter((k) => photos.includes(k));
-  out.pricing = Array.isArray(raw.pricing)
-    ? raw.pricing.slice(0, 30).map((row) => {
-        const r = (row && typeof row === "object" ? row : {}) as Record<string, unknown>;
-        return { label: text(r.label, 300), amount: text(r.amount, 100), note: text(r.note, 300) };
-      })
-    : [];
+  const priceLines = (value: unknown): PriceLine[] =>
+    Array.isArray(value)
+      ? value.slice(0, 30).map((row) => {
+          const r = (row && typeof row === "object" ? row : {}) as Record<string, unknown>;
+          return { label: text(r.label, 300), amount: text(r.amount, 100), note: text(r.note, 300) };
+        })
+      : [];
+  out.pricing = priceLines(raw.pricing);
+  // Proposals made before add-ons existed get none (not the standard list): the ones already
+  // sent would otherwise change in front of the client. The builder can add the standard list.
+  out.addOns = priceLines(raw.addOns);
   return out as ProposalContent;
 }
 

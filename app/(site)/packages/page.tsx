@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { siteAddOns } from "@/lib/addons";
 import { bottlesDrinkware } from "@/lib/images";
 import { delay } from "@/lib/site";
 
@@ -24,20 +25,6 @@ const included = [
   ["Your shopping list", "Down to the bottle"],
 ];
 
-const addOns = [
-  "Custom cups",
-  "Custom napkins",
-  "Custom menu signage",
-  "Whiskey blocks",
-  "Pebble ice",
-  "Sodas, seltzers and waters, stocked",
-  "Tray-passed welcome champagne",
-  "Champagne toast service",
-  "A zero proof menu alongside",
-  "Cart styling, flowers or greenery",
-  "Commercial grade sound",
-  "Extra hours or bartenders",
-];
 const pillColors = ["bg-sky", "bg-blush", "bg-peach"];
 
 export default function PackagesPage() {
@@ -109,7 +96,7 @@ export default function PackagesPage() {
             The things people add when they want the bar to feel like theirs.
           </p>
           <div className="gal addons reveal mt-[34px]" style={delay(110)}>
-            {addOns.map((a, i) => (
+            {siteAddOns.map((a, i) => (
               <span key={a} className={`pill ${pillColors[i % 3]} text-center py-[18px] px-[20px]`}>
                 {a}
               </span>
