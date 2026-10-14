@@ -7,7 +7,7 @@ import { delay } from "@/lib/site";
 export const metadata: Metadata = {
   title: "The cart",
   description:
-    "Meet the Revelrita bar cart: a restored sky blue pony trailer with a live edge bar top, pebble ice, fresh juice and a commercial sound system.",
+    "Meet the Revelrita bar cart: a restored sky blue pony trailer with a live edge bar top, fresh juice and a commercial sound system.",
   alternates: { canonical: "/cart" },
 };
 
@@ -80,7 +80,7 @@ export default function CartPage() {
             </div>
             <div className="reveal" style={delay(110)}>
               <h3>Proper ice</h3>
-              <p>Pebble ice for the long drinks, whiskey blocks for the short ones. It matters more than people think.</p>
+              <p>Add pebble ice for the long drinks and whiskey blocks for the short ones. It matters more than people think.</p>
             </div>
             <div className="reveal" style={delay(220)}>
               <h3>Music</h3>

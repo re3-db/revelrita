@@ -129,7 +129,10 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   content. The first slide always shows the party's Time: a blank one takes the inquiry's
   "Event time", and shows "TBD" if there's none. It's "Drinkware", never "Glassware".
 - **Add ons.** New proposals offer every add-on in `lib/addons.ts` (an "Add ons" card in the builder:
-  label, price, note per line). The client's page shows them on a "Make it yours" slide after the
+  label, price, note per line), at Helen's standard prices. Pebble ice and whiskey blocks are priced
+  from the guest count when there is one (the ice supplier's costs and $20 delivery are noted there).
+  Cocktail and mocktail packages include "Custom menu signage" in What's included instead of offering
+  it; beer and wine offers it as an add-on (`contentFromInquiry`). The client's page shows them on a "Make it yours" slide after the
   numbers (`components/proposal/AddOnsSlide.tsx`): they tick rows, see a running total, and **Send my
   picks** (`sendPicks` in `app/(proposals)/proposal/actions.ts`, callable by anyone with the link, so it
   only keeps add-ons the proposal offers). Picks are saved on the proposal (`picks`, outside `content`

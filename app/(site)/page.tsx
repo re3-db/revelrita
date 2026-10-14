@@ -148,8 +148,7 @@ export default function HomePage() {
               </svg>
               <h3>We pack the cart</h3>
               <p>
-                Cart, pebble ice, whiskey blocks, drinkware, fresh juice, herbs, dried citrus, a sound system and the
-                bartenders.
+                Cart, ice, drinkware, fresh juice, herbs, dried citrus, a sound system and the bartenders.
               </p>
             </div>
             <div className="reveal" style={delay(220)}>

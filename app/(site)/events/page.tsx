@@ -75,8 +75,8 @@ export default function EventsPage() {
               <p className="num">02</p>
               <h3>A bar, fully staffed</h3>
               <p>
-                Cart, pebble ice, whiskey blocks, drinkware, fresh juice, herbs, dried citrus, a sound system, and
-                bartenders who know how to move a line.
+                Cart, ice, drinkware, fresh juice, herbs, dried citrus, a sound system, and bartenders who know how to
+                move a line.
               </p>
             </div>
             <div className="step reveal" style={delay(220)}>

@@ -1,4 +1,4 @@
-import { standardAddOns } from "@/lib/addons";
+import { CUSTOM_MENU, guestCount, standardAddOns } from "@/lib/addons";
 import { hoursBetween, timeRange } from "@/lib/dates";
 import { drinkLabels, mockMenu, monthIn } from "@/lib/menu";
 import { reviewsBy } from "@/lib/reviews";
@@ -130,6 +130,8 @@ export function defaultContent(): ProposalContent {
       "Ice",
       "Fresh citrus, herbs and garnishes",
       "Mixers, juices and everything non-alcoholic",
+      // Every package but beer and wine (contentFromInquiry takes it out for those)
+      CUSTOM_MENU,
       "Commercial sound system",
       "Setup and pack-out, we leave it cleaner than we found it",
       "Your shopping list, built and managed by me",
@@ -161,7 +163,7 @@ export function defaultContent(): ProposalContent {
     holdsFor: "",
     peak: "",
     inTheNumber: [
-      "Fresh juice, real citrus, pebble and block ice | The good stuff costs more than sour mix and a bag from the gas station, and you can taste the difference.",
+      "Fresh juice and real citrus | The good stuff costs more than sour mix, and you can taste the difference.",
       "A prep day before your event | Shopping, batching, ice pickup. Everything ready before we pull up.",
       "Bartenders who are actually good | Paid properly, which is why they're fun.",
       "The cart, the sound system, setup and pack-out |",
@@ -342,6 +344,15 @@ export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   content.guests = /^\d[\d,]*$/.test(guests) ? `${guests} guests` : guests;
   content.time = timeRange(inquiry.start, inquiry.end);
   content.serviceWindow = hoursBetween(inquiry.start, inquiry.end);
+  // Cocktail and mocktail packages come with a custom menu sign; beer and wine can add one
+  const menuIncluded = inquiry.drinks !== "beer-wine";
+  if (!menuIncluded) {
+    content.included = content.included
+      .split("\n")
+      .filter((l) => l.trim() !== CUSTOM_MENU)
+      .join("\n");
+  }
+  content.addOns = standardAddOns({ guests: guestCount(guests), menuIncluded });
   Object.assign(content, mockMenu({ drinks: inquiry.drinks, kind, vibe: inquiry.vibe, date: inquiry.dates[0] }));
   return content;
 }

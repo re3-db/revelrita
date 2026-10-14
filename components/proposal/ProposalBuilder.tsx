@@ -7,7 +7,7 @@ import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } fr
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
 import ShareLinkButton from "@/components/proposal/ShareLinkButton";
-import { standardAddOns } from "@/lib/addons";
+import { CUSTOM_MENU, guestCount, standardAddOns } from "@/lib/addons";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
@@ -545,7 +545,18 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                 + Add another add on
               </button>
               {content.addOns.length === 0 && (
-                <button type="button" className="elink" onClick={() => change({ addOns: standardAddOns() })}>
+                <button
+                  type="button"
+                  className="elink"
+                  onClick={() =>
+                    change({
+                      addOns: standardAddOns({
+                        guests: guestCount(content.guests),
+                        menuIncluded: content.included.split("\n").some((l) => l.trim() === CUSTOM_MENU),
+                      }),
+                    })
+                  }
+                >
                   Use my standard add-ons
                 </button>
               )}
