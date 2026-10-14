@@ -137,7 +137,9 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
 - **Add ons.** New proposals offer every add-on in `lib/addons.ts` (an "Add ons" card in the builder:
   label, price, note per line), at Helen's prices, shown exactly as she wrote them ("$1.75 per cube",
   "$35 per 40 drinks", "$3 per guest"); never multiply them out. A plain number ("200") also adds to
-  the client's running total. The custom menu is included, never an add-on. When the standard
+  the client's running total. The custom menu is included, never an add-on: What's included ends
+  with "Custom menu printed and framed" for cocktail and mocktail packages (`contentFromInquiry`
+  leaves it off beer and wine). When the standard
   add-ons change, bump `ADD_ONS_VERSION` and teach `migrateAddOns` (`lib/proposals.ts`) the change:
   older proposals are brought up to date once when read (prices she typed stay), and the version is
   stamped on their next save, so lines she removes afterwards stay removed.
