@@ -15,13 +15,10 @@ const INDEX = "proposals";
 /**
  * Fills in fields added since a proposal was saved (like `time`), so pages can rely on every field,
  * and the standard quote, menu and price line where a proposal has none (see withAllSections).
- * Drafts also lose standard lines that are add-ons now (see withCurrentWording).
+ * Standard lines that are add-ons now come out (see withCurrentWording).
  */
-const complete = (p: Proposal | null): Proposal | null => {
-  if (!p) return null;
-  const content = normalizeContent(p.content);
-  return { ...p, content: withAllSections(p.status === "draft" ? withCurrentWording(content) : content, p.inquiry) };
-};
+const complete = (p: Proposal | null): Proposal | null =>
+  p && { ...p, content: withAllSections(withCurrentWording(normalizeContent(p.content)), p.inquiry) };
 
 /** An unguessable id: the client's link is the only way to their proposal. */
 export const newProposalId = () => randomBytes(12).toString("base64url");

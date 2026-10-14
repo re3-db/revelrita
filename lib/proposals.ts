@@ -252,9 +252,9 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
 }
 
 /**
- * Standard lines that changed after some drafts were made: the sound system, pebble ice and
- * whiskey blocks became add-ons. A draft gets the current wording wherever the old line is
- * still there word for word; sent proposals keep what the client was quoted.
+ * Standard lines that changed after some proposals were made: the sound system, pebble ice and
+ * whiskey blocks became add-ons. Every proposal, sent ones too (Helen's call), gets the current
+ * wording wherever the old line is still there word for word.
  */
 const retired: Record<"included" | "inTheNumber", [old: string, now: string | null][]> = {
   included: [["Commercial sound system", null]],

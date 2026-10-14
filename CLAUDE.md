@@ -133,8 +133,8 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   from the guest count when there is one (the ice supplier's costs and $20 delivery are noted there).
   Cocktail and mocktail packages include "Custom menu signage" in What's included instead of offering
   it; beer and wine offers it as an add-on (`contentFromInquiry`). The sound system, pebble ice and
-  whiskey blocks used to be in the standard included lists; drafts lose those old lines when read
-  (`withCurrentWording`, applied in `lib/proposal-store.ts`), sent proposals keep them. The client's page shows them on a "Make it yours" slide after the
+  whiskey blocks used to be in the standard included lists; every proposal, sent ones too (Helen's
+  call), loses those old lines when read (`withCurrentWording`, applied in `lib/proposal-store.ts`). The client's page shows them on a "Make it yours" slide after the
   numbers (`components/proposal/AddOnsSlide.tsx`): they tick rows, see a running total, and **Send my
   picks** (`sendPicks` in `app/(proposals)/proposal/actions.ts`, callable by anyone with the link, so it
   only keeps add-ons the proposal offers). Picks are saved on the proposal (`picks`, outside `content`
