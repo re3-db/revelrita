@@ -263,34 +263,6 @@ export default function ProposalView({
           </section>
         )}
 
-        {/* ---------- 3b. what makes us different ---------- */}
-        {diffs.length > 0 && (
-          <section className="slide feature-slide">
-            {featurePhoto && (
-              <Image
-                className="feature-bg"
-                src={photos[featurePhoto].src}
-                alt={photos[featurePhoto].alt}
-                sizes={sizes.full}
-                loading="eager"
-              />
-            )}
-            <div className="feature-inner">
-              <h2 className="feature-title">
-                What makes <em>Revelrita</em> different
-              </h2>
-              <div className="feat-row">
-                {diffs.slice(0, 4).map((x, i) => (
-                  <div className="feat" key={i}>
-                    <div className="feat-t">{x.t}</div>
-                    {x.b && <div className="feat-b">{x.b}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* ---------- 4. the menu ---------- */}
         {drinks.length > 0 && (
           <section className="slide split">
@@ -376,6 +348,34 @@ export default function ProposalView({
         {/* ---------- 5b. add ons (a site addition: the artifact has no such slide) ---------- */}
         {pricedRows(d.addOns, "").rows.length > 0 && (
           <AddOnsSlide addOns={d.addOns} pricing={d.pricing} picked={picks ?? []} proposalId={proposalId} />
+        )}
+
+        {/* ---------- 6a. what makes us different (Helen moved it here, right above Good to know) ---------- */}
+        {diffs.length > 0 && (
+          <section className="slide feature-slide">
+            {featurePhoto && (
+              <Image
+                className="feature-bg"
+                src={photos[featurePhoto].src}
+                alt={photos[featurePhoto].alt}
+                sizes={sizes.full}
+                loading="eager"
+              />
+            )}
+            <div className="feature-inner">
+              <h2 className="feature-title">
+                What makes <em>Revelrita</em> different
+              </h2>
+              <div className="feat-row">
+                {diffs.slice(0, 4).map((x, i) => (
+                  <div className="feat" key={i}>
+                    <div className="feat-t">{x.t}</div>
+                    {x.b && <div className="feat-b">{x.b}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
 
         {/* ---------- 6b. questions people ask ---------- */}
