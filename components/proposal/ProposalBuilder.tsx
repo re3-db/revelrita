@@ -7,12 +7,13 @@ import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } fr
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
 import ShareLinkButton from "@/components/proposal/ShareLinkButton";
-import { CUSTOM_MENU, guestCount, standardAddOns } from "@/lib/addons";
+import { guestCount, standardAddOns } from "@/lib/addons";
 import {
   DEFAULT_ALCOHOL,
   defaultMessage,
   defaultSubject,
   eventTypes,
+  includesMenu,
   money,
   photoKeys,
   photoLabels,
@@ -552,7 +553,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
                     change({
                       addOns: standardAddOns({
                         guests: guestCount(content.guests),
-                        menuIncluded: content.included.split("\n").some((l) => l.trim() === CUSTOM_MENU),
+                        menuIncluded: includesMenu(content.included),
                       }),
                     })
                   }

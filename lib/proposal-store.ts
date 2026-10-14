@@ -18,7 +18,7 @@ const INDEX = "proposals";
  * Standard lines that are add-ons now come out (see withCurrentWording).
  */
 const complete = (p: Proposal | null): Proposal | null =>
-  p && { ...p, content: withAllSections(withCurrentWording(normalizeContent(p.content)), p.inquiry) };
+  p && { ...p, content: withAllSections(withCurrentWording(normalizeContent(p.content), p.inquiry), p.inquiry) };
 
 /** An unguessable id: the client's link is the only way to their proposal. */
 export const newProposalId = () => randomBytes(12).toString("base64url");

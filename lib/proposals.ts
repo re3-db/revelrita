@@ -111,6 +111,37 @@ export const DEFAULT_ALCOHOL =
 /** The quote every proposal starts with: the whole experience, from booking to cleanup, in one review */
 const [standardQuote] = reviewsBy("Grace Kelly");
 
+/* Helen's "What's in the number" lines that changed (older proposals get them, see withCurrentWording) */
+const NUMBER_JUICE =
+  "Fresh juice, real citrus, thoughtfully designed drinks | The good stuff costs more than sour mix and a bag from the gas station, and you can taste the difference.";
+const NUMBER_CART = "The cart, setup and pack-out, everything you'd need for a bar |";
+const NUMBER_ALCOHOL = "The alcohol is separate, and you buy it at store prices |";
+
+/** In What's included for every package but beer and wine */
+export const MENU_INCLUDED = "Custom menu printed and framed";
+
+/** What every package includes (Helen's list), with the custom menu unless it's beer and wine */
+export function standardIncluded(withMenu = true) {
+  return [
+    "The bar cart, styled and ready to go",
+    "4 hours of bar service",
+    "Bartending for the full service window",
+    "All of your alcohol ordered and delivered to the event",
+    "Drinkware",
+    "Ice",
+    "Fresh citrus, herbs and garnishes",
+    "Mixers, juices and everything non-alcoholic for the cocktails",
+    "Setup and pack-out (we leave it cleaner than we found it)",
+    "Your shopping list, built and managed by me so you have the correct amount",
+    "Coordination with your planner or venue",
+    ...(withMenu ? [MENU_INCLUDED] : []),
+  ].join("\n");
+}
+
+/** Whether a What's included list has the custom menu (it said "Custom menu signage" for a day) */
+export const includesMenu = (included: string) =>
+  included.split("\n").some((l) => l.trim() === MENU_INCLUDED || l.trim() === CUSTOM_MENU);
+
 export function defaultContent(): ProposalContent {
   return {
     name: "",
@@ -123,19 +154,7 @@ export function defaultContent(): ProposalContent {
     serviceWindow: "",
     intro: "We can't wait to make your party memorable!",
     packageName: "",
-    included: [
-      "The bar cart, styled and ready to go",
-      "Two bartenders for the full service window",
-      "Drinkware",
-      "Ice",
-      "Fresh citrus, herbs and garnishes",
-      "Mixers, juices and everything non-alcoholic",
-      // Every package but beer and wine (contentFromInquiry takes it out for those)
-      CUSTOM_MENU,
-      "Setup and pack-out, we leave it cleaner than we found it",
-      "Your shopping list, built and managed by me",
-      "Coordination with your planner or venue",
-    ].join("\n"),
+    included: standardIncluded(),
     visionTitle: "It started with 600 cocktails.",
     visionBody:
       "Thanks for thinking of Revelrita for your party! The idea started at my own wedding, where I made all 600 drinks myself and learned that craft cocktails at scale are both doable and delicious, and they keep everyone out of a never ending line at the bar.\n\nSo now I do it for other people's parties. Craft cocktails, beer and wine, mocktails only, it doesn't matter. Every guest gets a drink that's delicious.",
@@ -162,11 +181,11 @@ export function defaultContent(): ProposalContent {
     holdsFor: "",
     peak: "",
     inTheNumber: [
-      "Fresh juice and real citrus | The good stuff costs more than sour mix, and you can taste the difference.",
+      NUMBER_JUICE,
       "A prep day before your event | Shopping, batching, ice pickup. Everything ready before we pull up.",
       "Bartenders who are actually good | Paid properly, which is why they're fun.",
-      "The cart, setup and pack-out |",
-      "The alcohol is separate, and you buy it at store prices | So the total usually lands under what a catered bar charges for the same night.",
+      NUMBER_CART,
+      NUMBER_ALCOHOL,
     ].join("\n"),
     pricingNote: "",
     alcohol: DEFAULT_ALCOHOL,
@@ -252,22 +271,56 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
 }
 
 /**
- * Standard lines that changed after some proposals were made: the sound system, pebble ice and
- * whiskey blocks became add-ons. Every proposal, sent ones too (Helen's call), gets the current
- * wording wherever the old line is still there word for word.
+ * Standard wording that changed after some proposals were made: Helen rewrote What's included and
+ * What's in the number, and the sound system, pebble ice and whiskey blocks became add-ons. Every proposal, sent ones
+ * too (Helen's call), gets the current wording: a What's included that's still one of the old
+ * standard lists becomes the new one, and elsewhere old lines are swapped where they're still
+ * there word for word. Anything Helen wrote herself stays.
  */
+const oldIncluded = (sound: boolean, menu: boolean) =>
+  [
+    "The bar cart, styled and ready to go",
+    "Two bartenders for the full service window",
+    "Drinkware",
+    "Ice",
+    "Fresh citrus, herbs and garnishes",
+    "Mixers, juices and everything non-alcoholic",
+    ...(menu ? [CUSTOM_MENU] : []),
+    ...(sound ? ["Commercial sound system"] : []),
+    "Setup and pack-out, we leave it cleaner than we found it",
+    "Your shopping list, built and managed by me",
+    "Coordination with your planner or venue",
+  ].join("\n");
+const oldIncludedLists = [true, false].flatMap((sound) => [true, false].map((menu) => oldIncluded(sound, menu)));
+
 const retired: Record<"included" | "inTheNumber", [old: string, now: string | null][]> = {
   included: [["Commercial sound system", null]],
   inTheNumber: [
     [
       "Fresh juice, real citrus, pebble and block ice | The good stuff costs more than sour mix and a bag from the gas station, and you can taste the difference.",
-      "Fresh juice and real citrus | The good stuff costs more than sour mix, and you can taste the difference.",
+      NUMBER_JUICE,
     ],
-    ["The cart, the sound system, setup and pack-out |", "The cart, setup and pack-out |"],
+    ["Fresh juice and real citrus | The good stuff costs more than sour mix, and you can taste the difference.", NUMBER_JUICE],
+    ["The cart, the sound system, setup and pack-out |", NUMBER_CART],
+    ["The cart, setup and pack-out |", NUMBER_CART],
+    [
+      "The alcohol is separate, and you buy it at store prices | So the total usually lands under what a catered bar charges for the same night.",
+      NUMBER_ALCOHOL,
+    ],
   ],
 };
 
-export function withCurrentWording(content: ProposalContent): ProposalContent {
+export function withCurrentWording(content: ProposalContent, inquiry?: Proposal["inquiry"]): ProposalContent {
+  const included = content.included
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join("\n");
+  if (oldIncludedLists.includes(included)) {
+    const drinks = inquiry?.answers.find(([q]) => q === "What are you thinking for drinks?")?.[1];
+    const withMenu = includesMenu(included) || drinks !== drinkLabels["beer-wine"];
+    content = { ...content, included: standardIncluded(withMenu) };
+  }
   const reword = (text: string, swaps: [string, string | null][]) =>
     text
       .split("\n")
@@ -377,12 +430,7 @@ export function contentFromInquiry(inquiry: InquiryDetails): ProposalContent {
   content.serviceWindow = hoursBetween(inquiry.start, inquiry.end);
   // Cocktail and mocktail packages come with a custom menu sign; beer and wine can add one
   const menuIncluded = inquiry.drinks !== "beer-wine";
-  if (!menuIncluded) {
-    content.included = content.included
-      .split("\n")
-      .filter((l) => l.trim() !== CUSTOM_MENU)
-      .join("\n");
-  }
+  if (!menuIncluded) content.included = standardIncluded(false);
   content.addOns = standardAddOns({ guests: guestCount(guests), menuIncluded });
   Object.assign(content, mockMenu({ drinks: inquiry.drinks, kind, vibe: inquiry.vibe, date: inquiry.dates[0] }));
   return content;
