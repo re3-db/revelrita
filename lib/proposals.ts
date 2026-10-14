@@ -251,6 +251,38 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
   return c;
 }
 
+/**
+ * Standard lines that changed after some drafts were made: the sound system, pebble ice and
+ * whiskey blocks became add-ons. A draft gets the current wording wherever the old line is
+ * still there word for word; sent proposals keep what the client was quoted.
+ */
+const retired: Record<"included" | "inTheNumber", [old: string, now: string | null][]> = {
+  included: [["Commercial sound system", null]],
+  inTheNumber: [
+    [
+      "Fresh juice, real citrus, pebble and block ice | The good stuff costs more than sour mix and a bag from the gas station, and you can taste the difference.",
+      "Fresh juice and real citrus | The good stuff costs more than sour mix, and you can taste the difference.",
+    ],
+    ["The cart, the sound system, setup and pack-out |", "The cart, setup and pack-out |"],
+  ],
+};
+
+export function withCurrentWording(content: ProposalContent): ProposalContent {
+  const reword = (text: string, swaps: [string, string | null][]) =>
+    text
+      .split("\n")
+      .flatMap((line) => {
+        const swap = swaps.find(([old]) => line.trim() === old);
+        return !swap ? [line] : swap[1] === null ? [] : [swap[1]];
+      })
+      .join("\n");
+  return {
+    ...content,
+    included: reword(content.included, retired.included),
+    inTheNumber: reword(content.inTheNumber, retired.inTheNumber),
+  };
+}
+
 /* ---------- untrusted input (server actions) ---------- */
 
 const text = (value: unknown, max = 5000) => (typeof value === "string" ? value.slice(0, max) : "");
