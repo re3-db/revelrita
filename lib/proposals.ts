@@ -165,10 +165,14 @@ export const STANDARD_TERMS = [
   "Responsible service | We serve guests 21 and over, may ask for ID, and can stop serving anyone who's had too much. That call is ours, for everyone's safety.",
   "Setup | We need a level spot and access about 90 minutes before service. Outdoors, plan shade or cover in case of sun or rain.",
   "Running long | Extra time is billed at the Extra hour price, and only with your OK on the night.",
-  "Tips | Gratuity isn't included. A tip jar only goes out if you say so.",
-  "Photos | We may share photos of the bar setup. Your guests only with their OK.",
   "Insurance | Revelrita carries $1,000,000 in general liability, and your venue can have a certificate at no cost.",
 ].join("\n");
+
+/* Standard terms Helen dropped (Oct 16, 2026): withCurrentWording takes them off proposals that still have them */
+const RETIRED_TERMS: [string, null][] = [
+  ["Tips | Gratuity isn't included. A tip jar only goes out if you say so.", null],
+  ["Photos | We may share photos of the bar setup. Your guests only with their OK.", null],
+];
 
 /* The standard terms as they first went out (Oct 16, 2026), swapped for the current ones by withCurrentWording */
 const FIRST_TERMS = [
@@ -455,7 +459,7 @@ export function withCurrentWording(content: ProposalContent, inquiry?: Proposal[
     inTheNumber: reword(content.inTheNumber, retired.inTheNumber),
     steps: reword(content.steps, [[STEP_SIGN, STEP_AGREEMENT]]),
     // A signed proposal keeps a copy of the terms it was signed under (signature.content), untouched
-    terms: terms === FIRST_TERMS ? STANDARD_TERMS : content.terms,
+    terms: terms === FIRST_TERMS ? STANDARD_TERMS : reword(content.terms, RETIRED_TERMS),
   };
 }
 
