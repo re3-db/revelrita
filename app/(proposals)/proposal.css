@@ -805,6 +805,8 @@
   .evstats dt{font-size:13px;color:var(--muted)}
   .evstats dd{margin:2px 0 0;font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--ink);font-variant-numeric:tabular-nums}
   .evowed{margin:18px 0 0;font-size:14px;font-weight:500;color:#B0390B}
+  .evbooked{margin:18px 0 0;font-size:14px;color:var(--body-ink)}
+  .evowed + .evbooked{margin-top:6px}
 
   .evgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin:0 0 18px}
   .evgrid .acard{margin:0}

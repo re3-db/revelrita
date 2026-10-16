@@ -208,6 +208,9 @@ bartenders table. The "Proposals / Events" tabs (`components/admin/AdminNav.tsx`
 - `components/events/EventLog.tsx` is the page (client), `lib/events.ts` the shared types and math,
   `lib/event-store.ts` the storage (`event:<id>` + an `events` sorted set, same Upstash database),
   `app/(proposals)/admin/events/actions.ts` the save / delete / import actions (each checks the login).
+- The money (headline, totals, "Waiting on", charts, bartenders) counts parties that have happened
+  (dated before today). Ones still coming up, like those booked by a signed proposal, are hollow dots
+  in the tally and a "Coming up: $X booked" line, and join the totals the day after the party.
 - Type colors (`kindColor` in `lib/events.ts`) were checked as a set for color-blind separation; keep
   them distinct if you change one. Text never takes a type's color; the type is always named next to it.
 - "Import events from a file" takes the old artifact's events as JSON (`{ "events": [...] }`, with the

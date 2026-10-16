@@ -62,34 +62,39 @@ export default function EventLog({
   const years = [...new Set(all.map(yearOf).filter(Boolean))].sort().reverse();
   const activeYear = year !== "all" && !years.includes(year) ? "all" : year;
   const shown = all.filter((e) => activeYear === "all" || yearOf(e) === activeYear);
-  const count = shown.length;
-  const rev = shown.reduce((s, e) => s + revenue(e), 0);
-  const mat = shown.reduce((s, e) => s + materials(e), 0);
-  const pay = shown.reduce((s, e) => s + staffPay(e), 0);
-  const guests = shown.reduce((s, e) => s + num(e.guests), 0);
-  const unpaid = shown.filter((e) => !e.paid && revenue(e) > 0);
-  const owed = unpaid.reduce((s, e) => s + revenue(e), 0);
   const upcoming = (e: LoggedEvent) => e.date >= today;
+  // The money counts parties that have happened; ones still coming up (booked) are counted apart
+  const past = shown.filter((e) => !upcoming(e));
+  const booked = shown.filter(upcoming);
+  const bookedRev = booked.reduce((s, e) => s + revenue(e), 0);
+  const count = past.length;
+  const rev = past.reduce((s, e) => s + revenue(e), 0);
+  const mat = past.reduce((s, e) => s + materials(e), 0);
+  const pay = past.reduce((s, e) => s + staffPay(e), 0);
+  const guests = past.reduce((s, e) => s + num(e.guests), 0);
+  const unpaid = past.filter((e) => !e.paid && revenue(e) > 0);
+  const owed = unpaid.reduce((s, e) => s + revenue(e), 0);
+  const pastYears = [...new Set(past.map(yearOf).filter(Boolean))].sort();
 
   const buckets: [string, number][] =
     activeYear === "all"
-      ? (years.length ? [...years].reverse() : [today.slice(0, 4)]).map((y) => [
+      ? (pastYears.length ? pastYears : [today.slice(0, 4)]).map((y) => [
           y,
-          all.filter((e) => yearOf(e) === y).reduce((s, e) => s + revenue(e), 0),
+          past.filter((e) => yearOf(e) === y).reduce((s, e) => s + revenue(e), 0),
         ])
-      : MONTHS.map((m, i) => [m, shown.filter((e) => Number(e.date.slice(5, 7)) === i + 1).reduce((s, e) => s + revenue(e), 0)]);
+      : MONTHS.map((m, i) => [m, past.filter((e) => Number(e.date.slice(5, 7)) === i + 1).reduce((s, e) => s + revenue(e), 0)]);
   const peak = Math.max(0, ...buckets.map((b) => b[1]));
 
   const byKind = eventKinds
     .map((k) => {
-      const es = shown.filter((e) => e.type === k.value);
+      const es = past.filter((e) => e.type === k.value);
       return { ...k, n: es.length, r: es.reduce((s, e) => s + revenue(e), 0) };
     })
     .filter((k) => k.n);
   const kindPeak = Math.max(1, ...byKind.map((k) => k.r));
 
   const staff = new Map<string, { name: string; n: number; p: number }>();
-  for (const e of shown) {
+  for (const e of past) {
     for (const b of e.bartenders) {
       const name = b.name.trim() || "Unnamed";
       const row = staff.get(name.toLowerCase()) ?? { name, n: 0, p: 0 };
@@ -173,6 +178,10 @@ export default function EventLog({
             <>
               {count} {count === 1 ? "event" : "events"}, <em>{dollars(rev)}</em> made.
             </>
+          ) : booked.length ? (
+            <>
+              {booked.length} coming up, <em>{dollars(bookedRev)}</em> booked.
+            </>
           ) : events.length ? (
             "No events here yet."
           ) : (
@@ -234,7 +243,7 @@ export default function EventLog({
 
       <section className="acard" aria-label="One dot per event">
         <div className="evtally">
-          {count ? (
+          {shown.length ? (
             shown.map((e) => (
               <button
                 key={e.id}
@@ -250,7 +259,7 @@ export default function EventLog({
             <p className="aempty">Each event you add drops a dot here. Tap Add event to start the tally.</p>
           )}
         </div>
-        {count > 0 && (
+        {shown.length > 0 && (
           <div className="evlegend">
             {usedKinds.map((k) => (
               <span key={k.value}>
@@ -289,6 +298,12 @@ export default function EventLog({
         {owed > 0 && (
           <p className="evowed">
             Waiting on {dollars(owed)} from {unpaid.length} {unpaid.length === 1 ? "event" : "events"}.
+          </p>
+        )}
+        {booked.length > 0 && (
+          <p className="evbooked">
+            Coming up: {dollars(bookedRev)} booked from {booked.length} {booked.length === 1 ? "event" : "events"}, not counted
+            above until the party.
           </p>
         )}
       </section>
