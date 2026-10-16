@@ -300,10 +300,17 @@ export default function EventLog({
             Waiting on {dollars(owed)} from {unpaid.length} {unpaid.length === 1 ? "event" : "events"}.
           </p>
         )}
-        {booked.length > 0 && (
+        {/* Always there (but in a past year's view), so it's clear where bookings go */}
+        {(booked.length > 0 || activeYear === "all" || activeYear >= today.slice(0, 4)) && (
           <p className="evbooked">
-            Coming up: {dollars(bookedRev)} booked from {booked.length} {booked.length === 1 ? "event" : "events"}, not counted
-            above until the party.
+            {booked.length ? (
+              <>
+                Coming up: {dollars(bookedRev)} booked from {booked.length} {booked.length === 1 ? "event" : "events"}, not
+                counted above until the party.
+              </>
+            ) : (
+              "Coming up: nothing booked yet. Signed proposals land here until the party."
+            )}
           </p>
         )}
       </section>
