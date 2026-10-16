@@ -12,6 +12,27 @@ export function formatDate(value: string) {
 
 export const isIsoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
 
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/**
+ * The first full date in text like "Saturday, May 22, 2027", "May 22nd 2027", "5/22/2027" or
+ * "2027-05-22", as YYYY-MM-DD, or "" when there isn't one with a year.
+ */
+export function isoDateIn(text: string) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const ok = (y: number, m: number, d: number) => {
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return date.getUTCMonth() === m - 1 && date.getUTCDate() === d ? `${y}-${pad(m)}-${pad(d)}` : "";
+  };
+  const iso = text.match(/\b(20\d\d)-(\d{1,2})-(\d{1,2})\b/);
+  if (iso) return ok(+iso[1], +iso[2], +iso[3]);
+  const named = text.toLowerCase().match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d\d)\b/);
+  if (named) return ok(+named[3], MONTHS.indexOf(named[1]) + 1, +named[2]);
+  const us = text.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d\d)\b/);
+  if (us) return ok(+us[3], +us[1], +us[2]);
+  return "";
+}
+
 /** HH:MM, what a time input sends (some browsers add seconds: HH:MM:SS or HH:MM:SS.sss) */
 export const isClockTime = (value: string) => /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?$/.test(value);
 

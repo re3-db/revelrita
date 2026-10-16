@@ -2,6 +2,8 @@
 
 import { headers } from "next/headers";
 import { isAdmin } from "@/lib/admin-auth";
+import { addEventOnce } from "@/lib/event-store";
+import { bookedEvent } from "@/lib/events";
 import { siteOrigin } from "@/lib/origin";
 import { proposalEmail } from "@/lib/proposal-email";
 import { getProposal, saveProposal } from "@/lib/proposal-store";
@@ -118,6 +120,16 @@ export async function signProposal(
     return { ok: false, message: "That didn't go through. Check your connection and try again." };
   }
 
+  const origin = await siteOrigin();
+  // Into Helen's event log, so her numbers stay current. Signing still counts if this fails.
+  let logged = false;
+  try {
+    const event = bookedEvent({ ...proposal, signature }, `${origin}/admin/${proposal.id}`);
+    if (event) logged = await addEventOnce(event);
+  } catch (error) {
+    console.error(error);
+  }
+
   const c = proposal.content;
   const when = signedOn(signature.at);
   const service = pricedRows(c.pricing);
@@ -132,7 +144,6 @@ export async function signProposal(
   ]
     .filter(Boolean)
     .join("\n");
-  const origin = await siteOrigin();
   const link = `${origin}/proposal/${proposal.id}`;
 
   await sendEmail({
@@ -141,7 +152,16 @@ export async function signProposal(
     ...(isEmail(proposal.clientEmail) ? { reply_to: proposal.clientEmail } : {}),
     subject: `${name} signed${c.date.trim() ? ` for ${c.date.trim()}` : ""}`,
     ...proposalEmail({
-      message: [`${name} signed the proposal on ${when}.`, summary, "Time to send the deposit invoice!"].filter(Boolean).join("\n\n"),
+      message: [
+        `${name} signed the proposal on ${when}.`,
+        summary,
+        logged
+          ? "It's in your event log too, with the service total as the fee."
+          : "It isn't in your event log: add it there by hand (the proposal's date needs a year to go in on its own).",
+        "Time to send the deposit invoice!",
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
       link: `${origin}/admin/${proposal.id}`,
       cta: "Open the proposal",
       note: "Signed! Hit reply to write to them.",

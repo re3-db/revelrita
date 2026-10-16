@@ -93,7 +93,8 @@ export default async function AdminPage() {
     }
   }
   const drafts = proposals.filter((p) => p.status === "draft");
-  const sent = proposals.filter((p) => p.status === "sent");
+  const sent = proposals.filter((p) => p.status === "sent" && !p.signature);
+  const booked = proposals.filter((p) => p.signature);
   // Newest first, so the first one from the form is the latest inquiry
   const latestInquiry = proposals.find((p) => p.inquiry)?.createdAt;
 
@@ -119,6 +120,10 @@ export default async function AdminPage() {
             <div>
               <dt>Sent</dt>
               <dd>{sent.length}</dd>
+            </div>
+            <div>
+              <dt>Booked</dt>
+              <dd>{booked.length}</dd>
             </div>
             <div>
               <dt>Latest inquiry</dt>
@@ -157,9 +162,15 @@ export default async function AdminPage() {
       />
       <Section
         title="Sent"
-        note="Edits to these show up on the client's page."
-        empty="Nothing sent yet."
+        note="Waiting on them. Edits to these show up on the client's page."
+        empty="Nothing out waiting right now."
         proposals={sent}
+      />
+      <Section
+        title="Booked"
+        note="Signed. Each one is in your event log too."
+        empty="No signed proposals yet."
+        proposals={booked}
       />
     </main>
   );

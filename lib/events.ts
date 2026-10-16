@@ -1,3 +1,7 @@
+import { guestCount } from "@/lib/addons";
+import { isoDateIn } from "@/lib/dates";
+import { pricedRows, type Proposal } from "@/lib/proposals";
+
 /**
  * Helen's event log: a port of her "Revelrita event log" Claude artifact. Every party she
  * works, with what she charged, what she spent and who she hired. Same fields as the
@@ -126,5 +130,61 @@ export function normalizeEvent(input: unknown, id: string): LoggedEvent | null {
     paid: raw.paid === true,
     notes: text(raw.notes, 5000),
     createdAt: Number.isNaN(Date.parse(createdAt)) ? new Date().toISOString() : createdAt,
+  };
+}
+
+/* ---------- booked from a signed proposal ---------- */
+
+/** A signed proposal's event in the log: one per proposal, so signing can never add it twice */
+export const bookedEventId = (proposalId: string) => `p-${proposalId}`;
+
+/**
+ * The event a signed proposal books, from what they signed: their name (and the occasion, when it
+ * says more than the type), the date, the type, venue, guests, and as the fee the service total
+ * plus the add-ons they picked that have a plain price. Tips, supplies and bartenders are Helen's to
+ * add after the party. Null when the proposal's date has no full date in it.
+ */
+export function bookedEvent(p: Proposal, adminLink: string): LoggedEvent | null {
+  const sig = p.signature;
+  if (!sig) return null;
+  const c = sig.content;
+  const date = isoDateIn(c.date);
+  if (!date) return null;
+  const type = eventKinds.find((k) => k.value === c.eventType)?.value ?? "other";
+  const who = c.name.trim() || sig.name;
+  const occasion = c.occasion.trim();
+  const service = pricedRows(c.pricing);
+  const addOns = pricedRows(c.addOns, "").rows.filter((r) => sig.picks.includes(r.label));
+  const counted = [...service.counted, ...addOns.filter((r) => r.num !== null)];
+  const unpriced = addOns.filter((r) => r.num === null);
+  const signedOn = new Date(sig.at).toLocaleDateString("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  return {
+    id: bookedEventId(p.id),
+    name: occasion && occasion.toLowerCase() !== kindLabel(type).toLowerCase() ? `${who}, ${occasion}` : who,
+    date,
+    type,
+    venue: c.venue.trim(),
+    guests: guestCount(c.guests),
+    fee: counted.length ? counted.reduce((sum, r) => sum + (r.num ?? 0), 0) : null,
+    tips: null,
+    purchases: [],
+    bartenders: [],
+    paid: false,
+    notes: [
+      `Booked: ${sig.name} signed the proposal on ${signedOn}.`,
+      c.time.trim() && `Time: ${c.time.trim()}`,
+      c.packageName.trim() && `Package: ${c.packageName.trim()}`,
+      addOns.length && `Add-ons: ${addOns.map((r) => (r.display ? `${r.label} (${r.display})` : r.label)).join(", ")}`,
+      unpriced.length && `Not in the fee yet: ${unpriced.map((r) => r.label).join(", ")}`,
+      `Proposal: ${adminLink}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    createdAt: new Date(sig.at).toISOString(),
   };
 }

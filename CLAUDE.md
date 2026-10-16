@@ -161,7 +161,11 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   works on a sent proposal with terms, once. It saves `signature` (outside `content`, like `picks`):
   name, time, IP, browser, and a copy of the content and picks as they stood, because edits after
   sending show live. A signed page shows the terms they signed. Helen gets an email from
-  `INQUIRY_NOTIFY_FROM`, the client a copy from `INQUIRY_FROM`; the builder and `/admin` show "Signed".
+  `INQUIRY_NOTIFY_FROM`, the client a copy from `INQUIRY_FROM`; the builder shows "Signed", and
+  `/admin` lists it under Booked (Drafts, Sent, Booked). Signing also adds the party to the event log
+  (`bookedEvent` in `lib/events.ts`, id `p-<proposal id>`, added only if it isn't there yet): the
+  date from the proposal's Date (`isoDateIn`, needs a year), type, venue, guests, and as the fee the
+  service total plus the priced add-ons they picked. Helen adds tips, supplies and bartenders after.
   New proposals get Helen's `STANDARD_TERMS` (`lib/proposals.ts`); older ones have none (the slide is
   skipped) until she clicks "Use my standard terms", which also points the first next step at signing.
 - In the Preview (and Helen's view of a draft's `/proposal/<id>`), the "Back to editor" bar

@@ -36,3 +36,11 @@ export async function deleteEvent(id: string) {
     ["ZREM", INDEX, id],
   ]);
 }
+
+/** Adds an event unless one with its id is already there (Helen may have edited it). True if added. */
+export async function addEventOnce(event: LoggedEvent) {
+  const [added] = await pipeline([["SET", key(event.id), JSON.stringify(event), "NX"]]);
+  if (added !== "OK") return false;
+  await pipeline([["ZADD", INDEX, Date.parse(event.createdAt) || Date.now(), event.id]]);
+  return true;
+}
