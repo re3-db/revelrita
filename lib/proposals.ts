@@ -144,6 +144,22 @@ const STEP_SIGN = "Sign the agreement below, and I'll send the deposit invoice";
 
 /** What every proposal asks the client to agree to when they sign ("title | sentence" per line) */
 export const STANDARD_TERMS = [
+  "Your date | Signing and paying the deposit holds your date. The deposit isn't refundable, because it turns other parties away.",
+  "Final details | Your final guest count, menu and add-ons are due 14 days before the event, along with the balance.",
+  "Moving your date | Your deposit moves once to a new date within 12 months, as long as that date is open.",
+  "If you cancel | More than 30 days out, you only lose the deposit. Within 30 days, the full service fee is owed, since the date can't be rebooked.",
+  "If we can't make it | If an emergency keeps Revelrita from your event, you get back everything you've paid, and I'll help find a replacement.",
+  "The alcohol | You buy it, in your name, from the shopping list I build. Anything unopened goes home with you.",
+  "Responsible service | We serve guests 21 and over, may ask for ID, and can stop serving anyone who's had too much. That call is ours, for everyone's safety.",
+  "Setup | We need a level spot and access about 90 minutes before service. Outdoors, plan shade or cover in case of sun or rain.",
+  "Running long | Extra time is billed at the Extra hour price, and only with your OK on the night.",
+  "Tips | Gratuity isn't included. A tip jar only goes out if you say so.",
+  "Photos | We may share photos of the bar setup. Your guests only with their OK.",
+  "Insurance | Revelrita carries $1,000,000 in general liability, and your venue can have a certificate at no cost.",
+].join("\n");
+
+/* The standard terms as they first went out (Oct 16, 2026), swapped for the current ones by withCurrentWording */
+const FIRST_TERMS = [
   "Your date | Signing and paying the deposit holds your date. Until both are in, it's still open to other parties.",
   "Paying | The deposit is due when you sign. The balance, with any add-ons, is due before the event, and I'll invoice you for both.",
   "If you cancel | The deposit holds your date and turns other parties away, so it isn't refundable.",
@@ -328,7 +344,8 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
 
 /**
  * Standard wording that changed after some proposals were made: Helen rewrote What's included and
- * What's in the number, and the sound system, pebble ice and whiskey blocks became add-ons. Every proposal, sent ones
+ * What's in the number, the sound system, pebble ice and whiskey blocks became add-ons, and the
+ * agreement's first standard terms were replaced. Every proposal, sent ones
  * too (Helen's call), gets the current wording: a What's included that's still one of the old
  * standard lists becomes the new one, and elsewhere old lines are swapped where they're still
  * there word for word. Anything Helen wrote herself stays.
@@ -388,10 +405,17 @@ export function withCurrentWording(content: ProposalContent, inquiry?: Proposal[
         return !swap ? [line] : swap[1] === null ? [] : [swap[1]];
       })
       .join("\n");
+  const terms = content.terms
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join("\n");
   return {
     ...content,
     included: reword(content.included, retired.included),
     inTheNumber: reword(content.inTheNumber, retired.inTheNumber),
+    // A signed proposal keeps a copy of the terms it was signed under (signature.content), untouched
+    terms: terms === FIRST_TERMS ? STANDARD_TERMS : content.terms,
   };
 }
 
