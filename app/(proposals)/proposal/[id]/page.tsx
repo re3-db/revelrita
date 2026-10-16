@@ -63,8 +63,6 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
     />
   ) : undefined;
 
-  // What they signed, without the IP and browser kept with it
-  const signed = proposal.signature;
   return (
     <ProposalView
       content={proposal.content}
@@ -72,7 +70,11 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
       preload
       picks={proposal.picks?.labels}
       proposalId={proposal.id}
-      signed={signed && { name: signed.name, at: signed.at, content: signed.content, picks: signed.picks }}
+      booking={{
+        requested: Boolean(proposal.bookingRequest),
+        agreementReady: Boolean(proposal.agreementSentAt),
+        signed: Boolean(proposal.signature),
+      }}
     />
   );
 }

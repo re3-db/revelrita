@@ -3,12 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { markSent, removeProposal, saveDraft, sendProposal, type SaveResult } from "@/app/(proposals)/admin/actions";
+import {
+  markSent,
+  removeProposal,
+  saveDraft,
+  sendAgreement,
+  sendProposal,
+  type SaveResult,
+} from "@/app/(proposals)/admin/actions";
 import ProposalView, { photos } from "@/components/proposal/ProposalView";
 import PreviewBar from "@/components/proposal/PreviewBar";
 import ShareLinkButton from "@/components/proposal/ShareLinkButton";
 import { standardAddOns } from "@/lib/addons";
 import {
+  bookingTotals,
   DEFAULT_ALCOHOL,
   defaultMessage,
   defaultSubject,
@@ -60,6 +68,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
     updatedAt: proposal.updatedAt,
     sentAt: proposal.sentAt,
     sentTo: proposal.sentTo,
+    agreementSentAt: proposal.agreementSentAt,
   });
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [preview, setPreview] = useState(false);
@@ -157,6 +166,20 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
   const picks = proposal.picks;
   const picked = new Set(picks?.labels ?? []);
   const signature = proposal.signature;
+  const amendments = proposal.amendments ?? [];
+  const agreementLink = `${link}/agreement`;
+
+  /** Saves and opens the agreement for the client: emailed to them, or for her to share */
+  async function releaseAgreement(email: boolean) {
+    // Copy first, while it's still part of the click (Safari won't copy after a wait)
+    const copied = email ? null : navigator.clipboard.writeText(agreementLink).catch(() => undefined);
+    const result = await run(
+      () => sendAgreement(proposal.id, { content, clientEmail, email }),
+      "That didn't send. Check your connection and try again.",
+    );
+    if (copied) await copied;
+    say(result.ok && !email ? "Agreement link copied" : result.message);
+  }
 
   /* ---------- buttons ---------- */
 
@@ -191,7 +214,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
       <ProposalView
         content={content}
         picks={picks?.labels}
-        signed={signature && { name: signature.name, at: signature.at, content: signature.content, picks: signature.picks }}
+        booking={{ requested: Boolean(proposal.bookingRequest), agreementReady: Boolean(meta.agreementSentAt), signed: Boolean(signature) }}
         topbar={
           <PreviewBar
             tag="Preview"
@@ -227,8 +250,8 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
             <Link href="/admin" className="alink">
               &larr; All proposals
             </Link>
-            <span className={`apill ${signature ? "signed" : sent ? "sent" : "draft"}`}>
-              {signature ? "Signed" : sent ? "Sent" : "Draft"}
+            <span className={`apill ${signature ? "signed" : meta.agreementSentAt ? "agreement" : proposal.bookingRequest ? "new" : sent ? "sent" : "draft"}`}>
+              {signature ? "Signed" : meta.agreementSentAt ? "Agreement sent" : proposal.bookingRequest ? "Wants to book" : sent ? "Sent" : "Draft"}
             </span>
           </div>
           <h1 className="ahero-title">
@@ -244,7 +267,9 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           </h1>
           <p className="ahero-sub">
             {signature
-              ? `Signed by ${signature.name} on ${day(signature.at)} at ${clock(signature.at)}. Changes you make here still show up on their page, but the agreement shows what they signed.`
+              ? `Signed by ${signature.name} on ${day(signature.at)} at ${clock(signature.at)}. Changes you make here show on their proposal, but their agreement keeps what they signed.`
+              : proposal.bookingRequest && !meta.agreementSentAt
+              ? `${who || "They"} tapped We want to book on ${day(proposal.bookingRequest.at)}. Finalize the details, then send the agreement (at the bottom).`
               : sent
               ? `${meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}${meta.sentAt ? ` on ${day(meta.sentAt)} at ${clock(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.`
               : `${proposal.inquiry ? `Made from the inquiry ${proposal.inquiry.answers[0]?.[1] || "someone"} sent on ${day(proposal.inquiry.receivedAt)}. ` : ""}It saves as you type, and nothing goes to the client until you hit Send.`}
@@ -626,20 +651,43 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
 
         <Card
           title="The agreement"
-          note="Its own slide after What's next: what they're booking, these terms, and a place to sign. Leave empty to skip it."
+          note="What they sign once they want to book, on its own page: the event, what's included, the add-ons (they can tick more), the numbers, the alcohol, these terms and your standard fine print."
         >
-          {signature && (
-            <p className="esigned">
-              {signature.name} signed on {day(signature.at)} at {clock(signature.at)}. Their page keeps the terms
-              they signed, so changes here won&apos;t show on it.
+          {signature ? (
+            <div className="esigned">
+              <p>
+                {signature.name} signed on {day(signature.at)} at {clock(signature.at)}
+                {(() => {
+                  const t = bookingTotals(signature.content, signature.picks);
+                  return t.counted ? `, for ${money(t.total)}${t.unpriced.length ? " plus add-ons priced per item" : ""}` : "";
+                })()}
+                . Their agreement keeps what they signed, so changes here won&apos;t show on it.
+              </p>
+              {amendments.length > 0 && (
+                <ul>
+                  {amendments.map((a, i) => (
+                    <li key={i}>
+                      {day(a.at)}: {[a.add.length ? `added ${a.add.join(", ")}` : "", a.note ? `“${a.note}”` : ""].filter(Boolean).join(". ")}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : meta.agreementSentAt ? (
+            <p className="esigned esent">
+              Sent on {day(meta.agreementSentAt)}, waiting on their signature. Changes here show on it until they sign.
             </p>
-          )}
+          ) : proposal.bookingRequest ? (
+            <p className="epicks">
+              {who || "They"} tapped We want to book on {day(proposal.bookingRequest.at)}. Finalize the details, then send it.
+            </p>
+          ) : null}
           <Field
-            label="The terms, one per line: a short title, then | and one sentence"
+            label="Key terms, one per line: a short title, then | and one sentence"
             htmlFor="f_terms"
             hint={
               <>
-                Their deposit line from Pricing shows above the terms.{" "}
+                The fine print under them is the same for everyone.{" "}
                 <button
                   type="button"
                   className="elink"
@@ -655,6 +703,36 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           >
             <textarea {...bind("terms")} rows={8} />
           </Field>
+          <div className="eagree">
+            <a className="ebtn ghost" href={agreementLink} target="_blank" rel="noreferrer">
+              {meta.agreementSentAt || signature ? "Open their agreement" : "Preview the agreement"} &#8599;
+            </a>
+            {!signature && (
+              <>
+                <button
+                  type="button"
+                  className="ebtn primary"
+                  onClick={() => releaseAgreement(true)}
+                  disabled={saveState === "saving" || !content.terms.trim()}
+                >
+                  {meta.agreementSentAt ? "Send the agreement again" : "Send the agreement"}
+                </button>
+                <button
+                  type="button"
+                  className="elink"
+                  onClick={() => releaseAgreement(false)}
+                  disabled={saveState === "saving" || !content.terms.trim()}
+                >
+                  Copy the link instead
+                </button>
+              </>
+            )}
+          </div>
+          {!signature && (
+            <p className="ehint">
+              {clientEmail.trim() ? `It's emailed to ${clientEmail.trim()} with a button to review and sign.` : "Add their email at the top to send it, or copy the link."}
+            </p>
+          )}
         </Card>
 
         <p className="edelete">

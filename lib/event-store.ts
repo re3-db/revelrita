@@ -1,7 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 import type { LoggedEvent } from "@/lib/events";
-import { listJson, pipeline } from "@/lib/redis";
+import { listJson, parseJson, pipeline } from "@/lib/redis";
 
 /**
  * Where the event log lives (see lib/redis.ts). Each event is one JSON value at
@@ -43,4 +43,10 @@ export async function addEventOnce(event: LoggedEvent) {
   if (added !== "OK") return false;
   await pipeline([["ZADD", INDEX, Date.parse(event.createdAt) || Date.now(), event.id]]);
   return true;
+}
+
+export async function getEvent(id: string): Promise<LoggedEvent | null> {
+  if (!validEventId(id)) return null;
+  const [raw] = await pipeline([["GET", key(id)]]);
+  return parseJson<LoggedEvent>(raw);
 }

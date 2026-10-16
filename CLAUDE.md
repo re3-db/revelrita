@@ -153,21 +153,32 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   so the builder's saves keep them) and emailed to Helen from `INQUIRY_NOTIFY_FROM`; the builder shows
   them. Proposals saved before add-ons existed get none (`normalizeContent`), so a sent one doesn't
   change in front of its client; the builder offers "Use my standard add-ons".
-- **The agreement.** Clients sign on their proposal page: a "Make it official" slide after What's
-  next (`components/proposal/AgreementSlide.tsx`, the `.agree*` rules) shows what they're booking
-  (event, package, service total, the add-ons they sent, the deposit line), the proposal's `terms`
-  ("title | sentence" per line, the builder's "The agreement" card), and a box to type their name and
-  tick "I agree". **Sign and book** (`signProposal` in `app/(proposals)/proposal/actions.ts`) only
-  works on a sent proposal with terms, once. It saves `signature` (outside `content`, like `picks`):
-  name, time, IP, browser, and a copy of the content and picks as they stood, because edits after
-  sending show live. A signed page shows the terms they signed. Helen gets an email from
-  `INQUIRY_NOTIFY_FROM`, the client a copy from `INQUIRY_FROM`; the builder shows "Signed", and
-  `/admin` lists it under Booked (Drafts, Sent, Booked). Signing also adds the party to the event log
-  (`bookedEvent` in `lib/events.ts`, id `p-<proposal id>`, added only if it isn't there yet): the
-  date from the proposal's Date (`isoDateIn`, needs a year), type, venue, guests, and as the fee the
-  service total plus the priced add-ons they picked. Helen adds tips, supplies and bartenders after.
-  New proposals get Helen's `STANDARD_TERMS` (`lib/proposals.ts`); older ones have none (the slide is
-  skipped) until she clicks "Use my standard terms", which also points the first next step at signing.
+- **Proposal, then agreement.** The proposal sells; the agreement (the contract) comes once they say
+  yes. The proposal has no terms: its What's next slide ends with **We want to book!**
+  (`components/proposal/BookingCta.tsx`, `requestBooking`), which saves `bookingRequest` and emails
+  Helen. She finalizes the details and hits **Send the agreement** in the builder's Agreement card
+  (`sendAgreement` in `app/(proposals)/admin/actions.ts`, or "Copy the link instead"): that sets
+  `agreementSentAt`, emails the client a link to `/proposal/<id>/agreement`, and their proposal gets a
+  ribbon and button to it. Before that, the agreement page 404s for everyone but Helen (preview bar).
+- **The agreement page** (`components/proposal/AgreementView.tsx`, the `.agr*` / `.agree*` rules: the
+  admin's hero and cream cards, set like a document): the event, what's included, the add-ons (they
+  tick more, the total follows), the numbers, the alcohol, the proposal's `terms` ("Key terms",
+  "title | sentence" per line, `STANDARD_TERMS` by default, "Use my standard terms" in the builder),
+  then `FINE_PRINT` (`lib/proposals.ts`, the same for everyone, with the legal clauses), and the
+  signatures. **Sign and book** (`signProposal` in `app/(proposals)/proposal/actions.ts`) only works on
+  a sent agreement, once. It saves `signature` (outside `content`, like `picks`): name, time, IP,
+  browser, and a copy of the content, the add-ons they signed for and the fine print, because edits
+  after sending show live. The signed page shows that copy. Helen gets an email from
+  `INQUIRY_NOTIFY_FROM`, the client a copy from `INQUIRY_FROM`.
+- **Changes after signing.** On the signed agreement, clients can add any offered add-on they don't
+  have yet, and/or write a note (`amendBooking`). Each is kept, dated, in `amendments`, shown on the
+  agreement and in the builder; Helen and the client get emails; priced add-ons join the event's fee
+  in the event log (`amendedEvent`). Removing something isn't self-serve: they write a note.
+- `/admin` lists Drafts, Sent (pill "Wants to book" once they tap it), Agreements out, Booked.
+  Signing adds the party to the event log (`bookedEvent` in `lib/events.ts`, id `p-<proposal id>`,
+  added only if it isn't there yet): the date from the proposal's Date (`isoDateIn`, needs a year),
+  type, venue, guests, and as the fee the service total plus the priced add-ons they signed for.
+  Helen adds tips, supplies and bartenders after.
 - In the Preview (and Helen's view of a draft's `/proposal/<id>`), the "Back to editor" bar
   (`components/proposal/PreviewBar.tsx`, the `.pbar` rules) is sticky, and those views don't snap,
   because the slides' scroll-snap would otherwise scroll it out of reach. It's styled like the

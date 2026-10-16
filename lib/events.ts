@@ -1,6 +1,6 @@
 import { guestCount } from "@/lib/addons";
 import { isoDateIn } from "@/lib/dates";
-import { pricedRows, type Proposal } from "@/lib/proposals";
+import { bookingTotals, type Amendment, type ProposalContent, type Proposal } from "@/lib/proposals";
 
 /**
  * Helen's event log: a port of her "Revelrita event log" Claude artifact. Every party she
@@ -153,10 +153,7 @@ export function bookedEvent(p: Proposal, adminLink: string): LoggedEvent | null 
   const type = eventKinds.find((k) => k.value === c.eventType)?.value ?? "other";
   const who = c.name.trim() || sig.name;
   const occasion = c.occasion.trim();
-  const service = pricedRows(c.pricing);
-  const addOns = pricedRows(c.addOns, "").rows.filter((r) => sig.picks.includes(r.label));
-  const counted = [...service.counted, ...addOns.filter((r) => r.num !== null)];
-  const unpriced = addOns.filter((r) => r.num === null);
+  const { addOns, total, counted, unpriced } = bookingTotals(c, sig.picks);
   const signedOn = new Date(sig.at).toLocaleDateString("en-US", {
     timeZone: "America/Los_Angeles",
     month: "short",
@@ -170,13 +167,13 @@ export function bookedEvent(p: Proposal, adminLink: string): LoggedEvent | null 
     type,
     venue: c.venue.trim(),
     guests: guestCount(c.guests),
-    fee: counted.length ? counted.reduce((sum, r) => sum + (r.num ?? 0), 0) : null,
+    fee: counted ? total : null,
     tips: null,
     purchases: [],
     bartenders: [],
     paid: false,
     notes: [
-      `Booked: ${sig.name} signed the proposal on ${signedOn}.`,
+      `Booked: ${sig.name} signed the agreement on ${signedOn}.`,
       c.time.trim() && `Time: ${c.time.trim()}`,
       c.packageName.trim() && `Package: ${c.packageName.trim()}`,
       addOns.length && `Add-ons: ${addOns.map((r) => (r.display ? `${r.label} (${r.display})` : r.label)).join(", ")}`,
@@ -186,5 +183,26 @@ export function bookedEvent(p: Proposal, adminLink: string): LoggedEvent | null 
       .filter(Boolean)
       .join("\n"),
     createdAt: new Date(sig.at).toISOString(),
+  };
+}
+
+/**
+ * A booked event after the client adds to it from their agreement: add-ons with a plain price join
+ * the fee, and a dated line in the notes says what changed (rates and notes are there to invoice).
+ */
+export function amendedEvent(event: LoggedEvent, amendment: Amendment, content: ProposalContent): LoggedEvent {
+  const { addOns } = bookingTotals(content, amendment.add);
+  const priced = addOns.filter((r) => r.num !== null);
+  const on = new Date(amendment.at).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: "short", day: "numeric" });
+  const line = [
+    addOns.length && `Added ${addOns.map((r) => (r.display ? `${r.label} (${r.display})` : r.label)).join(", ")}`,
+    amendment.note && `Asked: ${amendment.note}`,
+  ]
+    .filter(Boolean)
+    .join(". ");
+  return {
+    ...event,
+    fee: priced.length ? num(event.fee) + priced.reduce((sum, r) => sum + (r.num ?? 0), 0) : event.fee,
+    notes: [event.notes, `${on}: ${line}`].filter(Boolean).join("\n"),
   };
 }

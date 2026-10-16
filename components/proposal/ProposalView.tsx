@@ -1,7 +1,7 @@
 import Image, { type StaticImageData } from "next/image";
 import { Fragment, type ReactNode } from "react";
 import AddOnsSlide from "@/components/proposal/AddOnsSlide";
-import AgreementSlide from "@/components/proposal/AgreementSlide";
+import BookingCta from "@/components/proposal/BookingCta";
 import {
   logoCream,
   proposalBar,
@@ -14,7 +14,7 @@ import {
   proposalHelen,
   proposalToast,
 } from "@/lib/images";
-import { money, pricedRows, type PhotoKey, type ProposalContent, type Signature } from "@/lib/proposals";
+import { money, pricedRows, type PhotoKey, type ProposalContent } from "@/lib/proposals";
 
 /**
  * A client's proposal: a port of render() from Helen's proposal builder artifact. Same
@@ -83,7 +83,7 @@ export default function ProposalView({
   preload = false,
   picks,
   proposalId,
-  signed,
+  booking = { requested: false, agreementReady: false, signed: false },
 }: {
   content: ProposalContent;
   /** The admin's "This is what your client sees" bar */
@@ -92,10 +92,10 @@ export default function ProposalView({
   preload?: boolean;
   /** The add-ons the client already sent, ticked on "Make it yours" */
   picks?: string[];
-  /** The client's page passes it so "Send my picks" and "Sign and book" can save; the builder's Preview doesn't */
+  /** The client's page passes it so "Send my picks" and "We want to book!" can save; the builder's Preview doesn't */
   proposalId?: string;
-  /** Who signed "The agreement", when, and what: the slide then shows the terms they signed */
-  signed?: Pick<Signature, "name" | "at" | "content" | "picks">;
+  /** Where they are with booking: asked to book, have the agreement to sign, or signed it */
+  booking?: { requested: boolean; agreementReady: boolean; signed: boolean };
 }) {
   const type = d.eventType || "wedding";
   const greetWord = type === "corporate" || type === "popup" ? "Hi" : "Hey";
@@ -193,7 +193,6 @@ export default function ProposalView({
     })
     .filter((x) => x.q);
   const steps = lines(d.steps);
-  const agreement = pairs(signed ? signed.content.terms : d.terms);
 
   const visionPhoto = shows("toast") ? "toast" : shows("bartender") ? "bartender" : null;
   const featurePhoto = shows("bar") ? "bar" : shows("bartender") ? "bartender" : null;
@@ -201,6 +200,11 @@ export default function ProposalView({
   return (
     <div id="proposal" data-event={type}>
       {topbar}
+      {proposalId && (booking.agreementReady || booking.signed) && (
+        <a className="pready noprint" href={`/proposal/${proposalId}/agreement`}>
+          {booking.signed ? "You're booked! See your signed agreement" : "Your agreement is ready to sign"} &rarr;
+        </a>
+      )}
       <div id="proposalBody">
         {/* ---------- 1. hero ---------- */}
         <section className="slide hero-slide">
@@ -418,6 +422,8 @@ export default function ProposalView({
                     ))}
                   </ol>
                 )}
+                {/* A site addition: how they say yes, then the way to their agreement */}
+                <BookingCta proposalId={proposalId} {...booking} />
                 {(d.email.trim() || d.phone.trim()) && (
                   <div className="cta-row">
                     {d.email.trim() && <span className="btn">{d.email.trim()}</span>}
@@ -432,17 +438,6 @@ export default function ProposalView({
               ) : null}
             </div>
           </section>
-        )}
-
-        {/* ---------- 7b. the agreement, to sign (a site addition: the artifact has no such slide) ---------- */}
-        {(agreement.length > 0 || signed) && (
-          <AgreementSlide
-            content={signed?.content ?? d}
-            terms={agreement}
-            picks={signed?.picks ?? picks ?? []}
-            proposalId={proposalId}
-            signed={signed && { name: signed.name, at: signed.at }}
-          />
         )}
 
         {/* ---------- 4b. what a client said ---------- */}

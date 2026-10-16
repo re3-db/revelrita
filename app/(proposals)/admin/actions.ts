@@ -12,7 +12,7 @@ import { sendEmail } from "@/lib/resend";
 export type SaveResult = {
   ok: boolean;
   message: string;
-  proposal?: Pick<Proposal, "status" | "updatedAt" | "sentAt" | "sentTo">;
+  proposal?: Pick<Proposal, "status" | "updatedAt" | "sentAt" | "sentTo" | "agreementSentAt">;
 };
 
 // For the builder's saves: an answer instead of a redirect, so a lapsed login can't
@@ -76,8 +76,8 @@ async function store(proposal: Proposal, content: unknown, clientEmail: unknown,
     console.error(error);
     return { ok: false, message: "Couldn't save. Check your connection and try again." };
   }
-  const { status, updatedAt, sentAt, sentTo } = updated;
-  return { ok: true, message: "Saved", proposal: { status, updatedAt, sentAt, sentTo } };
+  const { status, updatedAt, sentAt, sentTo, agreementSentAt } = updated;
+  return { ok: true, message: "Saved", proposal: { status, updatedAt, sentAt, sentTo, agreementSentAt } };
 }
 
 /** Saves, then emails the client a link to their proposal and marks it sent. */
@@ -138,6 +138,55 @@ export async function shareProposal(id: string): Promise<SaveResult> {
   if (!proposal) return { ok: false, message: "This proposal was deleted." };
   if (proposal.status === "sent") return { ok: true, message: "" };
   return store(proposal, proposal.content, proposal.clientEmail, { status: "sent", sentAt: Date.now(), sentTo: "" });
+}
+
+/**
+ * "Send the agreement": saves, then opens the agreement page for the client (the proposal goes
+ * live too, if it wasn't) and, unless Helen will share the link herself, emails it to them with
+ * her copy. Needs terms, since the agreement is signed under them.
+ */
+export async function sendAgreement(
+  id: string,
+  input: { content: unknown; clientEmail: unknown; email: boolean },
+): Promise<SaveResult> {
+  if (!(await isAdmin())) return loggedOut;
+  const proposal = await getProposal(String(id));
+  if (!proposal) return { ok: false, message: "This proposal was deleted." };
+  if (proposal.signature) return { ok: false, message: "They've already signed it." };
+  const content = normalizeContent(input.content);
+  if (!content.terms.trim()) return { ok: false, message: "Add the terms first (Use my standard terms)." };
+  const to = String(input.clientEmail ?? "").trim();
+  if (input.email && !isEmail(to)) return { ok: false, message: "Add their email address first." };
+
+  const now = Date.now();
+  const live: Partial<Proposal> = proposal.status === "sent" ? {} : { status: "sent", sentAt: now, sentTo: input.email ? to : "" };
+  const saved = await store(proposal, content, to, { ...live, agreementSentAt: now });
+  if (!saved.ok || !input.email) return saved.ok ? { ...saved, message: "The agreement is live. Copy the link below." } : saved;
+
+  const link = `${await siteOrigin()}/proposal/${proposal.id}/agreement`;
+  const name = content.name.trim() || "there";
+  const subject = `Your Revelrita agreement${content.date.trim() ? ` for ${content.date.trim()}` : ""}`;
+  const message = [
+    `Hi ${name},`,
+    "I'm so excited to make it official! Here's your agreement: the final details, the numbers and the terms, all in one place.",
+    "You can add anything else you'd like (ice, custom napkins and more) right on the page before you sign. Once you sign, I'll send the deposit invoice.",
+    "Cheers,\nHelen",
+  ].join("\n\n");
+  const sent = await sendEmail({
+    from: process.env.INQUIRY_FROM || "Revelrita <fun@revelrita.com>",
+    to: [to],
+    subject,
+    ...proposalEmail({ message, link, cta: "Review and sign" }),
+  });
+  if (!sent) return { ...saved, ok: false, message: "The email didn't send, but the agreement is live. Copy the link below and send it yourself." };
+  await sendEmail({
+    from: process.env.INQUIRY_NOTIFY_FROM || "Revelrita website <website@revelrita.com>",
+    to: [process.env.INQUIRY_TO || "fun@revelrita.com"],
+    reply_to: to,
+    subject: `Sent to ${to}: ${subject}`,
+    ...proposalEmail({ message, link, cta: "Review and sign", note: `The agreement went to ${to}. This is your copy; hit reply to write to them.` }),
+  });
+  return { ...saved, message: `Agreement sent to ${to}` };
 }
 
 export async function removeProposal(id: string) {

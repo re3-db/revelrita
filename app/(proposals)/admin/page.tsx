@@ -23,14 +23,23 @@ function Row({ proposal: p }: { proposal: Proposal }) {
   const untouched = p.status === "draft" && p.inquiry && p.updatedAt === p.createdAt;
   const [pill, label] = p.signature
     ? ["signed", "Signed"]
-    : p.status === "sent"
-      ? ["sent", "Sent"]
-      : untouched
-        ? ["new", "New inquiry"]
-        : ["draft", "Draft"];
+    : p.agreementSentAt
+      ? ["agreement", "Agreement sent"]
+      : p.bookingRequest
+        ? ["new", "Wants to book"]
+        : p.status === "sent"
+          ? ["sent", "Sent"]
+          : untouched
+            ? ["new", "New inquiry"]
+            : ["draft", "Draft"];
+  const changes = p.amendments?.length ?? 0;
   const when = p.signature
-    ? `Signed ${day(p.signature.at)}`
-    : p.status === "sent"
+    ? `Signed ${day(p.signature.at)}${changes ? `, ${changes} ${changes === 1 ? "change" : "changes"} since` : ""}`
+    : p.agreementSentAt
+      ? `Agreement sent ${day(p.agreementSentAt)}`
+      : p.bookingRequest
+        ? `Asked ${day(p.bookingRequest.at)}`
+        : p.status === "sent"
       ? `Sent ${day(p.sentAt ?? p.updatedAt)}`
       : p.updatedAt !== p.createdAt
         ? `Edited ${day(p.updatedAt)}`
@@ -93,7 +102,8 @@ export default async function AdminPage() {
     }
   }
   const drafts = proposals.filter((p) => p.status === "draft");
-  const sent = proposals.filter((p) => p.status === "sent" && !p.signature);
+  const sent = proposals.filter((p) => p.status === "sent" && !p.agreementSentAt && !p.signature);
+  const agreements = proposals.filter((p) => p.agreementSentAt && !p.signature);
   const booked = proposals.filter((p) => p.signature);
   // Newest first, so the first one from the form is the latest inquiry
   const latestInquiry = proposals.find((p) => p.inquiry)?.createdAt;
@@ -120,6 +130,10 @@ export default async function AdminPage() {
             <div>
               <dt>Sent</dt>
               <dd>{sent.length}</dd>
+            </div>
+            <div>
+              <dt>To sign</dt>
+              <dd>{agreements.length}</dd>
             </div>
             <div>
               <dt>Booked</dt>
@@ -162,9 +176,15 @@ export default async function AdminPage() {
       />
       <Section
         title="Sent"
-        note="Waiting on them. Edits to these show up on the client's page."
+        note="Proposals out with clients. When one taps We want to book, it says so here."
         empty="Nothing out waiting right now."
         proposals={sent}
+      />
+      <Section
+        title="Agreements out"
+        note="Sent to sign. Waiting on their signature."
+        empty="No agreements waiting to be signed."
+        proposals={agreements}
       />
       <Section
         title="Booked"

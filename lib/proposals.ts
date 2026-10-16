@@ -54,7 +54,7 @@ export type ProposalContent = {
   alcohol: string;
   /** One per line */
   steps: string;
-  /** "The agreement" slide's terms: "title | sentence" per line. The client signs under them (slide skipped when empty) */
+  /** The agreement's key terms: "title | sentence" per line, above the fine print (no agreement without them) */
   terms: string;
   email: string;
   phone: string;
@@ -105,13 +105,19 @@ export type Proposal = {
   picks?: { labels: string[]; at: number };
   /** Which standard add-ons it has been brought up to (see ADD_ONS_VERSION) */
   addOnsVersion?: number;
-  /** The client's signature on "The agreement" slide (outside content, like picks, so the builder's saves keep it) */
+  /** When the client tapped "We want to book!" on their proposal */
+  bookingRequest?: { at: number };
+  /** When Helen sent (or shared) the agreement: its page opens for the client from then on */
+  agreementSentAt?: number;
+  /** The client's signature on the agreement (outside content, like picks, so the builder's saves keep it) */
   signature?: Signature;
+  /** What the client added or asked to change after signing, oldest first */
+  amendments?: Amendment[];
 };
 
 /**
  * A client's typed signature, with what they signed: edits after sending show up live on their
- * page, so the proposal and the add-ons they'd sent are kept as they stood at that moment.
+ * page, so the proposal, the add-ons they signed for and the fine print are kept as they stood.
  */
 export type Signature = {
   name: string;
@@ -120,7 +126,12 @@ export type Signature = {
   userAgent: string;
   content: ProposalContent;
   picks: string[];
+  /** FINE_PRINT as it read when they signed (missing on the first few, which had none) */
+  fineprint?: string;
 };
+
+/** A change after signing: add-ons they added (each a label from content.addOns) and/or a note */
+export type Amendment = { at: number; add: string[]; note: string };
 
 /* ---------- the artifact's standard wording ---------- */
 
@@ -138,7 +149,8 @@ const NUMBER_ALCOHOL = "The alcohol is separate, and you buy it at store prices 
 
 const INCLUDED_ALCOHOL = "All of your alcohol ordered, prepared, delivered, and iced down for the event";
 
-/* The first of Helen's next steps: it said she'd send the agreement until clients could sign on the page */
+/* The first of Helen's next steps. For an hour on Oct 16, 2026, new proposals said STEP_SIGN instead,
+   while the agreement was a slide on the proposal; withCurrentWording puts hers back. */
 const STEP_AGREEMENT = "Say the word and I'll send the invoice and the agreement";
 const STEP_SIGN = "Sign the agreement below, and I'll send the deposit invoice";
 
@@ -169,15 +181,42 @@ const FIRST_TERMS = [
   "Insurance | Revelrita carries $1,000,000 in general liability, and your venue can have a certificate at no cost.",
 ].join("\n");
 
-/** Puts the standard terms on a proposal, and points its first step at signing if it's still the old standard one */
-export const withStandardTerms = (c: ProposalContent): ProposalContent => ({
-  ...c,
-  terms: STANDARD_TERMS,
-  steps: c.steps
-    .split("\n")
-    .map((l) => (l.trim() === STEP_AGREEMENT ? STEP_SIGN : l))
-    .join("\n"),
-});
+/**
+ * The agreement's fine print, under the key terms: the same for every client, so it lives here,
+ * not in the builder. Each signature keeps the version it was signed under. "title | paragraph" per line.
+ */
+export const FINE_PRINT = [
+  "The agreement | This agreement is between Revelrita (Helen Bowman, Cardiff, California) and the client who signs it, for the event described above. With the proposal it comes from, it's the whole agreement. Changes are made in writing, including through this page.",
+  "Bar service | Revelrita provides the bar, bartenders, setup and pack-out described above. Revelrita doesn't sell or supply alcohol: the client buys it, owns it, and takes home what's left.",
+  "Serving responsibly | Bartenders follow California law. They may refuse service to anyone under 21, anyone without valid ID, or anyone who appears intoxicated, and may end service early if conditions become unsafe, without a refund.",
+  "The client's part | The client makes sure the venue allows bar service and outside alcohol, covers any venue fees or permits, and is responsible for guests' conduct and getting them home safely.",
+  "Liability | Revelrita carries general liability insurance. The client agrees to hold Revelrita harmless for claims arising from guests' drinking or conduct, except where Revelrita was negligent. Revelrita's liability is limited to the amount paid under this agreement.",
+  "Equipment | The client is responsible for damage to Revelrita's trailer, bar or equipment caused by guests, beyond normal wear.",
+  "Payment | If the balance isn't paid when it's due, Revelrita may treat the event as cancelled by the client, under the cancellation terms above.",
+  "Beyond anyone's control | If severe weather, a natural disaster, a public health order or another emergency outside either side's control stops the event, we'll first try to move it to a new date. If that isn't possible, everything paid beyond the deposit is refunded.",
+  "Signing online | Typing a name and signing here has the same effect as signing on paper. Both sides can see and print the signed agreement at its link.",
+  "California law | This agreement follows California law, and any dispute will be handled in San Diego County.",
+].join("\n");
+
+/** Puts the standard terms on a proposal */
+export const withStandardTerms = (c: ProposalContent): ProposalContent => ({ ...c, terms: STANDARD_TERMS });
+
+/**
+ * What a booking adds up to: the service lines, the add-ons picked (by label, among those offered),
+ * and the total of everything with a plain price. Rates like "$3 per guest" stay as written.
+ */
+export function bookingTotals(c: ProposalContent, picks: string[]) {
+  const service = pricedRows(c.pricing);
+  const addOns = pricedRows(c.addOns, "").rows.filter((r) => picks.includes(r.label));
+  const counted = [...service.counted, ...addOns.filter((r) => r.num !== null)];
+  return {
+    service,
+    addOns,
+    total: counted.reduce((sum, r) => sum + (r.num ?? 0), 0),
+    counted: counted.length,
+    unpriced: addOns.filter((r) => r.num === null),
+  };
+}
 
 /** In What's included for every package but beer and wine */
 export const MENU_INCLUDED = "Custom menu printed and framed";
@@ -252,7 +291,7 @@ export function defaultContent(): ProposalContent {
     pricingNote: "",
     alcohol: DEFAULT_ALCOHOL,
     steps: [
-      STEP_SIGN,
+      STEP_AGREEMENT,
       "The deposit holds your date",
       "We lock the menu, then I build your shopping list",
       "I show up early, set up, and you go be a guest at your own party",
@@ -344,8 +383,8 @@ export function withAllSections(content: ProposalContent, inquiry?: Proposal["in
 
 /**
  * Standard wording that changed after some proposals were made: Helen rewrote What's included and
- * What's in the number, the sound system, pebble ice and whiskey blocks became add-ons, and the
- * agreement's first standard terms were replaced. Every proposal, sent ones
+ * What's in the number, the sound system, pebble ice and whiskey blocks became add-ons, the
+ * agreement's first standard terms were replaced, and the first next step went back to hers. Every proposal, sent ones
  * too (Helen's call), gets the current wording: a What's included that's still one of the old
  * standard lists becomes the new one, and elsewhere old lines are swapped where they're still
  * there word for word. Anything Helen wrote herself stays.
@@ -414,6 +453,7 @@ export function withCurrentWording(content: ProposalContent, inquiry?: Proposal[
     ...content,
     included: reword(content.included, retired.included),
     inTheNumber: reword(content.inTheNumber, retired.inTheNumber),
+    steps: reword(content.steps, [[STEP_SIGN, STEP_AGREEMENT]]),
     // A signed proposal keeps a copy of the terms it was signed under (signature.content), untouched
     terms: terms === FIRST_TERMS ? STANDARD_TERMS : content.terms,
   };
