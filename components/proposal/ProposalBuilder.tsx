@@ -22,6 +22,7 @@ import {
   type PriceLine,
   type Proposal,
   type ProposalContent,
+  withStandardTerms,
 } from "@/lib/proposals";
 
 /**
@@ -155,6 +156,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
     change({ addOns: content.addOns.map((r, j) => (j === i ? { ...r, ...next } : r)) });
   const picks = proposal.picks;
   const picked = new Set(picks?.labels ?? []);
+  const signature = proposal.signature;
 
   /* ---------- buttons ---------- */
 
@@ -189,6 +191,7 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
       <ProposalView
         content={content}
         picks={picks?.labels}
+        signed={signature && { name: signature.name, at: signature.at, content: signature.content, picks: signature.picks }}
         topbar={
           <PreviewBar
             tag="Preview"
@@ -224,7 +227,9 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
             <Link href="/admin" className="alink">
               &larr; All proposals
             </Link>
-            <span className={`apill ${sent ? "sent" : "draft"}`}>{sent ? "Sent" : "Draft"}</span>
+            <span className={`apill ${signature ? "signed" : sent ? "sent" : "draft"}`}>
+              {signature ? "Signed" : sent ? "Sent" : "Draft"}
+            </span>
           </div>
           <h1 className="ahero-title">
             {who ? (
@@ -238,7 +243,9 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
             )}
           </h1>
           <p className="ahero-sub">
-            {sent
+            {signature
+              ? `Signed by ${signature.name} on ${day(signature.at)} at ${clock(signature.at)}. Changes you make here still show up on their page, but the agreement shows what they signed.`
+              : sent
               ? `${meta.sentTo ? `Emailed to ${meta.sentTo}` : "Marked as sent"}${meta.sentAt ? ` on ${day(meta.sentAt)} at ${clock(meta.sentAt)}` : ""}. Changes you make here show up on their page as they save.`
               : `${proposal.inquiry ? `Made from the inquiry ${proposal.inquiry.answers[0]?.[1] || "someone"} sent on ${day(proposal.inquiry.receivedAt)}. ` : ""}It saves as you type, and nothing goes to the client until you hit Send.`}
           </p>
@@ -614,6 +621,39 @@ export default function ProposalBuilder({ proposal, link }: { proposal: Proposal
           </div>
           <Field label="Sign-off" htmlFor="f_signOff">
             <input {...bind("signOff")} placeholder="e.g. Can't wait. Let's make it a party." />
+          </Field>
+        </Card>
+
+        <Card
+          title="The agreement"
+          note="Its own slide after What's next: what they're booking, these terms, and a place to sign. Leave empty to skip it."
+        >
+          {signature && (
+            <p className="esigned">
+              {signature.name} signed on {day(signature.at)} at {clock(signature.at)}. Their page keeps the terms
+              they signed, so changes here won&apos;t show on it.
+            </p>
+          )}
+          <Field
+            label="The terms, one per line: a short title, then | and one sentence"
+            htmlFor="f_terms"
+            hint={
+              <>
+                Their deposit line from Pricing shows above the terms.{" "}
+                <button
+                  type="button"
+                  className="elink"
+                  onClick={() => {
+                    change(withStandardTerms(content));
+                    say("Standard terms in");
+                  }}
+                >
+                  Use my standard terms
+                </button>
+              </>
+            }
+          >
+            <textarea {...bind("terms")} rows={8} />
           </Field>
         </Card>
 

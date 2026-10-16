@@ -54,6 +54,8 @@ export type ProposalContent = {
   alcohol: string;
   /** One per line */
   steps: string;
+  /** "The agreement" slide's terms: "title | sentence" per line. The client signs under them (slide skipped when empty) */
+  terms: string;
   email: string;
   phone: string;
   signOff: string;
@@ -103,6 +105,21 @@ export type Proposal = {
   picks?: { labels: string[]; at: number };
   /** Which standard add-ons it has been brought up to (see ADD_ONS_VERSION) */
   addOnsVersion?: number;
+  /** The client's signature on "The agreement" slide (outside content, like picks, so the builder's saves keep it) */
+  signature?: Signature;
+};
+
+/**
+ * A client's typed signature, with what they signed: edits after sending show up live on their
+ * page, so the proposal and the add-ons they'd sent are kept as they stood at that moment.
+ */
+export type Signature = {
+  name: string;
+  at: number;
+  ip: string;
+  userAgent: string;
+  content: ProposalContent;
+  picks: string[];
 };
 
 /* ---------- the artifact's standard wording ---------- */
@@ -120,6 +137,31 @@ const NUMBER_CART = "The cart, setup and pack-out, everything you'd need for a b
 const NUMBER_ALCOHOL = "The alcohol is separate, and you buy it at store prices |";
 
 const INCLUDED_ALCOHOL = "All of your alcohol ordered, prepared, delivered, and iced down for the event";
+
+/* The first of Helen's next steps: it said she'd send the agreement until clients could sign on the page */
+const STEP_AGREEMENT = "Say the word and I'll send the invoice and the agreement";
+const STEP_SIGN = "Sign the agreement below, and I'll send the deposit invoice";
+
+/** What every proposal asks the client to agree to when they sign ("title | sentence" per line) */
+export const STANDARD_TERMS = [
+  "Your date | Signing and paying the deposit holds your date. Until both are in, it's still open to other parties.",
+  "Paying | The deposit is due when you sign. The balance, with any add-ons, is due before the event, and I'll invoice you for both.",
+  "If you cancel | The deposit holds your date and turns other parties away, so it isn't refundable.",
+  "Changes | Guest count, hours and add-ons can change before the event, and the balance invoice reflects them.",
+  "The alcohol | You buy it, in your name, and pay for it separately. Anything unopened goes home with you.",
+  "Responsible service | We serve guests 21 and over, may ask for ID, and can stop serving anyone who's had too much.",
+  "Insurance | Revelrita carries $1,000,000 in general liability, and your venue can have a certificate at no cost.",
+].join("\n");
+
+/** Puts the standard terms on a proposal, and points its first step at signing if it's still the old standard one */
+export const withStandardTerms = (c: ProposalContent): ProposalContent => ({
+  ...c,
+  terms: STANDARD_TERMS,
+  steps: c.steps
+    .split("\n")
+    .map((l) => (l.trim() === STEP_AGREEMENT ? STEP_SIGN : l))
+    .join("\n"),
+});
 
 /** In What's included for every package but beer and wine */
 export const MENU_INCLUDED = "Custom menu printed and framed";
@@ -194,11 +236,12 @@ export function defaultContent(): ProposalContent {
     pricingNote: "",
     alcohol: DEFAULT_ALCOHOL,
     steps: [
-      "Say the word and I'll send the invoice and the agreement",
+      STEP_SIGN,
       "The deposit holds your date",
       "We lock the menu, then I build your shopping list",
       "I show up early, set up, and you go be a guest at your own party",
     ].join("\n"),
+    terms: STANDARD_TERMS,
     email: contact.email,
     phone: contact.phone,
     signOff: "Can't wait. Let's make it a party!",

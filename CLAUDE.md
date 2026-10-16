@@ -153,6 +153,17 @@ A port of Helen's "Revelrita proposal builder" Claude artifact. It isn't linked 
   so the builder's saves keep them) and emailed to Helen from `INQUIRY_NOTIFY_FROM`; the builder shows
   them. Proposals saved before add-ons existed get none (`normalizeContent`), so a sent one doesn't
   change in front of its client; the builder offers "Use my standard add-ons".
+- **The agreement.** Clients sign on their proposal page: a "Make it official" slide after What's
+  next (`components/proposal/AgreementSlide.tsx`, the `.agree*` rules) shows what they're booking
+  (event, package, service total, the add-ons they sent, the deposit line), the proposal's `terms`
+  ("title | sentence" per line, the builder's "The agreement" card), and a box to type their name and
+  tick "I agree". **Sign and book** (`signProposal` in `app/(proposals)/proposal/actions.ts`) only
+  works on a sent proposal with terms, once. It saves `signature` (outside `content`, like `picks`):
+  name, time, IP, browser, and a copy of the content and picks as they stood, because edits after
+  sending show live. A signed page shows the terms they signed. Helen gets an email from
+  `INQUIRY_NOTIFY_FROM`, the client a copy from `INQUIRY_FROM`; the builder and `/admin` show "Signed".
+  New proposals get Helen's `STANDARD_TERMS` (`lib/proposals.ts`); older ones have none (the slide is
+  skipped) until she clicks "Use my standard terms", which also points the first next step at signing.
 - In the Preview (and Helen's view of a draft's `/proposal/<id>`), the "Back to editor" bar
   (`components/proposal/PreviewBar.tsx`, the `.pbar` rules) is sticky, and those views don't snap,
   because the slides' scroll-snap would otherwise scroll it out of reach. It's styled like the

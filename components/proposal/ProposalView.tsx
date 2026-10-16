@@ -1,6 +1,7 @@
 import Image, { type StaticImageData } from "next/image";
 import { Fragment, type ReactNode } from "react";
 import AddOnsSlide from "@/components/proposal/AddOnsSlide";
+import AgreementSlide from "@/components/proposal/AgreementSlide";
 import {
   logoCream,
   proposalBar,
@@ -13,7 +14,7 @@ import {
   proposalHelen,
   proposalToast,
 } from "@/lib/images";
-import { money, pricedRows, type PhotoKey, type ProposalContent } from "@/lib/proposals";
+import { money, pricedRows, type PhotoKey, type ProposalContent, type Signature } from "@/lib/proposals";
 
 /**
  * A client's proposal: a port of render() from Helen's proposal builder artifact. Same
@@ -82,6 +83,7 @@ export default function ProposalView({
   preload = false,
   picks,
   proposalId,
+  signed,
 }: {
   content: ProposalContent;
   /** The admin's "This is what your client sees" bar */
@@ -90,8 +92,10 @@ export default function ProposalView({
   preload?: boolean;
   /** The add-ons the client already sent, ticked on "Make it yours" */
   picks?: string[];
-  /** The client's page passes it so "Send my picks" can save; the builder's Preview doesn't */
+  /** The client's page passes it so "Send my picks" and "Sign and book" can save; the builder's Preview doesn't */
   proposalId?: string;
+  /** Who signed "The agreement", when, and what: the slide then shows the terms they signed */
+  signed?: Pick<Signature, "name" | "at" | "content" | "picks">;
 }) {
   const type = d.eventType || "wedding";
   const greetWord = type === "corporate" || type === "popup" ? "Hi" : "Hey";
@@ -189,6 +193,7 @@ export default function ProposalView({
     })
     .filter((x) => x.q);
   const steps = lines(d.steps);
+  const agreement = pairs(signed ? signed.content.terms : d.terms);
 
   const visionPhoto = shows("toast") ? "toast" : shows("bartender") ? "bartender" : null;
   const featurePhoto = shows("bar") ? "bar" : shows("bartender") ? "bartender" : null;
@@ -427,6 +432,17 @@ export default function ProposalView({
               ) : null}
             </div>
           </section>
+        )}
+
+        {/* ---------- 7b. the agreement, to sign (a site addition: the artifact has no such slide) ---------- */}
+        {(agreement.length > 0 || signed) && (
+          <AgreementSlide
+            content={signed?.content ?? d}
+            terms={agreement}
+            picks={signed?.picks ?? picks ?? []}
+            proposalId={proposalId}
+            signed={signed && { name: signed.name, at: signed.at }}
+          />
         )}
 
         {/* ---------- 4b. what a client said ---------- */}

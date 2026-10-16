@@ -33,7 +33,9 @@ const complete = (p: Proposal | null): Proposal | null => {
   let content = withCurrentWording(normalizeContent(p.content), p.inquiry);
   if (p.status === "draft" && isOldMockUp(content.menuTitle, content.menu)) content = { ...content, menuTitle: "", menu: "" };
   if ((p.addOnsVersion ?? 1) < ADD_ONS_VERSION) content = { ...content, addOns: migrateAddOns({ ...p, content }) };
-  return { ...p, addOnsVersion: ADD_ONS_VERSION, content: withAllSections(content, p.inquiry) };
+  // The copy kept with a signature gets fields added since too, but stays as it was otherwise
+  const signature = p.signature && { ...p.signature, content: normalizeContent(p.signature.content) };
+  return { ...p, signature, addOnsVersion: ADD_ONS_VERSION, content: withAllSections(content, p.inquiry) };
 };
 
 /** An unguessable id: the client's link is the only way to their proposal. */

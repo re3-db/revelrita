@@ -21,9 +21,16 @@ function Row({ proposal: p }: { proposal: Proposal }) {
   const name = c.name.trim() || formName?.trim() || "Untitled";
   const details = [c.occasion, c.date, c.guests].map((s) => s.trim()).filter(Boolean).join(" · ");
   const untouched = p.status === "draft" && p.inquiry && p.updatedAt === p.createdAt;
-  const [pill, label] = p.status === "sent" ? ["sent", "Sent"] : untouched ? ["new", "New inquiry"] : ["draft", "Draft"];
-  const when =
-    p.status === "sent"
+  const [pill, label] = p.signature
+    ? ["signed", "Signed"]
+    : p.status === "sent"
+      ? ["sent", "Sent"]
+      : untouched
+        ? ["new", "New inquiry"]
+        : ["draft", "Draft"];
+  const when = p.signature
+    ? `Signed ${day(p.signature.at)}`
+    : p.status === "sent"
       ? `Sent ${day(p.sentAt ?? p.updatedAt)}`
       : p.updatedAt !== p.createdAt
         ? `Edited ${day(p.updatedAt)}`
