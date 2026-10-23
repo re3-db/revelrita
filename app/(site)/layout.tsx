@@ -10,7 +10,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Revelrita | San Diego's bar cart",
+    default: "Revelrita | San Diego's Bar Cart",
     template: "%s | Revelrita",
   },
   description:
