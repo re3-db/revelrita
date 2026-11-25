@@ -13,7 +13,7 @@ export default async function LoginPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const next = typeof params.next === "string" && params.next.startsWith("/admin") ? params.next : "/admin";
+  const next = typeof params.next === "string" && (params.next.startsWith("/admin") || params.next === "/recipes") ? params.next : "/admin";
   if (await isAdmin()) redirect(next);
 
   return (

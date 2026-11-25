@@ -25,6 +25,11 @@ const squarespaceRedirects: [from: string, to: string][] = [
 ];
 
 const nextConfig: NextConfig = {
+  // Helen's back bar (her bottles, recipes and party menus) is one self-contained page, a port of
+  // her "The Back Bar" Claude artifact; its data lives in Redis behind app/api/bar
+  async rewrites() {
+    return [{ source: "/recipes", destination: "/recipes.html" }];
+  },
   async redirects() {
     return squarespaceRedirects.map(([source, destination]) => ({ source, destination, permanent: true }));
   },

@@ -20,7 +20,7 @@ export type SaveResult = {
 const loggedOut: SaveResult = { ok: false, message: "You've been logged out. Log in again in a new tab, then hit Save." };
 
 /** Only same-site paths, so the login can't be used to bounce someone elsewhere */
-const safeNext = (next: string) => (next.startsWith("/admin") ? next : "/admin");
+const safeNext = (next: string) => (next.startsWith("/admin") || next === "/recipes" ? next : "/admin");
 
 export async function login(formData: FormData) {
   const next = safeNext(String(formData.get("next") ?? ""));

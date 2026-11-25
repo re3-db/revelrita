@@ -228,6 +228,22 @@ bartenders table. The "Proposals / Events" tabs (`components/admin/AdminNav.tsx`
   artifact's ids, so a second import of the same file adds nothing). Her financial data never goes in
   the repo.
 
+## Back bar (`/recipes`)
+
+Helen's home bar inventory: a port of her "The Back Bar" Claude artifact (bottles and levels,
+~100 classic specs checked against what she has, her own recipes, favorites, a party menu with
+scaled specs and a prep list, shopping list, pairings). Not linked from the site, `noindex`.
+- It is one self-contained page, `public/recipes.html` (vanilla JS, its own CSS and Revelrita
+  tokens, no Tailwind or `globals.css`), served at `/recipes` by a rewrite in `next.config.ts`.
+  The ingredient catalog, recipe book (`RAW`), styles (`STY`) and flavor notes live in its script.
+- Data: `app/api/bar/route.ts`. Anyone can GET; PUT needs the admin login (`isAdmin`), so the page
+  is read-only until she logs in (its note links to `/admin/login?next=/recipes`; the login allows
+  that one non-admin `next`). Sections `items`, `shopping`, `recipes`, `prefs` (favorites), `menu`,
+  each one JSON value at `bar:<section>` in the same Upstash database. A section never saved yet
+  falls back to `lib/bar/seed.json`, her data exported from the artifact at the move.
+- The artifact's Claude-powered buttons (paste a recipe, suggest, invent) need the `sample`
+  capability, which only exists inside Claude, so that panel stays hidden here.
+
 ## Deploying
 
 Vercel builds from `main` automatically and publishes to revelrita.com in a couple of minutes.

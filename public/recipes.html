@@ -1,0 +1,1310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>The Back Bar | Revelrita</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-icon.png">
+<!-- Helen's back bar: a port of her "The Back Bar" Claude artifact. Data comes from /api/bar (app/api/bar/route.ts). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@1&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Layout: cream page, compact hero with live counts, sticky pill tabs, one working panel per tab (shelf list, drink cards, shopping, pairings). Revelrita tokens. */
+:root{
+  --bg:#fff9e9; --card:#ffffff; --fg:#14374f; --muted:#45606f; --ember:#c4400d;
+  --orange:#fb5718; --sky:#78b8cd; --mist:#bbd6e6; --blush:#ffb59a; --peach:#ff8b5f;
+  --sand:#e0d2b6; --sand-strong:#c9b999; --hair:rgba(20,55,79,.16); --tint:#f6eedb;
+  --strong:#14374f; --on-strong:#fff9e9; --pill-ink:#14374f; --placeholder:#9aa8b2;
+  --f-sans:"Bricolage Grotesque", system-ui, -apple-system, sans-serif;
+  --f-serif:Newsreader, Georgia, "Times New Roman", serif;
+  --f-fancy:"Instrument Serif", Georgia, serif;
+  --r-pill:999px; --r-card:20px; --r-input:12px;
+  --lift:0 10px 24px rgba(20,55,79,.22); --focus-halo:0 0 0 3px rgba(251,87,24,.16);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d2232; --card:#133047; --fg:#fff9e9; --muted:#bbd6e6; --ember:#ff8b5f;
+  --sand:rgba(255,249,233,.2); --sand-strong:rgba(255,249,233,.36); --hair:rgba(255,249,233,.14); --tint:#173a55;
+  --strong:#fff9e9; --on-strong:#14374f; --placeholder:#7f97a6; --lift:0 10px 24px rgba(0,0,0,.4); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0d2232; --card:#133047; --fg:#fff9e9; --muted:#bbd6e6; --ember:#ff8b5f;
+  --sand:rgba(255,249,233,.2); --sand-strong:rgba(255,249,233,.36); --hair:rgba(255,249,233,.14); --tint:#173a55;
+  --strong:#fff9e9; --on-strong:#14374f; --placeholder:#7f97a6; --lift:0 10px 24px rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0; -webkit-text-size-adjust:100%}
+img{max-width:100%}
+.note a{color:var(--ember); font-weight:500}
+[hidden]{display:none!important}
+body{background:var(--bg); color:var(--fg); font-family:var(--f-serif); font-size:17px; line-height:1.55}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--bg)}
+.wrap{max-width:1160px; margin:0 auto; padding-left:max(20px, env(safe-area-inset-left,0px)); padding-right:max(20px, env(safe-area-inset-right,0px))}
+@media (min-width:900px){ .wrap{padding-left:max(40px, env(safe-area-inset-left,0px)); padding-right:max(40px, env(safe-area-inset-right,0px))} }
+h1,h2,h3,h4{font-family:var(--f-sans); font-weight:800; letter-spacing:-.02em; margin:0; text-wrap:balance}
+em.fancy{font-family:var(--f-fancy); font-style:italic; font-weight:400; color:var(--orange); letter-spacing:0}
+.eyebrow{font-family:var(--f-sans); font-weight:700; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ember); margin:0}
+.muted{color:var(--muted)}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:3px solid var(--fg); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important} }
+
+/* hero */
+.hero{padding-block:36px 22px}
+.hero h1{font-size:clamp(40px, 7vw, 64px); line-height:1.02; margin-top:10px}
+.lede{font-size:clamp(17px,2.2vw,20px); color:var(--muted); max-width:52ch; margin:12px 0 0}
+.stats{display:flex; flex-wrap:wrap; gap:10px 28px; margin-top:24px}
+.stat{display:flex; align-items:baseline; gap:8px}
+.stat b{font-family:var(--f-sans); font-weight:800; font-size:34px; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1}
+.stat span{font-family:var(--f-sans); font-weight:600; font-size:14px; color:var(--muted)}
+.note{margin-top:14px; font-size:15px; color:var(--muted)}
+
+/* tabs */
+.tabs{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg); border-bottom:1px solid var(--hair)}
+.tabs .wrap{display:flex; gap:8px; padding-block:12px; overflow-x:auto; scrollbar-width:none}
+.tab{flex:none; font-family:var(--f-sans); font-weight:700; font-size:15px; padding:10px 18px; border-radius:var(--r-pill); border:1.5px solid var(--sand); background:transparent; cursor:pointer}
+.tab[aria-selected="true"]{background:var(--strong); color:var(--on-strong); border-color:var(--strong)}
+.tab .ct{font-variant-numeric:tabular-nums; opacity:.7; margin-left:4px}
+
+main{padding-block:28px 80px}
+section.panel{display:grid; gap:28px}
+.head{display:flex; flex-wrap:wrap; align-items:end; justify-content:space-between; gap:12px}
+.head h2{font-size:clamp(28px,4vw,40px); line-height:1.05}
+.sub{font-size:15px; color:var(--muted); margin:6px 0 0; max-width:60ch}
+
+/* controls */
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; font-family:var(--f-sans); font-weight:600; font-size:15px; border-radius:var(--r-pill); padding:10px 18px; border:1.5px solid var(--sand); background:transparent; cursor:pointer; transition:transform .15s, box-shadow .15s; white-space:nowrap}
+.btn:hover{transform:translateY(-2px); box-shadow:var(--lift)}
+.btn.primary{background:var(--orange); color:#fff; border-color:var(--orange); font-size:17px; padding:12px 24px}
+.btn.dark{background:var(--strong); color:var(--on-strong); border-color:var(--strong)}
+.btn.sm{font-size:13px; padding:6px 12px}
+.btn.danger{color:var(--ember); border-color:var(--ember)}
+.btn[disabled]{opacity:.5; cursor:default; transform:none; box-shadow:none}
+.input, select.input, textarea.input{width:100%; background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-input); padding:11px 14px; font-family:var(--f-serif); font-size:17px; min-width:0}
+.input::placeholder{color:var(--placeholder)}
+.input:hover{border-color:var(--sand-strong)}
+.input:focus{outline:none; border-color:var(--orange); box-shadow:var(--focus-halo)}
+label.lbl{display:grid; gap:6px; font-family:var(--f-sans); font-weight:700; font-size:14px}
+.chip{display:inline-flex; align-items:center; gap:6px; font-family:var(--f-sans); font-weight:600; font-size:14px; padding:7px 13px; border-radius:var(--r-pill); border:1.5px solid var(--sand); background:var(--card); cursor:pointer}
+.chip:hover{border-color:var(--sand-strong)}
+.chip.on{background:var(--strong); color:var(--on-strong); border-color:var(--strong)}
+.chip .plus{color:var(--orange); font-weight:800}
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+
+/* add box */
+.addbox{position:relative; display:flex; gap:10px; flex-wrap:wrap}
+.addbox .input{flex:1 1 260px}
+.sugg{position:absolute; left:0; right:0; top:calc(100% + 6px); background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-input); box-shadow:var(--lift); z-index:4; max-height:320px; overflow:auto; padding:6px}
+.sugg button{display:flex; width:100%; justify-content:space-between; gap:10px; text-align:left; background:none; border:0; padding:10px 12px; border-radius:8px; cursor:pointer; font-family:var(--f-sans); font-weight:600; font-size:15px}
+.sugg button:hover,.sugg button.act{background:var(--tint)}
+.sugg small{font-weight:600; color:var(--muted); font-size:12px}
+
+/* shelf */
+.cat{display:grid; gap:4px}
+.cat-h{display:flex; align-items:baseline; gap:10px; padding-bottom:8px; border-bottom:1.5px solid var(--fg)}
+.cat-h h3{font-size:22px}
+.cat-h span{font-family:var(--f-sans); font-weight:700; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+.row{display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:12px 0; border-bottom:1px solid var(--hair)}
+.row .who{flex:1 1 220px; min-width:0}
+.row .who b{display:block; font-family:var(--f-sans); font-weight:700; font-size:17px; line-height:1.25}
+.row .who small{font-size:14px; color:var(--muted)}
+.row.out .who b{text-decoration:line-through; text-decoration-thickness:1.5px; color:var(--muted)}
+.lvl{display:inline-flex; border:1.5px solid var(--sand); border-radius:var(--r-pill); padding:2px; gap:2px}
+.lvl button{font-family:var(--f-sans); font-weight:700; font-size:12px; letter-spacing:.02em; border:0; background:transparent; padding:6px 10px; border-radius:var(--r-pill); color:var(--muted); cursor:pointer}
+.lvl button[aria-pressed="true"]{color:var(--pill-ink)}
+.lvl button[aria-pressed="true"][data-l="full"]{background:var(--sky)}
+.lvl button[aria-pressed="true"][data-l="half"]{background:var(--mist)}
+.lvl button[aria-pressed="true"][data-l="low"]{background:var(--blush)}
+.lvl button[aria-pressed="true"][data-l="out"]{background:var(--sand-strong)}
+.makes{font-family:var(--f-sans); font-weight:600; font-size:13px; color:var(--muted); min-width:7.5em; font-variant-numeric:tabular-nums}
+.iconbtn{border:0; background:none; cursor:pointer; font-family:var(--f-sans); font-weight:700; font-size:13px; color:var(--ember); padding:6px 4px}
+.quick{display:grid; gap:10px}
+.quick details{border-top:1px solid var(--hair); padding-top:10px}
+.quick summary{cursor:pointer; font-family:var(--f-sans); font-weight:700; font-size:16px; padding:4px 0; list-style-position:outside}
+.quick summary small{font-weight:600; color:var(--muted); font-size:13px; margin-left:6px}
+.quick .chips{padding:10px 0 6px}
+.empty{background:var(--blush); color:var(--pill-ink); border-radius:var(--r-card); padding:28px}
+.empty h3{font-size:clamp(24px,3.4vw,32px)}
+.empty p{margin:8px 0 0; max-width:56ch}
+
+/* drinks */
+.toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.toolbar .input{flex:1 1 220px; width:auto}
+.toolbar select.input{flex:0 1 220px}
+.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:16px; align-items:start}
+.card{background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-card); padding:20px; display:grid; gap:12px; min-width:0}
+.card-top{display:flex; justify-content:space-between; gap:10px; align-items:start}
+.card h3{font-size:22px; line-height:1.1}
+.card .meta{font-family:var(--f-sans); font-weight:600; font-size:13px; color:var(--muted); margin-top:4px}
+.star{border:0; background:none; cursor:pointer; font-size:22px; line-height:1; color:var(--sand-strong); padding:2px}
+.star[aria-pressed="true"]{color:var(--orange)}
+.pill{display:inline-flex; align-items:center; font-family:var(--f-sans); font-weight:700; font-size:12px; letter-spacing:.04em; padding:4px 10px; border-radius:var(--r-pill); color:var(--pill-ink); white-space:nowrap}
+.pill.s0{background:var(--sky)} .pill.s1{background:var(--blush)} .pill.s2{background:var(--peach)} .pill.s3{background:var(--sand)} .pill.mine{background:var(--mist)}
+:root[data-theme="dark"] .pill.s3{color:var(--fg)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .pill.s3{color:var(--fg)} }
+.ings{list-style:none; margin:0; padding:0; display:grid; gap:4px; font-size:16px}
+.ings li{display:grid; grid-template-columns:4.6em 1fr auto; gap:8px; align-items:baseline}
+.ings .amt{font-family:var(--f-sans); font-weight:600; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+.ings li.miss .nm{color:var(--ember); font-weight:500}
+.ings li.opt .nm::after{content:" (optional)"; color:var(--muted); font-size:13px}
+.ings li.opt.miss .nm{color:var(--muted)}
+.mini{font-family:var(--f-sans); font-weight:700; font-size:12px; border:1.5px solid var(--sand); background:transparent; border-radius:var(--r-pill); padding:3px 9px; cursor:pointer; white-space:nowrap}
+.mini.done{border-color:transparent; color:var(--muted); cursor:default}
+.method{font-size:15.5px; margin:0}
+.garnish{font-size:14px; color:var(--muted); margin:0}
+.card-foot{display:flex; gap:8px; flex-wrap:wrap}
+
+.invent{background:var(--strong); color:var(--on-strong); border-radius:var(--r-card); padding:24px; display:grid; gap:14px}
+.invent .eyebrow{color:var(--peach)}
+:root[data-theme="dark"] .invent .eyebrow{color:var(--ember)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .invent .eyebrow{color:var(--ember)} }
+.invent h3{font-size:clamp(24px,3.4vw,30px)}
+.invent h3 em{color:var(--peach)}
+.invent .row2{display:flex; gap:10px; flex-wrap:wrap}
+.invent .input{flex:1 1 260px; width:auto; color:var(--fg)}
+.invent-out .card{color:var(--fg)}
+.invent-out:empty{display:none}
+
+/* shopping */
+.cols{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap:28px; align-items:start}
+.block{display:grid; gap:10px; min-width:0}
+.block h3{font-size:24px}
+.buy{display:grid; grid-template-columns:2.2em 1fr auto; gap:12px; align-items:center; padding:12px 0; border-bottom:1px solid var(--hair)}
+.buy .n{font-family:var(--f-sans); font-weight:800; font-size:24px; color:var(--orange); font-variant-numeric:tabular-nums; text-align:right}
+.buy b{font-family:var(--f-sans); font-weight:700; font-size:16px; display:block}
+.buy small{font-size:14px; color:var(--muted); display:block}
+.buy .acts{display:flex; gap:6px; flex-wrap:wrap; justify-content:end}
+.list-item{display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--hair)}
+.list-item input[type=checkbox]{width:20px; height:20px; accent-color:var(--orange); flex:none}
+.list-item .t{flex:1; min-width:0; font-family:var(--f-sans); font-weight:600; font-size:16px}
+.list-item.done .t{text-decoration:line-through; color:var(--muted)}
+.copybox{width:100%; min-height:120px}
+
+/* pairings */
+.pair-hero{background:var(--sky); color:var(--pill-ink); border-radius:var(--r-card); padding:26px; display:grid; gap:10px}
+.pair-hero h3{font-size:clamp(30px,5vw,46px); line-height:1.02}
+.pair-hero p{margin:0; max-width:60ch; font-size:18px}
+.bar-row{display:grid; grid-template-columns:minmax(0,1fr) 2.2em auto; gap:12px; align-items:center; padding:8px 0; border-bottom:1px solid var(--hair)}
+.bar-row .lab{display:grid; gap:5px; min-width:0}
+.bar-row .lab b{font-family:var(--f-sans); font-weight:700; font-size:15px}
+.track{height:6px; border-radius:6px; background:var(--tint)}
+.track i{display:block; height:100%; border-radius:6px; background:var(--orange)}
+.bar-row .c{font-family:var(--f-sans); font-weight:700; font-size:14px; font-variant-numeric:tabular-nums; text-align:right}
+.have-tag{font-family:var(--f-sans); font-weight:700; font-size:12px; color:var(--muted)}
+.dlist{display:grid; gap:0}
+.dlist button{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; border:0; border-bottom:1px solid var(--hair); background:none; padding:10px 0; cursor:pointer; font-family:var(--f-sans); font-weight:700; font-size:16px}
+.dlist button:hover{color:var(--ember)}
+
+/* guest guide */
+.guide{background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-card); padding:20px; display:grid; gap:18px}
+.guide-row{display:grid; gap:10px}
+.style-desc{margin:0; font-size:15.5px; color:var(--muted); min-height:1.5em}
+.chip .n{opacity:.6; font-variant-numeric:tabular-nums}
+.chip[disabled]{opacity:.4; cursor:default}
+.drink-sections{display:grid; gap:40px}
+.spirit-sec{display:grid; gap:16px}
+.spirit-sec .cat-h h3{font-size:28px}
+
+/* ideas + menu */
+.invent textarea.input{width:100%; color:var(--fg); min-height:86px; resize:vertical}
+.idea-actions{display:flex; gap:10px; flex-wrap:wrap}
+.btn.light{background:transparent; color:inherit; border-color:currentColor}
+.ideas-grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); align-items:start}
+.ideas-grid > p{grid-column:1 / -1; margin:0}
+.mini.on{background:var(--strong); color:var(--on-strong); border-color:var(--strong)}
+.ings li.untracked .nm::after{content:" (not tracked)"; color:var(--muted); font-size:13px}
+.desc{font-style:italic; font-size:15.5px; margin:0}
+.menu-tools{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+.menu-tools .lbl{display:inline}
+.stepper{display:inline-flex; align-items:center; border:1.5px solid var(--sand); border-radius:var(--r-pill); background:var(--card)}
+.stepper button{border:0; background:none; cursor:pointer; font-family:var(--f-sans); font-weight:800; font-size:20px; width:42px; height:42px; border-radius:var(--r-pill)}
+.stepper output{font-family:var(--f-sans); font-weight:800; font-size:18px; min-width:2.2em; text-align:center; font-variant-numeric:tabular-nums}
+.menu-wrap{display:grid; gap:20px}
+.menu-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:16px; align-items:start}
+.menu-card{padding:24px}
+.menu-card h3{font-size:28px}
+.menu-card .ings{font-size:18px; gap:6px}
+.menu-card .ings li{grid-template-columns:minmax(6.5em, auto) 1fr}
+.menu-card .ings .amt{font-size:14px}
+.menu-card .method{font-size:17px}
+.prep{background:var(--peach); color:var(--pill-ink); border-radius:var(--r-card); padding:24px; display:grid; gap:10px}
+.prep h3{font-size:26px}
+.prep ul{list-style:none; margin:0; padding:0; display:grid}
+.prep li{display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid rgba(20,55,79,.2); padding:8px 0; font-family:var(--f-sans); font-weight:600; font-size:15px}
+.prep li span:last-child{font-variant-numeric:tabular-nums; text-align:right}
+.prep li.need span:first-child::after{content:" · need it"; font-weight:800}
+.prep .btn.dark{background:#14374f; color:#fff9e9; border-color:#14374f}
+
+/* dialogs */
+dialog{border:0; border-radius:var(--r-card); padding:0; background:var(--bg); color:var(--fg); width:min(560px, calc(100vw - 32px)); max-height:calc(100dvh - 40px)}
+dialog::backdrop{background:rgba(13,34,50,.5)}
+.dlg{padding:24px; display:grid; gap:16px}
+.dlg h3{font-size:26px}
+.dlg .acts{display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center}
+.dlg .acts div{display:flex; gap:10px; flex-wrap:wrap}
+.radios{display:flex; gap:8px; flex-wrap:wrap}
+.radios label{cursor:pointer}
+.radios input{position:absolute; opacity:0; pointer-events:none}
+.radios span{display:inline-block; font-family:var(--f-sans); font-weight:700; font-size:14px; padding:8px 14px; border:1.5px solid var(--sand); border-radius:var(--r-pill)}
+.radios input:checked + span{background:var(--strong); color:var(--on-strong); border-color:var(--strong)}
+.radios input:focus-visible + span{outline:3px solid var(--fg); outline-offset:2px}
+.ingrow{display:grid; grid-template-columns:5.5em minmax(0,1fr) auto; gap:8px; align-items:center}
+.ingrow .other{grid-column:2 / 3}
+.ingrow .input{padding:9px 10px; font-size:15px}
+.ingrow .x{border:0; background:none; cursor:pointer; color:var(--ember); font-family:var(--f-sans); font-weight:800; font-size:18px; padding:4px 8px}
+.ingrow label{display:flex; gap:4px; align-items:center; font-family:var(--f-sans); font-size:12px; font-weight:600; color:var(--muted); grid-column:2/3}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:480px){ .two{grid-template-columns:1fr} }
+
+.toast{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--strong); color:var(--on-strong); font-family:var(--f-sans); font-weight:600; font-size:15px; padding:12px 20px; border-radius:var(--r-pill); box-shadow:var(--lift); z-index:20; max-width:calc(100vw - 32px)}
+.loading{font-family:var(--f-sans); font-weight:600; color:var(--muted); padding:20px 0}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Bar inventory</p>
+    <h1>What's on the <em class="fancy">shelf.</em></h1>
+    <p class="lede">Every bottle you've got, what you can pour with it tonight, and what to buy next.</p>
+    <div class="stats" id="stats" aria-live="polite">
+      <div class="stat"><b id="st-bottles">0</b><span>bottles</span></div>
+      <div class="stat"><b id="st-ready">0</b><span>drinks ready to pour</span></div>
+      <div class="stat"><b id="st-one">0</b><span>one buy away</span></div>
+    </div>
+    <p class="note" id="note" hidden></p>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="tab-shelf" data-tab="shelf" aria-selected="true">Shelf</button>
+    <button class="tab" role="tab" id="tab-drinks" data-tab="drinks" aria-selected="false">Drinks<span class="ct" id="ct-drinks"></span></button>
+    <button class="tab" role="tab" id="tab-menu" data-tab="menu" aria-selected="false">Party menu<span class="ct" id="ct-menu"></span></button>
+    <button class="tab" role="tab" id="tab-shop" data-tab="shop" aria-selected="false">Shopping<span class="ct" id="ct-shop"></span></button>
+    <button class="tab" role="tab" id="tab-pairings" data-tab="pairings" aria-selected="false">Pairings</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <!-- SHELF -->
+  <section class="panel" id="p-shelf" role="tabpanel" aria-labelledby="tab-shelf">
+    <div>
+      <div class="head"><div><h2>Your shelf.</h2><p class="sub">Search for a bottle to add it, or tap the quick-add chips below. Set the level when something runs low so it lands on your shopping list.</p></div></div>
+    </div>
+    <div class="addbox" data-write>
+      <input class="input" id="add-q" type="search" autocomplete="off" placeholder="Add a bottle: try “Campari”, “rye” or “limes”" aria-label="Search bottles and ingredients to add">
+      <button class="btn dark" id="add-custom" type="button">Add with details</button>
+      <div class="sugg" id="add-sugg" hidden role="listbox" aria-label="Matching bottles"></div>
+    </div>
+    <div id="shelf-list"><p class="loading">Pulling bottles off the shelf…</p></div>
+    <div class="quick" data-write>
+      <div><h3 style="font-size:24px">Quick add.</h3><p class="sub">One tap puts it on the shelf as a full bottle.</p></div>
+      <div id="quick"></div>
+    </div>
+  </section>
+
+  <!-- DRINKS -->
+  <section class="panel" id="p-drinks" role="tabpanel" aria-labelledby="tab-drinks" hidden>
+    <div class="head">
+      <div><h2>What you can <em class="fancy">pour.</em></h2><p class="sub" id="drinks-sub">Grouped by spirit and checked against your shelf. Talking to a guest? Pick what they like and the list narrows to match.</p></div>
+      <button class="btn" id="new-recipe" type="button" data-write>Add your own recipe</button>
+    </div>
+    <div class="invent" id="invent" hidden>
+      <p class="eyebrow">Add and discover</p>
+      <h3>Paste a recipe, or let me <em class="fancy">find you one.</em></h3>
+      <textarea class="input" id="idea-text" rows="3" placeholder="Paste a recipe from anywhere, or type a drink name like “Jungle Bird”. For suggestions, describe a mood instead: bright and bitter, uses the Campari, for a hot afternoon." aria-label="Recipe, drink name, or what you're in the mood for"></textarea>
+      <div class="idea-actions">
+        <button class="btn primary" id="idea-parse" type="button">Check what I need</button>
+        <button class="btn light" id="idea-suggest" type="button">Suggest drinks to try</button>
+        <button class="btn light" id="idea-invent" type="button">Invent an original</button>
+      </div>
+      <div class="invent-out ideas-grid" id="invent-out" aria-live="polite"></div>
+    </div>
+    <div class="guide">
+      <div class="guide-row"><p class="eyebrow">What do they like?</p><div class="chips" id="style-chips" role="group" aria-label="Drink style"></div><p class="style-desc" id="style-desc"></p></div>
+      <div class="guide-row"><p class="eyebrow">Spirit</p><div class="chips" id="base-chips" role="group" aria-label="Spirit"></div></div>
+    </div>
+    <div class="toolbar">
+      <div class="chips" id="drink-filters" role="group" aria-label="Filter by what you have"></div>
+      <input class="input" id="drink-q" type="search" placeholder="Search drinks or ingredients" aria-label="Search drinks">
+    </div>
+    <div class="drink-sections" id="drink-list"></div>
+  </section>
+
+  <!-- MENU -->
+  <section class="panel" id="p-menu" role="tabpanel" aria-labelledby="tab-menu" hidden>
+    <div class="head">
+      <div><h2>Tonight's <em class="fancy">menu.</em></h2><p class="sub">Tap “+ Menu” on any drink to line it up here. Set how many of each you plan to pour and the specs and prep list scale to match.</p></div>
+      <div class="menu-tools">
+        <span class="lbl" id="srv-label">Servings of each</span>
+        <div class="stepper" role="group" aria-labelledby="srv-label"><button type="button" id="srv-minus" aria-label="Fewer servings">−</button><output id="srv" aria-live="polite">1</output><button type="button" id="srv-plus" aria-label="More servings">+</button></div>
+        <button class="btn sm" id="menu-clear" type="button" data-write>Clear menu</button>
+      </div>
+    </div>
+    <div id="menu-out"></div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="panel" id="p-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+    <div class="head"><div><h2>What to <em class="fancy">buy next.</em></h2><p class="sub">Best buys are ranked by how many new drinks each one would let you make with what's already on your shelf.</p></div></div>
+    <div class="cols">
+      <div class="block">
+        <h3>Best next buys.</h3>
+        <div id="best"></div>
+      </div>
+      <div class="block">
+        <h3>Your list.</h3>
+        <form class="addbox" id="list-form" data-write>
+          <input class="input" id="list-q" type="text" placeholder="Add anything: limes, big ice, a new amaro" aria-label="Add to shopping list">
+          <button class="btn dark" type="submit">Add</button>
+        </form>
+        <div id="list"></div>
+        <div class="card-foot">
+          <button class="btn sm" id="copy-list" type="button">Copy list</button>
+          <button class="btn sm" id="clear-done" type="button" data-write>Clear checked</button>
+        </div>
+        <textarea class="input copybox" id="copybox" readonly hidden aria-label="Shopping list text"></textarea>
+        <h3 style="margin-top:18px">Running low.</h3>
+        <div id="low"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAIRINGS -->
+  <section class="panel" id="p-pairings" role="tabpanel" aria-labelledby="tab-pairings" hidden>
+    <div class="head"><div><h2>What goes <em class="fancy">with what.</em></h2><p class="sub">Pick a bottle. Partners are ranked by how often they share a glass with it across every recipe here, so the top of the list is the safest bet.</p></div></div>
+    <div class="toolbar">
+      <div class="chips" id="pair-chips" role="group" aria-label="Your bottles"></div>
+    </div>
+    <div class="toolbar"><select class="input" id="pair-any" aria-label="Any ingredient"></select></div>
+    <div id="pair-out"></div>
+  </section>
+</main>
+
+<dialog id="dlg-item" aria-labelledby="item-title">
+  <form class="dlg" id="item-form">
+    <h3 id="item-title">Add to the shelf.</h3>
+    <label class="lbl">What it is
+      <select class="input" id="item-type" required></select>
+    </label>
+    <label class="lbl">Brand or label <span class="muted" style="font-weight:600">(optional)</span>
+      <input class="input" id="item-name" type="text" placeholder="e.g. Fortaleza Blanco" autocomplete="off">
+    </label>
+    <fieldset style="border:0; padding:0; margin:0; display:grid; gap:8px">
+      <legend class="lbl" style="padding:0; margin-bottom:8px">How full</legend>
+      <div class="radios" id="item-level"></div>
+    </fieldset>
+    <label class="lbl">Notes <span class="muted" style="font-weight:600">(optional)</span>
+      <textarea class="input" id="item-note" rows="2" placeholder="Opened in June, keep it in the fridge"></textarea>
+    </label>
+    <div class="acts">
+      <button class="btn danger" type="button" id="item-del" hidden>Delete</button>
+      <div><button class="btn" type="button" id="item-cancel">Cancel</button><button class="btn primary" type="submit" id="item-save">Save</button></div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-recipe" aria-labelledby="rec-title">
+  <form class="dlg" id="rec-form">
+    <h3 id="rec-title">Your recipe.</h3>
+    <label class="lbl">Name
+      <input class="input" id="rec-name" type="text" required maxlength="60" autocomplete="off">
+    </label>
+    <div class="two">
+      <label class="lbl">Base
+        <select class="input" id="rec-base"></select>
+      </label>
+      <label class="lbl">Glass
+        <input class="input" id="rec-glass" type="text" placeholder="Rocks" autocomplete="off">
+      </label>
+    </div>
+    <fieldset style="border:0; padding:0; margin:0">
+      <legend class="lbl" style="padding:0; margin-bottom:8px">Style</legend>
+      <div class="radios" id="rec-styles"></div>
+    </fieldset>
+    <div class="lbl" style="gap:10px">Ingredients
+      <div id="rec-ings" style="display:grid; gap:10px"></div>
+      <button class="btn sm" type="button" id="rec-add-ing" style="justify-self:start">Add ingredient</button>
+    </div>
+    <label class="lbl">Method
+      <textarea class="input" id="rec-method" rows="2" placeholder="Shake with ice and strain over fresh ice."></textarea>
+    </label>
+    <label class="lbl">Garnish
+      <input class="input" id="rec-garnish" type="text" placeholder="Lime wheel" autocomplete="off">
+    </label>
+    <div class="acts">
+      <button class="btn danger" type="button" id="rec-del" hidden>Delete</button>
+      <div><button class="btn" type="button" id="rec-cancel">Cancel</button><button class="btn primary" type="submit">Save recipe</button></div>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+/* ---------- catalog ---------- */
+const CATS = [['spirits','Spirits'],['liqueurs','Liqueurs'],['wine','Vermouth & wine'],['bitters','Bitters'],['syrups','Syrups & sweeteners'],['fresh','Fresh & juice'],['mixers','Mixers'],['other','Pantry']];
+const I = {};
+const def = (c, list) => list.forEach(([k,l,g]) => { I[k] = {k, l, c, g: g || []}; });
+def('spirits', [
+  ['vodka','Vodka'],['gin','Gin'],['tequila-blanco','Tequila blanco',['tequila']],['tequila-reposado','Tequila reposado',['tequila']],['tequila-anejo','Tequila añejo',['tequila']],['mezcal','Mezcal'],
+  ['rum-white','White rum',['rum']],['rum-aged','Aged / gold rum',['rum']],['rum-dark','Dark rum',['rum']],['rum-spiced','Spiced rum',['rum']],['cachaca','Cachaça'],
+  ['bourbon','Bourbon',['whiskey']],['rye','Rye whiskey',['whiskey']],['scotch-blended','Blended Scotch',['scotch','whiskey']],['scotch-islay','Islay Scotch',['scotch','whiskey']],['irish-whiskey','Irish whiskey',['whiskey']],['japanese-whisky','Japanese whisky',['whiskey']],
+  ['cognac','Cognac / brandy',['brandy']],['apple-brandy','Apple brandy / Calvados',['brandy']],['pisco','Pisco'],['kirsch','Kirschwasser'],['absinthe','Absinthe']
+]);
+def('liqueurs', [
+  ['triple-sec','Triple sec / Cointreau',['orange-liqueur']],['grand-marnier','Grand Marnier',['orange-liqueur']],['dry-curacao','Dry curaçao',['orange-liqueur']],['blue-curacao','Blue curaçao'],
+  ['campari','Campari'],['aperol','Aperol'],['amaro','Amaro (Nonino, Montenegro…)'],['fernet','Fernet-Branca'],['maraschino','Maraschino liqueur'],
+  ['chartreuse-green','Green Chartreuse'],['chartreuse-yellow','Yellow Chartreuse'],['benedictine','Bénédictine'],['st-germain','Elderflower liqueur'],
+  ['coffee-liqueur','Coffee liqueur'],['amaretto','Amaretto'],['licor-43','Licor 43'],['creme-de-cassis','Crème de cassis'],['creme-de-cacao','Crème de cacao'],
+  ['creme-de-menthe','Crème de menthe'],['creme-de-violette','Crème de violette'],['chambord','Raspberry liqueur'],['peach-schnapps','Peach schnapps'],
+  ['irish-cream','Irish cream'],['drambuie','Drambuie'],['falernum','Falernum'],['banana-liqueur','Crème de banane'],['peppermint-schnapps','Peppermint schnapps']
+]);
+def('wine', [['sweet-vermouth','Sweet vermouth'],['dry-vermouth','Dry vermouth'],['lillet-blanc','Lillet Blanc / Cocchi Americano'],['prosecco','Prosecco',['sparkling']],['champagne','Champagne / cava',['sparkling']],['sherry','Sherry (oloroso, amontillado…)']]);
+def('bitters', [['angostura','Angostura bitters'],['peychauds',"Peychaud's bitters"],['orange-bitters','Orange bitters']]);
+def('syrups', [['simple-syrup','Simple syrup'],['honey-syrup','Honey / honey syrup'],['agave','Agave nectar'],['grenadine','Grenadine'],['orgeat','Orgeat'],['ginger-syrup','Ginger syrup'],['passionfruit-syrup','Passion fruit syrup'],['raspberry-syrup','Raspberry syrup'],['cinnamon-syrup','Cinnamon syrup'],['sugar-cube','Sugar cubes']]);
+def('fresh', [['lime','Limes'],['lemon','Lemons'],['orange','Oranges / OJ'],['grapefruit','Grapefruit / juice'],['pineapple-juice','Pineapple juice'],['cranberry-juice','Cranberry juice'],['tomato-juice','Tomato juice'],['mint','Mint'],['basil','Basil'],['rosemary','Rosemary'],['cucumber','Cucumber'],['jalapeno','Jalapeños'],['egg-white','Eggs'],['cream','Heavy cream'],['coffee','Espresso / coffee'],['coconut-cream','Cream of coconut'],['parsley','Parsley'],['mascarpone','Mascarpone']]);
+def('mixers', [['soda','Soda water'],['tonic','Tonic water'],['ginger-beer','Ginger beer'],['ginger-ale','Ginger ale'],['cola','Cola'],['grapefruit-soda','Grapefruit soda']]);
+def('other', [['salt','Salt'],['worcestershire','Worcestershire'],['hot-sauce','Hot sauce'],['olives','Olives / olive brine'],['cherries','Cocktail cherries']]);
+const G = {tequila:'Tequila', rum:'Rum', whiskey:'Whiskey', scotch:'Scotch', 'orange-liqueur':'Orange liqueur', sparkling:'Sparkling wine', brandy:'Brandy'};
+const BASES = [['whiskey','Bourbon & whiskey'],['tequila','Tequila'],['mezcal','Mezcal'],['gin','Gin'],['rum','Rum & cachaça'],['vodka','Vodka'],['brandy','Brandy & pisco'],['aperitivo','Aperitivo & liqueur'],['zero','Zero proof']];
+const BASE_L = Object.fromEntries(BASES);
+const LEVELS = [['full','Full'],['half','Half'],['low','Low'],['out','Out']];
+
+const FLAV = {
+  gin:'Juniper, citrus peel and a little spice. It loves lemon and lime, bitter Italian aperitivi, elderflower, cucumber and tonic.',
+  vodka:'Clean and neutral, so it carries whatever you pair it with. Best with bold juice, coffee or ginger.',
+  'tequila-blanco':'Bright, peppery green agave. Made for lime, grapefruit, agave syrup and a little heat.',
+  'tequila-reposado':'Agave with a few months of oak: vanilla and caramel, still peppery. Great in stirred drinks and richer margaritas.',
+  'tequila-anejo':'Long-aged and oaky. Sip it, or swap it in anywhere you would use bourbon.',
+  mezcal:'Smoky roasted agave. A little goes a long way, and it loves Campari, Aperol, lime and Chartreuse.',
+  'rum-white':'Light and grassy-sweet. The base for daiquiris, mojitos and anything with lime.',
+  'rum-aged':'Toffee, banana and oak. Pairs with orgeat, citrus and warm spice.',
+  'rum-dark':'Molasses-rich and bold. Tiki drinks, ginger beer and pineapple.',
+  'rum-spiced':'Vanilla and baking spice. Keep it simple: cola, ginger beer, lime.',
+  cachaca:'Fresh sugarcane funk from Brazil. Lime and sugar, and that is the whole story.',
+  bourbon:'Sweet corn, vanilla and caramel. Friends with honey, lemon, bitter amaro and mint.',
+  rye:'Spicier and drier than bourbon. Shines in stirred drinks with vermouth and bitters.',
+  'scotch-blended':'Malty with a wisp of smoke. Honey, ginger and sweet vermouth suit it.',
+  'scotch-islay':'Peat smoke and sea salt. Use it as a float or a rinse to perfume a drink.',
+  'irish-whiskey':'Soft, light and a little fruity. Coffee, ginger and highballs.',
+  'japanese-whisky':'Delicate and polished. The classic move is a tall, ice-cold highball.',
+  cognac:'Grape brandy with dried fruit and oak. Orange liqueur and lemon are its classic partners.',
+  pisco:'Unaged grape brandy, floral and bright. Lime, egg white and bitters.',
+  campari:'Bitter orange and rhubarb. Stretch it with sweet vermouth, soda, bubbles or orange juice.',
+  aperol:'Campari’s gentler cousin: orange, rhubarb, light bitterness. Spritz it or shake it with citrus.',
+  'sweet-vermouth':'Fortified wine with herbs and spice. The glue in Manhattans and Negronis. Keep it in the fridge once open.',
+  'dry-vermouth':'Crisp and herbal. Martinis and lighter stirred drinks. Refrigerate after opening.',
+  'chartreuse-green':'Intense alpine herbs. A little goes far; pair it with gin, lime and maraschino.',
+  'st-germain':'Elderflower, pear and lychee. Lovely with bubbles, gin and grapefruit.',
+  amaro:'Bittersweet and herbal. Try it with bourbon and lemon, or neat after dinner.',
+  'triple-sec':'Bright orange. The backbone of margaritas, sidecars and cosmos.',
+  'coffee-liqueur':'Roasted coffee and sugar. Vodka, cream and espresso.',
+  maraschino:'Funky cherry-pit and almond, not sweet cherry. Use it by the quarter ounce.',
+  'lillet-blanc':'Honeyed, citrusy aperitif wine. Gin’s best friend after vermouth.',
+  kirsch:'Dry, clear cherry brandy with a bitter-almond edge. Not sweet. A barspoon brightens stirred drinks; it loves dry vermouth and raspberry.',
+  'banana-liqueur':'Ripe banana and vanilla. A half ounce turns a daiquiri tropical; it also plays well with aged rum, amaro and coffee.',
+  amaretto:'Toasted almond and apricot pit. Sour it with lemon, or stir it with Scotch or cognac.',
+  chambord:'Jammy raspberry. Drizzle it over crushed ice, shake it with pineapple, or add a splash to bubbles.'
+};
+
+/* ---------- recipes ---------- */
+const RAW = `Margarita|tequila|Rocks|Shake hard with ice and strain over fresh ice.|tequila 2 oz, orange-liqueur ¾ oz, lime 1 oz, agave ¼ oz?, salt rim?|Lime wheel
+Tommy's Margarita|tequila|Rocks|Shake with ice and strain over fresh ice.|tequila 2 oz, lime 1 oz, agave ½ oz|Lime wheel
+Spicy Margarita|tequila|Rocks|Muddle the jalapeño with the agave, add the rest, shake and double strain over ice.|tequila 2 oz, lime 1 oz, agave ¾ oz, jalapeno 2 slices, orange-liqueur ½ oz?|Jalapeño coin, Tajín rim
+Paloma|tequila|Highball|Build over ice in a salt-rimmed glass and top with grapefruit soda.|tequila 2 oz, lime ½ oz, grapefruit-soda 4 oz, salt rim?|Grapefruit wedge
+Ranch Water|tequila|Highball|Build over ice and top with sparkling water.|tequila 2 oz, lime ¾ oz, soda 4 oz|Lime wedge
+Tequila Sunrise|tequila|Highball|Build tequila and orange juice over ice, then sink the grenadine.|tequila 2 oz, orange 4 oz, grenadine ½ oz|Orange slice, cherry
+Oaxaca Old Fashioned|tequila|Rocks|Stir with ice and strain over a large cube.|tequila-reposado 1½ oz, mezcal ½ oz, agave 1 tsp, angostura 2 dashes|Flamed orange peel
+Mezcal Negroni|mezcal|Rocks|Stir with ice and strain over a large cube.|mezcal 1 oz, campari 1 oz, sweet-vermouth 1 oz|Orange peel
+Naked and Famous|mezcal|Coupe|Shake with ice and strain.|mezcal ¾ oz, chartreuse-yellow ¾ oz, aperol ¾ oz, lime ¾ oz|None
+Division Bell|mezcal|Coupe|Shake with ice and strain.|mezcal 1 oz, aperol ¾ oz, maraschino ½ oz, lime ¾ oz|Grapefruit peel
+Daiquiri|rum|Coupe|Shake hard with ice and strain.|rum-white 2 oz, lime 1 oz, simple-syrup ¾ oz|Lime wheel
+Hemingway Daiquiri|rum|Coupe|Shake with ice and strain.|rum-white 2 oz, maraschino ¼ oz, grapefruit ¾ oz, lime ½ oz|Lime wheel
+Mojito|rum|Highball|Gently muddle mint with syrup and lime, add rum and crushed ice, top with soda.|rum-white 2 oz, lime 1 oz, simple-syrup ¾ oz, mint 8 leaves, soda 2 oz|Mint sprig
+Dark 'n Stormy|rum|Highball|Build ginger beer over ice and float the rum.|rum-dark 2 oz, ginger-beer 4 oz, lime ½ oz?|Lime wedge
+Mai Tai|rum|Rocks|Shake with crushed ice and dump into the glass.|rum-aged/rum-dark 2 oz, orange-liqueur ½ oz, orgeat ½ oz, lime ¾ oz, simple-syrup ¼ oz?|Mint sprig, spent lime shell
+Piña Colada|rum|Hurricane|Blend with a cup of ice until smooth.|rum-white 2 oz, coconut-cream 1½ oz, pineapple-juice 1½ oz, lime ½ oz?|Pineapple wedge
+Painkiller|rum|Hurricane|Shake with crushed ice and pour it all in.|rum-dark 2 oz, pineapple-juice 4 oz, orange 1 oz, coconut-cream 1 oz|Grated nutmeg
+Hurricane|rum|Hurricane|Shake with ice and strain over fresh ice.|rum-white 1 oz, rum-dark 1 oz, passionfruit-syrup 1 oz, orange 1 oz, lime ½ oz, grenadine ¼ oz|Orange slice, cherry
+Jungle Bird|rum|Rocks|Shake with ice and strain over fresh ice.|rum-dark/rum-aged 1½ oz, campari ¾ oz, pineapple-juice 1½ oz, lime ½ oz, simple-syrup ½ oz|Pineapple wedge
+Blue Hawaiian|rum|Hurricane|Shake with ice and strain over crushed ice.|rum-white 1 oz, blue-curacao ¾ oz, pineapple-juice 2 oz, coconut-cream ¾ oz|Pineapple, cherry
+Planter's Punch|rum|Highball|Shake with ice, strain over fresh ice, top with soda.|rum-dark 1½ oz, lime ¾ oz, simple-syrup ½ oz, grenadine ¼ oz, angostura 2 dashes, soda 1 oz|Orange slice
+Cuba Libre|rum|Highball|Squeeze the lime over ice, add rum, top with cola.|rum 2 oz, cola 4 oz, lime ½ oz|Lime wedge
+El Presidente|rum|Coupe|Stir with ice and strain.|rum-white 1½ oz, dry-vermouth ¾ oz, orange-liqueur ½ oz, grenadine 1 tsp|Orange peel
+Caipirinha|rum|Rocks|Muddle lime wedges with syrup, add cachaça and crushed ice, stir.|cachaca 2 oz, lime ½ lime, simple-syrup ¾ oz|Lime wedge
+Old Fashioned|whiskey|Rocks|Stir with ice and strain over a large cube.|bourbon/rye 2 oz, simple-syrup/sugar-cube ¼ oz, angostura 2 dashes, orange-bitters 1 dash?|Orange peel
+Manhattan|whiskey|Coupe|Stir with ice and strain.|rye/bourbon 2 oz, sweet-vermouth 1 oz, angostura 2 dashes|Brandied cherry
+Boulevardier|whiskey|Rocks|Stir with ice and strain over a large cube.|bourbon/rye 1¼ oz, campari 1 oz, sweet-vermouth 1 oz|Orange peel
+Whiskey Sour|whiskey|Rocks|Dry shake if using egg, then shake with ice and strain.|bourbon/rye 2 oz, lemon ¾ oz, simple-syrup ¾ oz, egg-white 1 white?|Angostura drops
+Gold Rush|whiskey|Rocks|Shake with ice and strain over a large cube.|bourbon 2 oz, lemon ¾ oz, honey-syrup ¾ oz|Lemon peel
+Brown Derby|whiskey|Coupe|Shake with ice and strain.|bourbon 1½ oz, grapefruit 1 oz, honey-syrup ½ oz|Grapefruit peel
+Penicillin|whiskey|Rocks|Shake all but the Islay with ice, strain over fresh ice, float the Islay on top.|scotch-blended 2 oz, lemon ¾ oz, honey-syrup ⅜ oz, ginger-syrup ⅜ oz, scotch-islay ¼ oz?|Candied ginger
+Sazerac|whiskey|Rocks, no ice|Rinse a chilled glass with absinthe. Stir the rest with ice and strain in.|rye/cognac 2 oz, simple-syrup/sugar-cube ¼ oz, peychauds 3 dashes, absinthe rinse|Lemon peel, discarded
+Mint Julep|whiskey|Julep cup|Gently muddle mint with syrup, add bourbon, pack with crushed ice and stir.|bourbon 2½ oz, simple-syrup ½ oz, mint 8 leaves|Mint bouquet
+Whiskey Smash|whiskey|Rocks|Muddle lemon and mint with syrup, add bourbon, shake and strain over crushed ice.|bourbon 2 oz, lemon ¾ oz, simple-syrup ¾ oz, mint 6 leaves|Mint sprig
+Paper Plane|whiskey|Coupe|Shake with ice and strain.|bourbon ¾ oz, aperol ¾ oz, amaro ¾ oz, lemon ¾ oz|None
+Vieux Carré|whiskey|Rocks|Stir with ice and strain over a large cube.|rye ¾ oz, cognac ¾ oz, sweet-vermouth ¾ oz, benedictine 1 tsp, peychauds 2 dashes, angostura 2 dashes|Lemon peel
+Irish Coffee|whiskey|Mug|Stir whiskey and syrup into hot coffee, then float lightly whipped cream.|irish-whiskey 1½ oz, coffee 4 oz, simple-syrup ½ oz, cream 1 oz|None
+Rob Roy|whiskey|Coupe|Stir with ice and strain.|scotch-blended 2 oz, sweet-vermouth 1 oz, angostura 2 dashes|Cherry
+Rusty Nail|whiskey|Rocks|Stir over ice.|scotch-blended 1½ oz, drambuie ¾ oz|Lemon peel
+Godfather|whiskey|Rocks|Stir over ice.|scotch-blended 1½ oz, amaretto ¾ oz|None
+Whisky Highball|whiskey|Highball|Fill with ice, add whisky, top with very cold soda and stir once.|whiskey 2 oz, soda 4 oz|Lemon peel
+Horsefeather|whiskey|Highball|Build over ice and top with ginger beer.|whiskey 2 oz, ginger-beer 4 oz, angostura 3 dashes, lemon ¼ oz?|Lemon wedge
+Hot Toddy|whiskey|Mug|Stir into hot water until the honey dissolves.|whiskey/cognac/rum-aged 2 oz, honey-syrup ½ oz, lemon ½ oz|Lemon wheel, cinnamon stick
+Gin & Tonic|gin|Highball|Build over lots of ice and top with cold tonic.|gin 2 oz, tonic 4 oz|Lime wedge
+Martini|gin|Coupe|Stir with ice until very cold and strain.|gin/vodka 2½ oz, dry-vermouth ½ oz, orange-bitters 1 dash?|Lemon twist or olive
+Negroni|gin|Rocks|Stir with ice and strain over a large cube.|gin 1 oz, campari 1 oz, sweet-vermouth 1 oz|Orange peel
+Gimlet|gin|Coupe|Shake with ice and strain.|gin 2 oz, lime ¾ oz, simple-syrup ¾ oz|Lime wheel
+Tom Collins|gin|Collins|Shake with ice, strain over fresh ice, top with soda.|gin 2 oz, lemon 1 oz, simple-syrup ¾ oz, soda 2 oz|Lemon wheel, cherry
+Gin Rickey|gin|Highball|Squeeze the lime over ice, add gin, top with soda.|gin 2 oz, lime ½ oz, soda 4 oz|Lime wedge
+French 75|gin|Flute|Shake gin, lemon and syrup with ice, strain into a flute and top with bubbles.|gin 1 oz, lemon ½ oz, simple-syrup ½ oz, sparkling 3 oz|Lemon twist
+Bee's Knees|gin|Coupe|Shake with ice and strain.|gin 2 oz, lemon ¾ oz, honey-syrup ¾ oz|Lemon twist
+Southside|gin|Coupe|Shake with mint and ice, then double strain.|gin 2 oz, lime 1 oz, simple-syrup ¾ oz, mint 6 leaves|Mint leaf
+Eastside|gin|Coupe|Muddle the cucumber, shake everything with ice, double strain.|gin 2 oz, lime ¾ oz, simple-syrup ¾ oz, mint 6 leaves, cucumber 2 slices|Cucumber wheel
+Gin Basil Smash|gin|Rocks|Muddle the basil hard, shake with ice, double strain over fresh ice.|gin 2 oz, lemon ¾ oz, simple-syrup ¾ oz, basil 8 leaves|Basil sprig
+Aviation|gin|Coupe|Shake with ice and strain.|gin 2 oz, maraschino ½ oz, creme-de-violette ¼ oz, lemon ¾ oz|Cherry
+Last Word|gin|Coupe|Shake with ice and strain.|gin ¾ oz, chartreuse-green ¾ oz, maraschino ¾ oz, lime ¾ oz|Cherry
+Corpse Reviver No. 2|gin|Coupe|Rinse the glass with absinthe, shake the rest with ice and strain.|gin ¾ oz, orange-liqueur ¾ oz, lillet-blanc ¾ oz, lemon ¾ oz, absinthe rinse?|Orange peel
+Clover Club|gin|Coupe|Dry shake, then shake with ice and strain.|gin 1½ oz, dry-vermouth ½ oz, lemon ½ oz, raspberry-syrup ½ oz, egg-white 1 white|Raspberries
+Bramble|gin|Rocks|Shake gin, lemon and syrup, strain over crushed ice, then drizzle the liqueur on top.|gin 2 oz, lemon 1 oz, simple-syrup ½ oz, chambord/creme-de-cassis ½ oz|Blackberry, lemon
+Hanky Panky|gin|Coupe|Stir with ice and strain.|gin 1½ oz, sweet-vermouth 1½ oz, fernet 2 dashes|Orange peel
+Vesper|gin|Coupe|Shake or stir with ice and strain.|gin 3 oz, vodka 1 oz, lillet-blanc ½ oz|Lemon peel
+Greyhound|vodka|Highball|Build over ice. Salt the rim and it becomes a Salty Dog.|vodka/gin 2 oz, grapefruit 4 oz|Grapefruit wedge
+Moscow Mule|vodka|Mug|Build over ice and top with ginger beer.|vodka 2 oz, lime ½ oz, ginger-beer 4 oz|Lime wedge, mint
+Cosmopolitan|vodka|Coupe|Shake with ice and strain.|vodka 1½ oz, orange-liqueur ¾ oz, cranberry-juice 1 oz, lime ½ oz|Orange peel
+Espresso Martini|vodka|Coupe|Shake very hard with ice and strain for a thick crema.|vodka 2 oz, coffee-liqueur ½ oz, coffee 1 oz, simple-syrup ¼ oz?|Three coffee beans
+Lemon Drop|vodka|Coupe|Shake with ice and strain into a sugar-rimmed glass.|vodka 2 oz, orange-liqueur ½ oz, lemon 1 oz, simple-syrup ½ oz|Sugar rim, lemon twist
+Bloody Mary|vodka|Highball|Roll between tins with ice, then strain over fresh ice.|vodka 2 oz, tomato-juice 4 oz, lemon ½ oz, worcestershire 2 dashes, hot-sauce 2 dashes, salt pinch?|Celery, lemon, olives
+White Russian|vodka|Rocks|Build over ice and float the cream.|vodka 2 oz, coffee-liqueur 1 oz, cream 1 oz|None
+Sea Breeze|vodka|Highball|Build over ice.|vodka 1½ oz, cranberry-juice 3 oz, grapefruit 1½ oz|Lime wedge
+Sex on the Beach|vodka|Highball|Shake with ice and strain over fresh ice.|vodka 1½ oz, peach-schnapps ½ oz, orange 1½ oz, cranberry-juice 1½ oz|Orange slice
+Pornstar Martini|vodka|Coupe|Shake with ice and strain. Serve a little prosecco on the side.|vodka 1½ oz, passionfruit-syrup 1 oz, lime ½ oz, sparkling 2 oz?|Half a passion fruit
+Long Island Iced Tea|vodka|Highball|Shake all but the cola with ice, strain over ice, top with a splash of cola.|vodka ½ oz, gin ½ oz, rum-white ½ oz, tequila ½ oz, orange-liqueur ½ oz, lemon ¾ oz, simple-syrup ½ oz, cola 1 oz|Lemon wedge
+Sidecar|brandy|Coupe|Shake with ice and strain into a sugar-rimmed glass.|cognac 2 oz, orange-liqueur ¾ oz, lemon ¾ oz|Orange peel
+Brandy Alexander|brandy|Coupe|Shake with ice and strain.|cognac 1½ oz, creme-de-cacao 1 oz, cream 1 oz|Grated nutmeg
+Jack Rose|brandy|Coupe|Shake with ice and strain.|apple-brandy 2 oz, lemon ¾ oz, grenadine ½ oz|Apple slice
+Pisco Sour|brandy|Coupe|Dry shake, then shake with ice and strain.|pisco 2 oz, lime 1 oz, simple-syrup ¾ oz, egg-white 1 white, angostura 3 drops|Angostura drops
+Aperol Spritz|aperitivo|Wine glass|Build over ice: bubbles first, then Aperol, then a splash of soda.|aperol 2 oz, sparkling 3 oz, soda 1 oz|Orange slice
+Hugo Spritz|aperitivo|Wine glass|Build over ice with the mint and stir gently.|st-germain 1 oz, sparkling 3 oz, soda 2 oz, mint 6 leaves, lime ½ oz?|Lime wheel, mint
+Americano|aperitivo|Highball|Build over ice and top with soda.|campari 1½ oz, sweet-vermouth 1½ oz, soda 3 oz|Orange slice
+Negroni Sbagliato|aperitivo|Rocks|Build over ice and top with bubbles.|campari 1 oz, sweet-vermouth 1 oz, sparkling 1½ oz|Orange slice
+Garibaldi|aperitivo|Highball|Build over ice with the fluffiest orange juice you can manage.|campari 1½ oz, orange 4 oz|Orange wedge
+Kir Royale|aperitivo|Flute|Pour the cassis into a flute and top with bubbles.|creme-de-cassis ½ oz, sparkling 4 oz|Lemon twist
+Mimosa|aperitivo|Flute|Pour the orange juice and top with bubbles.|sparkling 3 oz, orange 3 oz|Orange twist
+Champagne Cocktail|aperitivo|Flute|Soak a sugar cube with bitters, drop it in the flute, top with bubbles.|sugar-cube 1 cube, angostura 3 dashes, sparkling 4 oz, cognac ½ oz?|Lemon twist
+Amaretto Sour|aperitivo|Rocks|Dry shake, then shake with ice and strain over fresh ice.|amaretto 1½ oz, bourbon ¾ oz?, lemon 1 oz, simple-syrup ¼ oz, egg-white 1 white?|Lemon peel, cherry
+Chartreuse Swizzle|aperitivo|Highball|Swizzle with crushed ice until the glass frosts.|chartreuse-green 1¼ oz, falernum ½ oz, pineapple-juice 1 oz, lime ¾ oz|Mint sprig
+Grasshopper|aperitivo|Coupe|Shake hard with ice and strain.|creme-de-menthe ¾ oz, creme-de-cacao ¾ oz, cream ¾ oz|Mint leaf
+Carajillo|aperitivo|Rocks|Shake with ice and strain over fresh ice.|licor-43 1½ oz, coffee 2 oz|None
+B-52|aperitivo|Shot glass|Layer over the back of a spoon: coffee liqueur, Irish cream, then Grand Marnier.|coffee-liqueur ½ oz, irish-cream ½ oz, grand-marnier ½ oz|None
+Banana Daiquiri|rum|Coupe|Shake hard with ice and strain.|rum-white/rum-aged 2 oz, banana-liqueur ½ oz, lime 1 oz, simple-syrup ¼ oz?|Lime wheel
+Rose|aperitivo|Coupe|Stir with ice and strain.|dry-vermouth 2 oz, kirsch 1 oz, raspberry-syrup/chambord 1 tsp|Cherry
+Black Manhattan|whiskey|Coupe|Stir with ice and strain.|rye/bourbon 2 oz, amaro 1 oz, angostura 1 dash, orange-bitters 1 dash?|Brandied cherry
+Amaro Spritz|aperitivo|Wine glass|Build over ice and top with soda.|amaro 2 oz, sparkling 3 oz, soda 1 oz|Orange slice
+Amaro Sour|aperitivo|Rocks|Dry shake if using egg, then shake with ice and strain over fresh ice.|amaro 1½ oz, lemon ¾ oz, simple-syrup ¼ oz, egg-white 1 white?|Lemon peel
+French Martini|vodka|Coupe|Shake hard with ice and strain.|vodka 1½ oz, chambord ½ oz, pineapple-juice 1½ oz|Lemon twist
+French Connection|brandy|Rocks|Stir over ice.|cognac 1½ oz, amaretto ¾ oz|None
+Nojito|zero|Highball|Muddle mint with lime and syrup, add crushed ice, top with soda.|lime 1 oz, simple-syrup ¾ oz, mint 8 leaves, soda 4 oz|Mint sprig
+Zero-Proof Paloma|zero|Highball|Shake grapefruit, lime and agave with ice, strain over ice, top with soda.|grapefruit 3 oz, lime ½ oz, agave ½ oz, soda 2 oz, salt rim?|Grapefruit wedge
+Cucumber Cooler|zero|Highball|Muddle the cucumber, shake with lime and syrup, strain over ice, top with soda.|cucumber 3 slices, lime ¾ oz, simple-syrup ¾ oz, soda 3 oz, mint 4 leaves?|Cucumber ribbon
+Shirley Temple|zero|Highball|Build over ice and stir once.|ginger-ale 6 oz, grenadine ½ oz, lime ¼ oz?|Cherries`;
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const BUILTIN = RAW.split('\n').map(line => {
+  const [n, base, glass, method, ings, garnish] = line.split('|');
+  const ing = ings.split(', ').map(s => {
+    s = s.trim(); const opt = s.endsWith('?'); if (opt) s = s.slice(0,-1);
+    const sp = s.indexOf(' '); const spec = s.slice(0, sp).replace(/\//g,'|'); const amt = s.slice(sp+1);
+    return {spec, amt, opt};
+  });
+  return {id: slug(n), n, base, glass, method, garnish: garnish === 'None' ? '' : garnish, ing};
+});
+
+const STYLES = [
+  ['strong','Spirit-forward','Stirred, boozy and sippable. For the Old Fashioned and Manhattan crowd.'],
+  ['sour','Bright & sour','Citrus-driven and balanced. The safe bet for most guests.'],
+  ['fruity','Light & fruity','Juicy and easy-drinking, not too boozy.'],
+  ['bubbly','Tall & bubbly','Highballs and spritzes. Refreshing and lower intensity.'],
+  ['bitter','Bitter & herbal','Campari, amaro, Chartreuse. For anyone who orders a Negroni.'],
+  ['tropical','Tropical','Rum, pineapple, coconut and passion fruit. Vacation in a glass.'],
+  ['smoky','Smoky','Mezcal and peaty Scotch, campfire in a glass.'],
+  ['spicy','Spicy & savory','Ginger, chile and a little heat.'],
+  ['creamy','Rich & dessert','Coffee, cream and liqueurs. After-dinner drinks.']
+];
+const STYLE_L = Object.fromEntries(STYLES.map(x => [x[0], x[1]]));
+const STY = Object.fromEntries(`margarita:sour|tommy-s-margarita:sour|spicy-margarita:sour spicy|paloma:bubbly fruity|ranch-water:bubbly|tequila-sunrise:fruity|oaxaca-old-fashioned:strong smoky|mezcal-negroni:bitter strong smoky|naked-and-famous:sour smoky bitter|division-bell:sour smoky bitter|daiquiri:sour|hemingway-daiquiri:sour fruity|mojito:bubbly sour|dark-n-stormy:bubbly spicy|mai-tai:tropical sour|pina-colada:tropical creamy|painkiller:tropical creamy|hurricane:tropical fruity|jungle-bird:tropical bitter|blue-hawaiian:tropical creamy|planter-s-punch:tropical fruity|cuba-libre:bubbly|el-presidente:strong|caipirinha:sour|old-fashioned:strong|manhattan:strong|boulevardier:strong bitter|whiskey-sour:sour|gold-rush:sour|brown-derby:sour fruity|penicillin:sour smoky spicy|sazerac:strong|mint-julep:strong|whiskey-smash:sour|paper-plane:sour bitter|vieux-carre:strong|irish-coffee:creamy|rob-roy:strong|rusty-nail:strong|godfather:strong|whisky-highball:bubbly|horsefeather:bubbly spicy|hot-toddy:sour spicy|gin-tonic:bubbly|martini:strong|negroni:bitter strong|gimlet:sour|tom-collins:bubbly sour|gin-rickey:bubbly|french-75:bubbly sour|bee-s-knees:sour|southside:sour|eastside:sour fruity|gin-basil-smash:sour|aviation:sour fruity|last-word:sour bitter|corpse-reviver-no-2:sour|clover-club:sour fruity|bramble:fruity sour|hanky-panky:strong bitter|vesper:strong|greyhound:fruity|moscow-mule:bubbly spicy|cosmopolitan:fruity sour|espresso-martini:creamy|lemon-drop:sour|bloody-mary:spicy|white-russian:creamy|sea-breeze:fruity|sex-on-the-beach:fruity|pornstar-martini:fruity tropical|long-island-iced-tea:sour|sidecar:sour|brandy-alexander:creamy|jack-rose:sour fruity|pisco-sour:sour|aperol-spritz:bubbly bitter|hugo-spritz:bubbly fruity|americano:bubbly bitter|negroni-sbagliato:bubbly bitter|garibaldi:fruity bitter|kir-royale:bubbly fruity|mimosa:bubbly fruity|champagne-cocktail:bubbly|amaretto-sour:sour|chartreuse-swizzle:tropical bitter|grasshopper:creamy|carajillo:creamy|b-52:creamy|banana-daiquiri:tropical sour|rose:strong fruity|black-manhattan:strong bitter|amaro-spritz:bubbly bitter|amaro-sour:sour bitter|french-martini:fruity|french-connection:strong|nojito:bubbly|zero-proof-paloma:bubbly fruity|cucumber-cooler:bubbly|shirley-temple:bubbly fruity`.split('|').map(x => { const [k, v] = x.split(':'); return [k, v.split(' ')]; }));
+BUILTIN.forEach(r => { r.styles = STY[r.id] || []; });
+function inferStyles(r){
+  const keys = (r.ing || []).flatMap(i => specAlts(i.spec)); const has = k => keys.includes(k); const out = [];
+  if (['soda','tonic','ginger-beer','ginger-ale','cola','grapefruit-soda','sparkling','prosecco','champagne'].some(has)) out.push('bubbly');
+  if (['cream','coconut-cream','irish-cream','coffee','creme-de-cacao','coffee-liqueur'].some(has)) out.push('creamy');
+  if (['campari','aperol','amaro','fernet','chartreuse-green'].some(has)) out.push('bitter');
+  if (['mezcal','scotch-islay'].some(has)) out.push('smoky');
+  if (['pineapple-juice','orgeat','passionfruit-syrup','banana-liqueur','falernum'].some(has)) out.push('tropical');
+  if (['jalapeno','hot-sauce','ginger-syrup'].some(has)) out.push('spicy');
+  if (['lime','lemon'].some(has) && !out.includes('bubbly')) out.push('sour');
+  if (!out.length) out.push(['orange','grapefruit','cranberry-juice','chambord','raspberry-syrup'].some(has) ? 'fruity' : 'strong');
+  return out.slice(0, 3);
+}
+function stylesOf(r){ const st = Array.isArray(r.styles) ? r.styles.filter(x => STYLE_L[x]) : []; return st.length ? st : inferStyles(r); }
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+function el(tag, props, ...kids){
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(props || {})){
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()){ if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const specAlts = spec => (spec || '').split('|').filter(Boolean);
+const keyLabel = k => I[k]?.l || G[k] || k;
+const specLabel = (spec, label) => spec ? specAlts(spec).map(keyLabel).join(' or ') : (label || '');
+const expand = spec => { const out = []; for (const k of specAlts(spec)){ if (I[k]) out.push(k); else for (const c of Object.values(I)) if (c.g.includes(k)) out.push(c.k); } return [...new Set(out)]; };
+const toastEl = $('#toast'); let toastT;
+function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 2600); }
+
+/* ---------- state ---------- */
+const S = {items: [], shopping: [], mine: [], fav: [], menu: [], servings: 1, ready: false, readOnly: false};
+const UI = {tab: 'shelf', filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
+
+function haveSet(){
+  const H = new Set();
+  for (const it of S.items){ if (it.level === 'out') continue; const c = I[it.key]; if (!c) continue; H.add(c.k); c.g.forEach(g => H.add(g)); }
+  return H;
+}
+const specOk = (spec, H) => specAlts(spec).some(k => H.has(k));
+function allRecipes(){
+  return BUILTIN.concat(S.mine.map(m => ({...m, id: 'mine-' + m.id, docId: m.id, mine: true, ing: Array.isArray(m.ing) ? m.ing : []})));
+}
+function evaluate(){
+  const H = haveSet();
+  const rs = allRecipes().map(r => {
+    const req = r.ing.filter(x => !x.opt && x.spec);
+    const missing = req.filter(x => !specOk(x.spec, H));
+    return {r, missing, H};
+  });
+  return {H, rs};
+}
+
+/* ---------- storage (revelrita.com: /api/bar, saved in Redis) ---------- */
+const COLS = {items: 'items', shopping: 'shopping', recipes: 'mine'};
+function setNote(t, link){
+  const n = $('#note'); n.replaceChildren();
+  if (t) n.append(t);
+  if (link) n.append(' ', el('a', {href: link.href, text: link.text}));
+  n.hidden = !t && !link;
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const sectionValue = s => s === 'prefs' ? {fav: S.fav} : s === 'menu' ? {ids: S.menu, servings: S.servings} : S[COLS[s]];
+const saving = {};
+function save(section){
+  if (S.readOnly) return;
+  const prev = saving[section] || Promise.resolve();
+  saving[section] = prev.then(async () => {
+    try {
+      const r = await fetch('/api/bar', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({section, value: sectionValue(section)})});
+      if (r.status === 401){ S.readOnly = true; applyReadOnly(); setNote('You’ve been logged out, so that change didn’t save.', {href: '/admin/login?next=/recipes', text: 'Log in again'}); return; }
+      if (!r.ok){ const d = await r.json().catch(() => ({})); toast(d.error || 'That didn’t save. Try again.'); }
+    } catch { toast('That didn’t save. Check your connection and try again.'); }
+  });
+}
+const ops = {
+  add(col, data){ S[COLS[col]].push({id: uid(), ...data}); renderAll(); save(col); },
+  update(col, id, patch){ const it = S[COLS[col]].find(x => x.id === id); if (it) Object.assign(it, patch); renderAll(); save(col); },
+  del(col, id){ S[COLS[col]] = S[COLS[col]].filter(x => x.id !== id); renderAll(); save(col); },
+  setFav(fav){ S.fav = fav; renderAll(); save('prefs'); },
+  setMenu(ids, servings){ S.menu = ids; S.servings = servings; renderAll(); save('menu'); }
+};
+function applyReadOnly(){ document.querySelectorAll('[data-write]').forEach(n => n.hidden = S.readOnly); renderAll(); }
+
+async function init(){
+  try {
+    const r = await fetch('/api/bar', {cache: 'no-store'});
+    const d = await r.json();
+    S.items = Array.isArray(d.items) ? d.items : [];
+    S.shopping = Array.isArray(d.shopping) ? d.shopping : [];
+    S.mine = Array.isArray(d.recipes) ? d.recipes : [];
+    S.fav = Array.isArray(d.prefs?.fav) ? d.prefs.fav : [];
+    S.menu = Array.isArray(d.menu?.ids) ? d.menu.ids : [];
+    S.servings = Number.isFinite(d.menu?.servings) ? Math.max(1, Math.min(50, d.menu.servings)) : 1;
+    S.readOnly = !d.canEdit;
+    if (d.stored === false) setNote('The bar’s database isn’t connected, so changes can’t be saved right now.');
+    else if (!d.canEdit) setNote('You’re looking at Helen’s bar.', {href: '/admin/login?next=/recipes', text: 'Log in to make changes'});
+    else setNote('');
+  } catch {
+    setNote('Your bar couldn’t load. Check your connection and reload the page.');
+    S.readOnly = true;
+  }
+  S.ready = true; applyReadOnly();
+}
+
+/* ---------- shelf ---------- */
+function addKey(key, extra){
+  const c = I[key]; if (!c) return;
+  const existing = S.items.find(x => x.key === key && !x.name);
+  if (existing && !extra){
+    if (existing.level !== 'full'){ ops.update('items', existing.id, {level: 'full'}); toast(c.l + ' is back to full.'); }
+    else toast(c.l + ' is already on the shelf.');
+    return;
+  }
+  ops.add('items', {key, name: '', level: 'full', note: '', at: Date.now(), ...(extra || {})});
+  toast('Added ' + ((extra && extra.name) || c.l) + '.');
+}
+function usesKey(r, key){
+  const c = I[key]; const ks = new Set([key, ...(c ? c.g : [])]);
+  return r.ing.some(x => specAlts(x.spec).some(k => ks.has(k)));
+}
+function renderShelf(E){
+  const box = $('#shelf-list'); box.replaceChildren();
+  if (!S.ready){ box.append(el('p', {class: 'loading', text: 'Pulling bottles off the shelf…'})); return; }
+  if (!S.items.length){
+    box.append(el('div', {class: 'empty'},
+      el('h3', {text: 'Your shelf is empty.'}),
+      el('p', {text: S.readOnly ? 'Nothing has been added yet.' : 'Start with the quick-add chips below: tap every bottle you have, then your fresh fruit and mixers. The Drinks tab fills in as you go.'})));
+    return;
+  }
+  const ready = E.rs.filter(x => !x.missing.length).map(x => x.r);
+  for (const [cid, cl] of CATS){
+    const its = S.items.filter(x => I[x.key]?.c === cid).sort((a,b) => (a.name || I[a.key].l).localeCompare(b.name || I[b.key].l));
+    if (!its.length) continue;
+    const cat = el('div', {class: 'cat'}, el('div', {class: 'cat-h'}, el('h3', {text: cl}), el('span', {text: its.length})));
+    for (const it of its){
+      const c = I[it.key]; const n = ready.filter(r => usesKey(r, it.key)).length;
+      const lvl = el('div', {class: 'lvl', role: 'group', 'aria-label': 'Level for ' + (it.name || c.l)},
+        LEVELS.map(([l, lab]) => el('button', {type: 'button', 'data-l': l, 'aria-pressed': String((it.level || 'full') === l), disabled: S.readOnly || null, text: lab,
+          onclick: () => { if (it.level !== l){ ops.update('items', it.id, {level: l}); if (l === 'out' || l === 'low') toast((it.name || c.l) + ' is on your shopping radar.'); } }})));
+      cat.append(el('div', {class: 'row' + (it.level === 'out' ? ' out' : '')},
+        el('div', {class: 'who'}, el('b', {text: it.name || c.l}), (it.name || it.note) ? el('small', {text: [it.name ? c.l : '', it.note].filter(Boolean).join(' · ')}) : null),
+        el('span', {class: 'makes', text: it.level === 'out' ? 'Out' : (n ? 'In ' + n + ' ready drink' + (n === 1 ? '' : 's') : 'No ready drinks yet')}),
+        lvl,
+        S.readOnly ? null : el('button', {type: 'button', class: 'iconbtn', text: 'Edit', 'aria-label': 'Edit ' + (it.name || c.l), onclick: () => openItem(it)})));
+    }
+    box.append(cat);
+  }
+}
+function renderQuick(){
+  const q = $('#quick'); q.replaceChildren();
+  const owned = new Set(S.items.filter(x => x.level !== 'out').map(x => x.key));
+  if (!S.items.length){ UI.openCats.add('spirits'); UI.openCats.add('liqueurs'); }
+  for (const [cid, cl] of CATS){
+    const ks = Object.values(I).filter(c => c.c === cid);
+    const missing = ks.filter(c => !owned.has(c.k));
+    const d = el('details', {open: UI.openCats.has(cid) || null},
+      el('summary', {}, cl, el('small', {text: missing.length ? missing.length + ' not on your shelf' : 'All here'})),
+      el('div', {class: 'chips'}, missing.length ? missing.map(c => el('button', {type: 'button', class: 'chip', onclick: () => addKey(c.k)}, el('span', {class: 'plus', 'aria-hidden': 'true', text: '+'}), c.l)) : el('span', {class: 'muted', text: 'You have every one of these.'})));
+    d.addEventListener('toggle', () => { d.open ? UI.openCats.add(cid) : UI.openCats.delete(cid); });
+    q.append(d);
+  }
+}
+/* search-to-add */
+const addQ = $('#add-q'), sugg = $('#add-sugg'); let suggIdx = -1, suggList = [];
+function norm(s){ return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function searchCatalog(q){
+  q = norm(q.trim()); if (!q) return [];
+  const words = q.split(/\s+/);
+  return Object.values(I).map(c => { const hay = norm(c.l + ' ' + c.k + ' ' + c.g.join(' ')); const ok = words.every(w => hay.includes(w)); return ok ? {c, s: norm(c.l).startsWith(q) ? 0 : 1} : null; }).filter(Boolean).sort((a,b) => a.s - b.s).slice(0, 8).map(x => x.c);
+}
+function showSugg(){
+  const q = addQ.value; suggList = searchCatalog(q); suggIdx = -1; sugg.replaceChildren();
+  if (!q.trim()){ sugg.hidden = true; return; }
+  if (!suggList.length){
+    sugg.append(el('button', {type: 'button', onclick: () => { openItem(null, {name: q.trim()}); }}, el('span', {text: 'Add “' + q.trim() + '” and pick its type'}), el('small', {text: 'Custom'})));
+  } else {
+    suggList.forEach((c, i) => sugg.append(el('button', {type: 'button', role: 'option', 'data-i': i, onclick: () => pickSugg(i)}, el('span', {text: c.l}), el('small', {text: (CATS.find(x => x[0] === c.c) || [])[1]}))));
+    sugg.append(el('button', {type: 'button', onclick: () => openItem(null, {name: q.trim()})}, el('span', {text: 'Add with a brand name…'}), el('small', {text: 'Details'})));
+  }
+  sugg.hidden = false;
+}
+function pickSugg(i){ const c = suggList[i]; if (!c) return; addKey(c.k); addQ.value = ''; sugg.hidden = true; addQ.focus(); }
+addQ.addEventListener('input', showSugg);
+addQ.addEventListener('keydown', e => {
+  const btns = [...sugg.querySelectorAll('button')];
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); if (!btns.length) return; suggIdx = (suggIdx + (e.key === 'ArrowDown' ? 1 : -1) + btns.length) % btns.length; btns.forEach((b, i) => b.classList.toggle('act', i === suggIdx)); }
+  else if (e.key === 'Enter'){ e.preventDefault(); if (suggIdx >= 0 && btns[suggIdx]) btns[suggIdx].click(); else if (suggList.length) pickSugg(0); else if (addQ.value.trim()) openItem(null, {name: addQ.value.trim()}); }
+  else if (e.key === 'Escape'){ sugg.hidden = true; }
+});
+document.addEventListener('click', e => { if (!e.target.closest('.addbox')) sugg.hidden = true; });
+$('#add-custom').addEventListener('click', () => openItem(null, {name: ''}));
+
+/* item dialog */
+const dItem = $('#dlg-item'); let editing = null, pendingDel = false;
+function typeOptions(sel, withGroups){
+  sel.replaceChildren();
+  if (withGroups){ sel.append(el('optgroup', {label: 'Any of a kind'}, Object.entries(G).map(([k,l]) => el('option', {value: k, text: 'Any ' + l.toLowerCase()})))); }
+  for (const [cid, cl] of CATS) sel.append(el('optgroup', {label: cl}, Object.values(I).filter(c => c.c === cid).map(c => el('option', {value: c.k, text: c.l}))));
+}
+typeOptions($('#item-type'), false);
+$('#item-level').append(...LEVELS.map(([l, lab]) => el('label', {}, el('input', {type: 'radio', name: 'lvl', value: l, id: 'lvl-' + l}), el('span', {text: lab}))));
+function openItem(it, pre){
+  editing = it; pendingDel = false; sugg.hidden = true;
+  $('#item-title').textContent = it ? 'Edit bottle.' : 'Add to the shelf.';
+  const guess = pre && pre.name ? searchCatalog(pre.name)[0] : null;
+  $('#item-type').value = it ? it.key : (guess ? guess.k : 'vodka');
+  $('#item-name').value = it ? (it.name || '') : (pre && pre.name && !(guess && norm(guess.l) === norm(pre.name)) ? pre.name : '');
+  $('#item-note').value = it ? (it.note || '') : '';
+  const lv = it ? (it.level || 'full') : 'full'; document.getElementById('lvl-' + lv).checked = true;
+  $('#item-del').hidden = !it; $('#item-del').textContent = 'Delete';
+  dItem.showModal(); $('#item-name').focus();
+}
+$('#item-cancel').addEventListener('click', () => dItem.close());
+$('#item-del').addEventListener('click', () => {
+  if (!editing) return;
+  if (!pendingDel){ pendingDel = true; $('#item-del').textContent = 'Tap again to delete'; return; }
+  ops.del('items', editing.id); toast('Removed ' + (editing.name || I[editing.key]?.l || 'it') + '.'); dItem.close();
+});
+$('#item-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const data = {key: $('#item-type').value, name: $('#item-name').value.trim().slice(0, 80), note: $('#item-note').value.trim().slice(0, 300), level: (document.querySelector('input[name=lvl]:checked') || {}).value || 'full'};
+  if (editing) { ops.update('items', editing.id, data); toast('Saved.'); }
+  else { ops.add('items', {...data, at: Date.now()}); toast('Added ' + (data.name || I[data.key].l) + '.'); addQ.value = ''; }
+  dItem.close();
+});
+
+/* ---------- drinks ---------- */
+let sample = null;
+$('#drink-q').addEventListener('input', e => { UI.q = e.target.value; renderDrinks(evaluate()); });
+const FILTERS = [['ready','Ready now', x => !x.missing.length], ['one','One away', x => x.missing.length === 1], ['two','Two away', x => x.missing.length === 2], ['all','All', () => true], ['fav','Favorites', x => S.fav.includes(x.r.id)], ['mine','Your recipes', x => x.r.mine]];
+function onList(spec, label){ const lab = specLabel(spec, label); return S.shopping.some(s => !s.done && (s.spec ? s.spec === spec : norm(s.label) === norm(lab))); }
+function addToList(spec, label){
+  const lab = specLabel(spec, label);
+  if (onList(spec, label)){ toast(lab + ' is already on your list.'); return; }
+  ops.add('shopping', {label: lab, spec: spec || '', done: false, at: Date.now()}); toast('Added ' + lab + ' to your list.');
+}
+function drinkCard(x){
+  const {r, missing, H} = x; const n = missing.length;
+  const pill = r.mine && !r.ing.some(i => i.spec) ? el('span', {class: 'pill mine', text: 'Yours'}) :
+    el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : n === 1 ? 'Need 1' : 'Need ' + n});
+  const fav = S.fav.includes(r.id);
+  return el('article', {class: 'card'},
+    el('div', {class: 'card-top'},
+      el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, ...stylesOf(r).map(x => STYLE_L[x]), r.mine ? (r.source === 'claude' ? 'Invented' : r.source === 'suggested' ? 'Suggested' : 'Your recipe') : ''].filter(Boolean).join(' · ')})),
+      el('div', {style: 'display:flex; gap:6px; align-items:center'}, pill,
+        S.readOnly ? null : el('button', {type: 'button', class: 'star', 'aria-pressed': String(fav), 'aria-label': (fav ? 'Remove ' : 'Save ') + r.n + (fav ? ' from' : ' to') + ' favorites', text: fav ? '★' : '☆',
+          onclick: () => ops.setFav(fav ? S.fav.filter(f => f !== r.id) : S.fav.concat(r.id))}))),
+    r.desc ? el('p', {class: 'desc', text: r.desc}) : null,
+    el('ul', {class: 'ings'}, r.ing.map(i => {
+      const ok = i.spec ? specOk(i.spec, H) : true; const lab = specLabel(i.spec, i.label);
+      const ol = !ok && i.spec ? onList(i.spec) : false;
+      return el('li', {class: (ok ? '' : 'miss') + (i.opt ? ' opt' : '') + (i.spec ? '' : ' untracked')},
+        el('span', {class: 'amt', text: i.amt || ''}), el('span', {class: 'nm', text: lab}),
+        (!ok && i.spec && !S.readOnly) ? el('button', {type: 'button', class: 'mini' + (ol ? ' done' : ''), text: ol ? 'On list' : '+ List', disabled: ol || null, 'aria-label': 'Add ' + lab + ' to shopping list', onclick: () => addToList(i.spec)}) : el('span'));
+    })),
+    r.method ? el('p', {class: 'method', text: r.method}) : null,
+    r.garnish ? el('p', {class: 'garnish', text: 'Garnish: ' + r.garnish}) : null,
+    (S.readOnly || String(r.id).startsWith('preview')) ? null : el('div', {class: 'card-foot'},
+      el('button', {type: 'button', class: 'mini' + (S.menu.includes(r.id) ? ' on' : ''), 'aria-pressed': String(S.menu.includes(r.id)), text: S.menu.includes(r.id) ? 'On the menu' : '+ Menu', onclick: () => toggleMenu(r.id)}),
+      r.mine ? el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)}) : null));
+}
+function renderDrinks(E){
+  const counts = Object.fromEntries(FILTERS.map(([k,,f]) => [k, E.rs.filter(f).length]));
+  if (!UI.filter && S.ready) UI.filter = counts.ready ? 'ready' : 'all';
+  const cur = UI.filter || 'all';
+  const fbox = $('#drink-filters'); fbox.replaceChildren(...FILTERS.filter(([k]) => k !== 'mine' || counts.mine).filter(([k]) => k !== 'fav' || counts.fav || cur === 'fav').map(([k, l]) =>
+    el('button', {type: 'button', class: 'chip' + (cur === k ? ' on' : ''), 'aria-pressed': String(cur === k), onclick: () => { UI.filter = k; renderDrinks(evaluate()); }}, l, el('span', {class: 'n', text: counts[k]}))));
+  const f = (FILTERS.find(x => x[0] === cur) || FILTERS[3])[2];
+  const q = norm(UI.q.trim());
+  const pool = E.rs.filter(f).filter(x => !q || norm(x.r.n + ' ' + x.r.ing.map(i => specLabel(i.spec, i.label)).join(' ')).includes(q));
+  const inStyle = x => !UI.style || stylesOf(x.r).includes(UI.style);
+  const inBase = x => !UI.base || x.r.base === UI.base;
+  const chip = (label, on, n, onclick) => el('button', {type: 'button', class: 'chip' + (on ? ' on' : ''), 'aria-pressed': String(on), disabled: (!on && n === 0) || null, onclick}, label, el('span', {class: 'n', text: n}));
+  const sp = pool.filter(inBase);
+  $('#style-chips').replaceChildren(chip('Any style', !UI.style, sp.length, () => { UI.style = ''; renderDrinks(evaluate()); }),
+    ...STYLES.map(([k, l]) => chip(l, UI.style === k, sp.filter(x => stylesOf(x.r).includes(k)).length, () => { UI.style = UI.style === k ? '' : k; renderDrinks(evaluate()); })));
+  $('#style-desc').textContent = UI.style ? STYLES.find(x => x[0] === UI.style)[2] : 'Pick what your guest likes and the list narrows to match.';
+  const bp = pool.filter(inStyle);
+  $('#base-chips').replaceChildren(chip('All spirits', !UI.base, bp.length, () => { UI.base = ''; renderDrinks(evaluate()); }),
+    ...BASES.map(([k, l]) => chip(l, UI.base === k, bp.filter(x => x.r.base === k).length, () => { UI.base = UI.base === k ? '' : k; renderDrinks(evaluate()); })));
+  const list = pool.filter(inStyle).filter(inBase).sort((a,b) => a.missing.length - b.missing.length || a.r.n.localeCompare(b.r.n));
+  const box = $('#drink-list'); box.replaceChildren();
+  if (!list.length){
+    const msg = cur === 'ready' && !counts.ready ? 'Nothing is fully stocked yet. Try “One away” to see what a single bottle would unlock.' : cur === 'fav' ? 'Tap the star on any drink to keep it here.' : 'Nothing matches that combination. Try “All” above, or loosen the style or spirit.';
+    box.append(el('p', {class: 'muted', text: msg}));
+    return;
+  }
+  for (const [bk, bl] of BASES){
+    const xs = list.filter(x => x.r.base === bk); if (!xs.length) continue;
+    const rd = xs.filter(x => !x.missing.length).length;
+    box.append(el('section', {class: 'spirit-sec', 'aria-label': bl},
+      el('div', {class: 'cat-h'}, el('h3', {text: bl}), el('span', {text: xs.length + ' drink' + (xs.length === 1 ? '' : 's') + (cur !== 'ready' && rd ? ' · ' + rd + ' ready' : '')})),
+      el('div', {class: 'grid'}, xs.map(drinkCard))));
+  }
+}
+
+/* ideas: paste, suggest, invent */
+const CATALOG_TXT = Object.values(I).map(c => c.k + ': ' + c.l).join('\n') + '\n' + Object.entries(G).map(([k,l]) => k + ': any ' + l.toLowerCase()).join('\n');
+const SCHEMA_TXT = `{"name":"drink name","description":"one sentence on how it tastes","base":"one of ${BASES.map(b => b[0]).join(', ')}","glass":"glass","method":"one or two sentences","garnish":"garnish or empty","styles":["1 to 3 of: ${STYLES.map(x => x[0]).join(', ')}"],"ingredients":[{"key":"catalog key, or null if nothing fits","label":"ingredient as written","amount":"e.g. 1 1/2 oz or 2 dashes","optional":false}]}`;
+function cleanRecipe(res, source){
+  if (!res || typeof res.name !== 'string' || !Array.isArray(res.ingredients)) return null;
+  const ing = res.ingredients.slice(0, 12).map(i => {
+    if (!i || typeof i !== 'object') return null;
+    const key = typeof i.key === 'string' && (I[i.key] || G[i.key]) ? i.key : '';
+    const label = String(i.label || '').slice(0, 60);
+    if (!key && !label) return null;
+    return {spec: key, label: key ? '' : label, amt: String(i.amount || '').slice(0, 24), opt: !!i.optional};
+  }).filter(Boolean);
+  if (!ing.length) return null;
+  return {n: res.name.slice(0, 60), desc: String(res.description || '').slice(0, 240), base: BASE_L[res.base] ? res.base : 'aperitivo', glass: String(res.glass || '').slice(0, 40), method: String(res.method || '').slice(0, 600), garnish: String(res.garnish || '').slice(0, 80), styles: Array.isArray(res.styles) ? res.styles.filter(x => STYLE_L[x]).slice(0, 3) : [], ing, source};
+}
+let previewN = 0;
+function previewCard(r){
+  const H = haveSet();
+  const missing = r.ing.filter(x => !x.opt && x.spec && !specOk(x.spec, H));
+  const card = drinkCard({r: {...r, id: 'preview-' + (++previewN)}, missing, H});
+  card.querySelector('.star')?.remove();
+  const dup = allRecipes().find(x => norm(x.n) === norm(r.n));
+  const foot = el('div', {class: 'card-foot'});
+  if (dup) foot.append(el('span', {class: 'muted', style: 'font-size:14px', text: 'Already in your book as ' + dup.n + '. '}),
+    el('button', {type: 'button', class: 'mini', text: 'Show it', onclick: () => { UI.filter = 'all'; UI.q = dup.n; $('#drink-q').value = dup.n; renderDrinks(evaluate()); $('#drink-list').scrollIntoView({behavior: 'smooth', block: 'start'}); }}));
+  else if (!S.readOnly){
+    const save = el('button', {type: 'button', class: 'btn sm dark', text: 'Save to your recipes', onclick: async () => {
+      save.disabled = true; save.textContent = 'Saved';
+      await ops.add('recipes', {n: r.n, desc: r.desc, base: r.base, glass: r.glass, method: r.method, garnish: r.garnish, styles: r.styles || [], ing: r.ing, source: r.source, at: Date.now()});
+      toast('Saved ' + r.n + '. Find it under “Your recipes”.');
+    }});
+    foot.append(save, el('button', {type: 'button', class: 'btn sm', text: 'Edit first', onclick: () => openRecipe(null, r)}));
+  }
+  card.append(foot);
+  return card;
+}
+async function runIdea(kind){
+  const out = $('#invent-out');
+  if (!sample) return;
+  const txt = $('#idea-text').value.trim().slice(0, 3000);
+  if (kind === 'parse' && !txt){ out.replaceChildren(el('p', {text: 'Paste a recipe or type a drink name first.'})); $('#idea-text').focus(); return; }
+  const owned = [...new Set(S.items.filter(x => x.level !== 'out').map(x => x.key))].filter(k => I[k]);
+  if (kind !== 'parse' && owned.length < 3){ out.replaceChildren(el('p', {text: 'Add a few bottles to your shelf first.'})); return; }
+  const shelf = owned.map(k => k + ': ' + I[k].l + (S.items.some(x => x.key === k && x.level === 'low') ? ' (running low)' : '')).join('\n');
+  const names = allRecipes().map(r => r.n).join(', ');
+  const ask = txt ? 'They asked for: ' + txt + '\n\n' : '';
+  let prompt;
+  if (kind === 'parse') prompt = `Turn the text below into ONE structured cocktail recipe. If it is only a drink name or a description of a known drink, use the best-known standard spec for it. Map each ingredient to a key from the catalog when one fits (use a group key such as "tequila" or "orange-liqueur" when any style works); otherwise use null and keep the label. Use US ounces where possible. Keep the drink's real name.\n\nCatalog (key: name):\n${CATALOG_TXT}\n\nText:\n"""\n${txt}\n"""\n\nReturn ONLY JSON in this shape:\n${SCHEMA_TXT}`;
+  else if (kind === 'suggest') prompt = `You are a craft cocktail bartender. Suggest 3 real, established cocktails (classics, modern classics or well-known bar recipes) this person should try next. Strongly favor drinks they can make right now from their shelf, or with one easy purchase. Do NOT suggest any drink already in their book: ${names}.\n\nTheir shelf (key: name):\n${shelf}\n\n${ask}Catalog of keys for mapping ingredients:\n${CATALOG_TXT}\n\nReturn ONLY a JSON array of exactly 3 objects, each in this shape:\n${SCHEMA_TXT}`;
+  else prompt = `You are a craft cocktail bartender inventing ONE original cocktail. Use only ingredients from this shelf (ice and water are free). Use a balanced, proven structure (sour, stirred, highball, spritz) with a twist; do not restate a famous classic, and do not reuse any of these names: ${names}.\n\nShelf (key: name):\n${shelf}\n\n${ask}Return ONLY JSON in this shape, with every key taken from the shelf:\n${SCHEMA_TXT}`;
+  const btns = ['#idea-parse', '#idea-suggest', '#idea-invent'].map(s => $(s));
+  btns.forEach(b => b.disabled = true);
+  out.replaceChildren(el('p', {text: kind === 'parse' ? 'Reading the recipe…' : kind === 'suggest' ? 'Flipping through the recipe books…' : 'Mixing ideas…'}));
+  try {
+    const res = await sample.json(prompt, {modelTier: 'default', cache: false});
+    const src = kind === 'invent' ? 'claude' : kind === 'suggest' ? 'suggested' : 'mine';
+    const list = (Array.isArray(res) ? res : [res]).slice(0, 3).map(r => cleanRecipe(r, src)).filter(Boolean);
+    if (!list.length) throw {code: 'bad'};
+    out.replaceChildren(...list.map(previewCard));
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'not_granted'){ $('#invent').hidden = true; return; }
+    out.replaceChildren(el('p', {text: code === 'rate_limited' ? 'Too many requests at once. Give it a minute and try again.' : kind === 'parse' ? 'I couldn’t read that as a recipe. Try pasting just the ingredients and amounts.' : 'That didn’t come together. Try again, or change the request.'}));
+  } finally { btns.forEach(b => b.disabled = false); }
+}
+$('#idea-parse').addEventListener('click', () => runIdea('parse'));
+$('#idea-suggest').addEventListener('click', () => runIdea('suggest'));
+$('#idea-invent').addEventListener('click', () => runIdea('invent'));
+
+/* party menu */
+function toggleMenu(id){
+  const on = S.menu.includes(id);
+  ops.setMenu(on ? S.menu.filter(x => x !== id) : S.menu.concat(id), S.servings);
+  toast(on ? 'Taken off the menu.' : 'Added to tonight’s menu.');
+}
+const FR = {'¼': .25, '½': .5, '¾': .75, '⅓': 1/3, '⅔': 2/3, '⅛': .125, '⅜': .375, '⅝': .625, '⅞': .875};
+function parseAmt(s){
+  s = String(s || '').trim(); let m;
+  if ((m = s.match(/^(\d+(?:\.\d+)?)\s+(\d+)\/(\d+)\s*(.*)$/))) return {n: +m[1] + m[2] / m[3], u: m[4]};
+  if ((m = s.match(/^(\d+)\/(\d+)\s*(.*)$/))) return {n: m[1] / m[2], u: m[3]};
+  if ((m = s.match(/^(\d+(?:\.\d+)?)?\s*([¼½¾⅓⅔⅛⅜⅝⅞])?\s*(.*)$/)) && (m[1] || m[2])) return {n: (m[1] ? +m[1] : 0) + (m[2] ? FR[m[2]] : 0), u: m[3]};
+  return null;
+}
+function fmtN(x){
+  let w = Math.floor(x + 1e-9), q = Math.round((x - w) * 4) / 4;
+  if (q === 1){ w++; q = 0; }
+  const fs = q === .25 ? '¼' : q === .5 ? '½' : q === .75 ? '¾' : '';
+  return (w || !fs ? String(w) : '') + fs;
+}
+const PLURAL = {dash: 'dashes', white: 'whites', cube: 'cubes', drop: 'drops', slice: 'slices', leaf: 'leaves', lime: 'limes', sprig: 'sprigs'};
+function scaleAmt(a, k){
+  if (k === 1) return a || '';
+  const p = parseAmt(a); if (!p) return a || '';
+  const n = p.n * k; let u = p.u.trim();
+  if (/^oz\b/i.test(u) || (/^tsp\b/i.test(u) && n >= 6)){
+    const oz = /^tsp/i.test(u) ? n / 6 : n;
+    return fmtN(oz) + ' oz · ' + Math.round(oz * 29.57 / 5) * 5 + ' ml';
+  }
+  const w = u.split(' ')[0]; if (PLURAL[w] && n > 1) u = PLURAL[w] + u.slice(w.length);
+  return fmtN(n) + (u ? ' ' + u : '');
+}
+function menuCard(x, k){
+  const {r, missing, H} = x; const n = missing.length;
+  return el('article', {class: 'card menu-card'},
+    el('div', {class: 'card-top'},
+      el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, k > 1 ? 'Makes ' + k : ''].filter(Boolean).join(' · ')})),
+      el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})),
+    el('ul', {class: 'ings'}, r.ing.map(i => {
+      const ok = i.spec ? specOk(i.spec, H) : true;
+      return el('li', {class: (ok ? '' : 'miss') + (i.opt ? ' opt' : '') + (i.spec ? '' : ' untracked')},
+        el('span', {class: 'amt', text: scaleAmt(i.amt, k)}), el('span', {class: 'nm', text: specLabel(i.spec, i.label)}));
+    })),
+    r.method ? el('p', {class: 'method', text: r.method + (k > 2 && /shake/i.test(r.method) ? ' Shake two at a time.' : '')}) : null,
+    r.garnish ? el('p', {class: 'garnish', text: 'Garnish: ' + r.garnish}) : null,
+    S.readOnly ? null : el('div', {class: 'card-foot'}, el('button', {type: 'button', class: 'mini', text: 'Take off menu', onclick: () => toggleMenu(r.id)})));
+}
+function renderMenu(E){
+  const out = $('#menu-out'); out.replaceChildren();
+  $('#srv').textContent = S.servings;
+  const byId = new Map(E.rs.map(x => [x.r.id, x]));
+  const xs = S.menu.map(id => byId.get(id)).filter(Boolean);
+  if (!S.ready){ out.append(el('p', {class: 'loading', text: 'Setting the bar…'})); return; }
+  if (!xs.length){
+    out.append(el('div', {class: 'empty'},
+      el('h3', {text: 'No drinks on the menu yet.'}),
+      el('p', {text: 'Head to Drinks, tap “+ Menu” on the ones you want to serve, and they line up here with scaled specs and one prep list.'}),
+      el('p', {}, el('button', {type: 'button', class: 'btn dark', text: 'Pick from what’s ready', onclick: () => { UI.filter = 'ready'; go('drinks'); }}))));
+    return;
+  }
+  const k = S.servings;
+  const agg = new Map();
+  for (const x of xs) for (const i of x.r.ing){
+    if (i.opt) continue;
+    const lab = specLabel(i.spec, i.label); const key = i.spec || 'l:' + norm(lab);
+    let a = agg.get(key); if (!a){ a = {lab, spec: i.spec, oz: 0, units: new Map(), misc: new Set()}; agg.set(key, a); }
+    const p = parseAmt(i.amt);
+    if (p && /^oz\b/i.test(p.u)) a.oz += p.n * k;
+    else if (p && /^tsp\b/i.test(p.u)) a.oz += p.n * k / 6;
+    else if (p){ const u = p.u.trim(); a.units.set(u, (a.units.get(u) || 0) + p.n * k); }
+    else if (i.amt) a.misc.add(i.amt);
+  }
+  const missingSpecs = new Set(xs.flatMap(x => x.missing.map(m => m.spec)));
+  const ul = el('ul');
+  [...agg.values()].sort((a, b) => b.oz - a.oz || a.lab.localeCompare(b.lab)).forEach(a => {
+    const parts = [];
+    if (a.oz) parts.push(fmtN(a.oz) + ' oz');
+    for (const [u, n] of a.units) parts.push(scaleAmt(fmtN(n) + (u ? ' ' + u : ''), 1));
+    parts.push(...a.misc);
+    let hint = '';
+    if (a.spec === 'lime' && a.oz) hint = ' (≈' + Math.ceil(a.oz) + ' limes)';
+    if (a.spec === 'lemon' && a.oz) hint = ' (≈' + Math.ceil(a.oz / 1.25) + ' lemons)';
+    if (a.oz >= 25) hint += ' · ' + (a.oz / 25.4).toFixed(1) + ' bottles';
+    ul.append(el('li', {class: a.spec && missingSpecs.has(a.spec) ? 'need' : ''}, el('span', {text: a.lab}), el('span', {text: parts.join(' + ') + hint})));
+  });
+  const prep = el('div', {class: 'prep'},
+    el('h3', {text: 'Prep list.'}),
+    el('p', {style: 'margin:0; font-size:15px', text: 'Everything you need for ' + xs.length + ' drink' + (xs.length === 1 ? '' : 's') + (k > 1 ? ', ' + k + ' of each.' : ', one of each.') + ' Juice citrus the day of.'}),
+    ul);
+  if (missingSpecs.size && !S.readOnly) prep.append(el('div', {}, el('button', {type: 'button', class: 'btn sm dark', text: 'Add what’s missing to the shopping list', onclick: () => {
+    let n = 0; for (const sp of missingSpecs){ if (!onList(sp)){ ops.add('shopping', {label: specLabel(sp), spec: sp, done: false, at: Date.now()}); n++; } }
+    toast(n ? 'Added ' + n + ' to your list.' : 'It’s all on your list already.');
+  }})));
+  out.append(el('div', {class: 'menu-wrap'}, el('div', {class: 'menu-grid'}, xs.map(x => menuCard(x, k))), prep));
+}
+let srvT;
+function setServings(v){
+  v = Math.max(1, Math.min(50, v)); if (v === S.servings) return;
+  S.servings = v; renderAll(); clearTimeout(srvT);
+  srvT = setTimeout(() => save('menu'), 700);
+}
+$('#srv-minus').addEventListener('click', () => setServings(S.servings - 1));
+$('#srv-plus').addEventListener('click', () => setServings(S.servings + 1));
+$('#menu-clear').addEventListener('click', () => { if (S.menu.length){ ops.setMenu([], S.servings); toast('Menu cleared.'); } });
+
+/* recipe dialog */
+const dRec = $('#dlg-recipe'); let editingRec = null, pendingRecDel = false;
+$('#rec-base').append(...BASES.map(([k,l]) => el('option', {value: k, text: l})));
+$('#rec-styles').append(...STYLES.map(([k,l]) => el('label', {}, el('input', {type: 'checkbox', value: k, id: 'sty-' + k}), el('span', {text: l}))));
+function ingRow(i){
+  const sel = el('select', {class: 'input', 'aria-label': 'Ingredient'}); typeOptions(sel, true);
+  sel.prepend(el('option', {value: '', text: 'Something else (type it)'}));
+  sel.value = i && i.spec ? specAlts(i.spec)[0] : (i && i.label ? '' : 'lime');
+  const amt = el('input', {class: 'input', type: 'text', placeholder: '1 oz', value: (i && i.amt) || '', 'aria-label': 'Amount'});
+  const other = el('input', {class: 'input other', type: 'text', placeholder: 'e.g. Hibiscus syrup', value: (i && i.label && !i.spec) ? i.label : '', 'aria-label': 'Ingredient name'});
+  const opt = el('input', {type: 'checkbox'}); opt.checked = !!(i && i.opt);
+  const row = el('div', {class: 'ingrow'}, amt, sel, el('button', {type: 'button', class: 'x', 'aria-label': 'Remove ingredient', text: '×', onclick: () => row.remove()}), other, el('label', {}, opt, 'Optional'));
+  const sync = () => { other.hidden = sel.value !== ''; }; sel.addEventListener('change', sync); sync();
+  row._get = () => { const spec = sel.value; const label = spec ? '' : other.value.trim(); if (!spec && !label) return null; return {spec, label: label.slice(0, 60), amt: amt.value.trim().slice(0, 24), opt: opt.checked}; };
+  return row;
+}
+function openRecipe(r, pre){
+  editingRec = r && r.mine ? r : null; pendingRecDel = false;
+  const src = r || pre || {};
+  $('#rec-title').textContent = editingRec ? 'Edit recipe.' : 'Your recipe.';
+  $('#rec-name').value = src.n || ''; $('#rec-base').value = src.base || 'gin'; $('#rec-glass').value = src.glass || '';
+  $('#rec-method').value = src.method || ''; $('#rec-garnish').value = src.garnish || '';
+  const st = src.ing ? stylesOf(src) : []; STYLES.forEach(([k]) => { document.getElementById('sty-' + k).checked = st.includes(k); });
+  const box = $('#rec-ings'); box.replaceChildren(...((src.ing && src.ing.length) ? src.ing : [null, null, null]).map(ingRow));
+  $('#rec-del').hidden = !editingRec; $('#rec-del').textContent = 'Delete';
+  dRec._source = (pre && pre.source) || (editingRec && editingRec.source) || 'mine'; dRec._desc = src.desc || '';
+  dRec.showModal(); $('#rec-name').focus();
+}
+$('#new-recipe').addEventListener('click', () => openRecipe(null));
+$('#rec-add-ing').addEventListener('click', () => { const row = ingRow(null); $('#rec-ings').append(row); row.querySelector('input').focus(); });
+$('#rec-cancel').addEventListener('click', () => dRec.close());
+$('#rec-del').addEventListener('click', () => {
+  if (!editingRec) return;
+  if (!pendingRecDel){ pendingRecDel = true; $('#rec-del').textContent = 'Tap again to delete'; return; }
+  ops.del('recipes', editingRec.docId); toast('Deleted ' + editingRec.n + '.'); dRec.close();
+});
+$('#rec-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const ing = [...$('#rec-ings').children].map(r => r._get()).filter(Boolean);
+  if (!ing.length){ toast('Add at least one ingredient.'); return; }
+  const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ing, source: dRec._source || 'mine', desc: dRec._desc || '', styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
+  if (editingRec) ops.update('recipes', editingRec.docId, data); else ops.add('recipes', {...data, at: Date.now()});
+  toast('Saved ' + data.n + '.'); dRec.close();
+  if (!editingRec){ UI.filter = 'mine'; }
+});
+
+/* ---------- shopping ---------- */
+function bestBuys(E){
+  const owned = new Set(S.items.filter(x => x.level !== 'out').map(x => x.key));
+  const unlock = new Map(), closer = new Map();
+  for (const x of E.rs){
+    if (x.missing.length === 0 || x.missing.length > 2) continue;
+    const cands = new Set();
+    for (const m of x.missing) for (const k of expand(m.spec)) if (!owned.has(k)) cands.add(k);
+    for (const k of cands){
+      const H2 = new Set(E.H); H2.add(k); I[k].g.forEach(g => H2.add(g));
+      const still = x.missing.filter(m => !specOk(m.spec, H2)).length;
+      if (still === 0){ if (!unlock.has(k)) unlock.set(k, []); unlock.get(k).push(x.r.n); }
+      else { closer.set(k, (closer.get(k) || 0) + 1); }
+    }
+  }
+  return [...unlock.entries()].map(([k, names]) => ({k, names, closer: closer.get(k) || 0}))
+    .sort((a,b) => b.names.length - a.names.length || b.closer - a.closer || I[a.k].l.localeCompare(I[b.k].l)).slice(0, 10);
+}
+function renderShop(E){
+  const best = $('#best'); best.replaceChildren();
+  const bb = bestBuys(E);
+  if (!bb.length) best.append(el('p', {class: 'muted', text: S.items.length ? 'Nothing is a single buy away right now. Add a few more bottles and this fills in.' : 'Add what you have to your shelf and the best buys show up here.'}));
+  for (const b of bb){
+    const c = I[b.k]; const ol = onList(b.k);
+    const names = b.names.slice(0, 3).join(', ') + (b.names.length > 3 ? ', +' + (b.names.length - 3) + ' more' : '');
+    best.append(el('div', {class: 'buy'},
+      el('span', {class: 'n', text: b.names.length}),
+      el('div', {}, el('b', {text: c.l}), el('small', {text: 'Unlocks ' + names + (b.closer ? '. Gets ' + b.closer + ' more closer.' : '.')})),
+      S.readOnly ? el('span') : el('div', {class: 'acts'},
+        el('button', {type: 'button', class: 'mini' + (ol ? ' done' : ''), text: ol ? 'On list' : '+ List', disabled: ol || null, onclick: () => addToList(b.k)}),
+        el('button', {type: 'button', class: 'mini', text: 'I have it', onclick: () => addKey(b.k)}))));
+  }
+  const list = $('#list'); list.replaceChildren();
+  const items = S.shopping.slice().sort((a,b) => (a.done - b.done) || ((a.at || 0) - (b.at || 0)));
+  if (!items.length) list.append(el('p', {class: 'muted', text: 'Your list is empty. Use “+ List” on any drink or best buy, or type something above.'}));
+  for (const s of items){
+    const cb = el('input', {type: 'checkbox', 'aria-label': 'Got ' + s.label, disabled: S.readOnly || null}); cb.checked = !!s.done;
+    cb.addEventListener('change', () => ops.update('shopping', s.id, {done: cb.checked}));
+    const key = s.spec ? expand(s.spec)[0] : null;
+    list.append(el('div', {class: 'list-item' + (s.done ? ' done' : '')}, cb, el('span', {class: 't', text: s.label}),
+      (key && !S.readOnly) ? el('button', {type: 'button', class: 'mini', text: 'Put on shelf', onclick: () => { addKey(key); ops.del('shopping', s.id); }}) : null,
+      S.readOnly ? null : el('button', {type: 'button', class: 'iconbtn', 'aria-label': 'Remove ' + s.label, text: 'Remove', onclick: () => ops.del('shopping', s.id)})));
+  }
+  const low = $('#low'); low.replaceChildren();
+  const lows = S.items.filter(x => x.level === 'low' || x.level === 'out');
+  if (!lows.length) low.append(el('p', {class: 'muted', text: 'Nothing is low. Mark a bottle Low or Out on the Shelf tab and it shows up here.'}));
+  for (const it of lows){
+    const c = I[it.key]; if (!c) continue; const ol = onList(it.key);
+    low.append(el('div', {class: 'list-item'}, el('span', {class: 'pill ' + (it.level === 'out' ? 's3' : 's1'), text: it.level === 'out' ? 'Out' : 'Low'}), el('span', {class: 't', text: it.name || c.l}),
+      S.readOnly ? null : el('button', {type: 'button', class: 'mini' + (ol ? ' done' : ''), text: ol ? 'On list' : '+ List', disabled: ol || null, onclick: () => addToList(it.key)})));
+  }
+}
+$('#list-form').addEventListener('submit', e => {
+  e.preventDefault(); const v = $('#list-q').value.trim().slice(0, 80); if (!v) return;
+  const m = searchCatalog(v)[0]; const exact = m && norm(m.l) === norm(v);
+  addToList(exact ? m.k : '', exact ? '' : v); $('#list-q').value = '';
+});
+$('#clear-done').addEventListener('click', () => { const d = S.shopping.filter(s => s.done); d.forEach(s => ops.del('shopping', s.id)); toast(d.length ? 'Cleared ' + d.length + ' checked.' : 'Nothing is checked.'); });
+$('#copy-list').addEventListener('click', () => {
+  const txt = S.shopping.filter(s => !s.done).map(s => '- ' + s.label).join('\n') || '(list is empty)';
+  const box = $('#copybox');
+  const fallback = () => { box.value = txt; box.hidden = false; box.focus(); box.select(); toast('Select all and copy.'); };
+  try { navigator.clipboard.writeText(txt).then(() => { box.hidden = true; toast('List copied.'); }, fallback); } catch { fallback(); }
+});
+
+/* ---------- pairings ---------- */
+const pairAny = $('#pair-any');
+pairAny.append(el('option', {value: '', text: 'Or pick any bottle or ingredient…'}));
+for (const [cid, cl] of CATS) pairAny.append(el('optgroup', {label: cl}, Object.values(I).filter(c => c.c === cid).map(c => el('option', {value: c.k, text: c.l}))));
+pairAny.addEventListener('change', () => { if (pairAny.value){ UI.pair = pairAny.value; renderPairs(evaluate()); } });
+function renderPairs(E){
+  const ownedK = [...new Set(S.items.filter(x => x.level !== 'out' && ['spirits','liqueurs','wine'].includes(I[x.key]?.c)).map(x => x.key))];
+  if (!UI.pair) UI.pair = ownedK[0] || 'gin';
+  const K = UI.pair; const c = I[K];
+  const chips = $('#pair-chips'); chips.replaceChildren(...(ownedK.length ? ownedK : ['gin','tequila-blanco','bourbon','rum-white','mezcal','campari']).map(k =>
+    el('button', {type: 'button', class: 'chip' + (k === K ? ' on' : ''), 'aria-pressed': String(k === K), text: I[k].l, onclick: () => { UI.pair = k; pairAny.value = ''; renderPairs(evaluate()); }})));
+  const rs = E.rs.filter(x => usesKey(x.r, K));
+  const ks = new Set([K, ...c.g]);
+  const part = new Map();
+  for (const x of rs) for (const i of x.r.ing){
+    if (!i.spec || specAlts(i.spec).some(k => ks.has(k))) continue;
+    part.set(i.spec, (part.get(i.spec) || 0) + 1);
+  }
+  const partners = [...part.entries()].sort((a,b) => b[1] - a[1] || specLabel(a[0]).localeCompare(specLabel(b[0]))).slice(0, 14);
+  const max = partners.length ? partners[0][1] : 1;
+  const ready = rs.filter(x => !x.missing.length).length;
+  const out = $('#pair-out'); out.replaceChildren();
+  out.append(el('div', {class: 'pair-hero'},
+    el('p', {class: 'eyebrow', style: 'color:inherit', text: (CATS.find(x => x[0] === c.c) || [])[1]}),
+    el('h3', {text: c.l + '.'}),
+    el('p', {text: FLAV[K] || ('Shows up in ' + rs.length + ' drink' + (rs.length === 1 ? '' : 's') + ' here.')}),
+    el('p', {style: 'font-family:var(--f-sans); font-weight:700; font-size:15px', text: rs.length + ' drinks use it · ' + ready + ' ready to pour now'})));
+  const cols = el('div', {class: 'cols', style: 'margin-top:28px'});
+  const pb = el('div', {class: 'block'}, el('h3', {text: 'Goes well with.'}));
+  if (!partners.length) pb.append(el('p', {class: 'muted', text: 'Nothing in the recipe book uses this yet. Add your own recipe with it.'}));
+  for (const [spec, n] of partners){
+    const have = specOk(spec, E.H); const ol = !have && onList(spec);
+    pb.append(el('div', {class: 'bar-row'},
+      el('div', {class: 'lab'}, el('b', {text: specLabel(spec)}), el('div', {class: 'track', 'aria-hidden': 'true'}, el('i', {style: 'width:' + Math.round(n / max * 100) + '%'}))),
+      el('span', {class: 'c', text: n, 'aria-label': n + ' drinks'}),
+      have ? el('span', {class: 'have-tag', text: 'On shelf'}) : (S.readOnly ? el('span') : el('button', {type: 'button', class: 'mini' + (ol ? ' done' : ''), text: ol ? 'On list' : '+ List', disabled: ol || null, onclick: () => addToList(spec)}))));
+  }
+  const db2 = el('div', {class: 'block'}, el('h3', {text: 'Drinks with ' + c.l.toLowerCase() + '.'}));
+  const dl = el('div', {class: 'dlist'});
+  rs.slice().sort((a,b) => a.missing.length - b.missing.length || a.r.n.localeCompare(b.r.n)).forEach(x => {
+    const n = x.missing.length;
+    dl.append(el('button', {type: 'button', onclick: () => { UI.filter = 'all'; UI.q = x.r.n; $('#drink-q').value = x.r.n; UI.base = ''; UI.style = ''; go('drinks'); }},
+      el('span', {text: x.r.n}), el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})));
+  });
+  if (!rs.length) dl.append(el('p', {class: 'muted', text: 'None yet.'}));
+  db2.append(dl);
+  cols.append(pb, db2); out.append(cols);
+}
+
+/* ---------- tabs & render ---------- */
+const TABS = ['shelf','drinks','menu','shop','pairings'];
+function go(t, push = true){
+  if (!TABS.includes(t)) t = 'shelf';
+  UI.tab = t;
+  TABS.forEach(x => { $('#p-' + x).hidden = x !== t; $('#tab-' + x).setAttribute('aria-selected', String(x === t)); });
+  if (push && location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
+  renderAll(); window.scrollTo({top: Math.min(window.scrollY, document.querySelector('.tabs').offsetTop)});
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+window.addEventListener('hashchange', () => go(location.hash.slice(1), false));
+
+function renderAll(){
+  const E = evaluate();
+  const bottles = S.items.filter(x => x.level !== 'out' && ['spirits','liqueurs','wine','bitters'].includes(I[x.key]?.c)).length;
+  const ready = E.rs.filter(x => !x.missing.length).length, one = E.rs.filter(x => x.missing.length === 1).length;
+  $('#st-bottles').textContent = bottles; $('#st-ready').textContent = ready; $('#st-one').textContent = one;
+  $('#ct-drinks').textContent = ready ? ' ' + ready : '';
+  const openList = S.shopping.filter(s => !s.done).length; $('#ct-shop').textContent = openList ? ' ' + openList : '';
+  if (UI.tab === 'shelf'){ renderShelf(E); renderQuick(); }
+  if (UI.tab === 'drinks') renderDrinks(E);
+  if (UI.tab === 'shop') renderShop(E);
+  if (UI.tab === 'pairings') renderPairs(E);
+  if (UI.tab === 'menu') renderMenu(E);
+  $('#ct-menu').textContent = S.menu.length ? ' ' + S.menu.length : '';
+}
+go(location.hash.slice(1) || 'shelf', false);
+init();
+})();
+</script>
+
+</body>
+</html>

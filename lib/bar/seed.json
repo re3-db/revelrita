@@ -1,0 +1,702 @@
+{
+ "items": [
+  {
+   "at": 1795640000001,
+   "key": "amaretto",
+   "level": "half",
+   "name": "Disaronno Originale",
+   "note": "",
+   "id": "w1-disaronno"
+  },
+  {
+   "at": 1795640000002,
+   "key": "chambord",
+   "level": "full",
+   "name": "Drillaud Raspberry",
+   "note": "Crème de framboise",
+   "id": "w1-drillaud-raspberry"
+  },
+  {
+   "at": 1795640000003,
+   "key": "vodka",
+   "level": "low",
+   "name": "Haiken Lychee Vodka",
+   "note": "Lychee-infused, so it's not a neutral vodka",
+   "id": "w1-haiken-lychee"
+  },
+  {
+   "at": 1795640000004,
+   "key": "aperol",
+   "level": "full",
+   "name": "Aperol",
+   "note": "",
+   "id": "w1-aperol"
+  },
+  {
+   "at": 1795640000005,
+   "key": "amaro",
+   "level": "half",
+   "name": "Amaro Averna",
+   "note": "Sicilian, rich and caramel-y",
+   "id": "w1-averna"
+  },
+  {
+   "at": 1795640000006,
+   "key": "kirsch",
+   "level": "full",
+   "name": "Fidelitas Black Forest Kirschwasser",
+   "note": "",
+   "id": "w1-kirsch"
+  },
+  {
+   "at": 1795640000007,
+   "key": "vodka",
+   "level": "full",
+   "name": "Veil Pear Vodka",
+   "note": "Pear-flavored",
+   "id": "w1-veil-pear"
+  },
+  {
+   "at": 1795640000008,
+   "key": "amaro",
+   "level": "full",
+   "name": "Amaro Ramazzotti",
+   "note": "Milanese, orange and cola notes",
+   "id": "w1-ramazzotti"
+  },
+  {
+   "at": 1795640000009,
+   "key": "campari",
+   "level": "full",
+   "name": "Campari",
+   "note": "",
+   "id": "w1-campari"
+  },
+  {
+   "at": 1795640000010,
+   "key": "banana-liqueur",
+   "level": "full",
+   "name": "Drillaud Banana",
+   "note": "",
+   "id": "w1-drillaud-banana"
+  },
+  {
+   "at": 1795640000011,
+   "key": "amaro",
+   "level": "full",
+   "name": "Amaro Angeleno",
+   "note": "California, bright orange",
+   "id": "w1-angeleno"
+  },
+  {
+   "at": 1795640100001,
+   "key": "vodka",
+   "level": "full",
+   "name": "Tower Vodka",
+   "note": "",
+   "id": "w2-tower-vodka"
+  },
+  {
+   "at": 1795640100002,
+   "key": "dry-vermouth",
+   "level": "full",
+   "name": "Dry vermouth",
+   "note": "",
+   "id": "w2-vermouth"
+  },
+  {
+   "at": 1795640100003,
+   "key": "tequila-blanco",
+   "level": "full",
+   "name": "San Matías Blanco",
+   "note": "",
+   "id": "w2-san-matias"
+  },
+  {
+   "at": 1795640100004,
+   "key": "triple-sec",
+   "level": "full",
+   "name": "Triple sec",
+   "note": "",
+   "id": "w2-triple-sec"
+  },
+  {
+   "at": 1795640100005,
+   "key": "gin",
+   "level": "full",
+   "name": "Tanqueray",
+   "note": "",
+   "id": "w2-tanqueray"
+  },
+  {
+   "at": 1795640100006,
+   "key": "mezcal",
+   "level": "full",
+   "name": "Ilegal Mezcal",
+   "note": "",
+   "id": "w2-ilegal"
+  },
+  {
+   "at": 1795640100007,
+   "key": "mezcal",
+   "level": "full",
+   "name": "Del Maguey Vida",
+   "note": "2 bottles",
+   "id": "w2-vida"
+  },
+  {
+   "at": 1795640100008,
+   "key": "gin",
+   "level": "full",
+   "name": "Esme Gin",
+   "note": "",
+   "id": "w2-esme"
+  },
+  {
+   "at": 1795640100009,
+   "key": "cherries",
+   "level": "full",
+   "name": "Luxardo cherries",
+   "note": "",
+   "id": "w2-luxardo-cherries"
+  },
+  {
+   "at": 1795640100010,
+   "key": "bourbon",
+   "level": "full",
+   "name": "Woodford Reserve Double Oaked",
+   "note": "",
+   "id": "w2-woodford-double-oaked"
+  },
+  {
+   "at": 1795640100011,
+   "key": "rum-spiced",
+   "level": "full",
+   "name": "Kraken Black Spiced Rum",
+   "note": "Dark and spiced. Works in a Dark 'n Stormy.",
+   "id": "w2-kraken"
+  },
+  {
+   "at": 1795640100012,
+   "key": "orange-bitters",
+   "level": "full",
+   "name": "",
+   "note": "",
+   "id": "w2-orange-bitters"
+  },
+  {
+   "at": 1795640100013,
+   "key": "angostura",
+   "level": "full",
+   "name": "",
+   "note": "",
+   "id": "w2-angostura"
+  },
+  {
+   "at": 1795640100014,
+   "key": "passionfruit-syrup",
+   "level": "full",
+   "name": "Passion fruit simple syrup",
+   "note": "",
+   "id": "w2-passionfruit"
+  },
+  {
+   "at": 1795640100015,
+   "key": "bourbon",
+   "level": "full",
+   "name": "Woodford Reserve",
+   "note": "",
+   "id": "w2-woodford"
+  },
+  {
+   "at": 1795640100016,
+   "key": "tequila-blanco",
+   "level": "full",
+   "name": "Trader Joe's Tequila",
+   "note": "Saved as blanco. Change it if it's reposado.",
+   "id": "w2-tj-tequila"
+  },
+  {
+   "at": 1795640100017,
+   "key": "grand-marnier",
+   "level": "full",
+   "name": "Grand Marnier",
+   "note": "",
+   "id": "w2-grand-marnier"
+  },
+  {
+   "at": 1795640100018,
+   "key": "rum-white",
+   "level": "full",
+   "name": "Bacardi Superior",
+   "note": "",
+   "id": "w2-bacardi"
+  },
+  {
+   "at": 1795640100019,
+   "key": "peppermint-schnapps",
+   "level": "full",
+   "name": "Peppermint schnapps",
+   "note": "",
+   "id": "w2-peppermint"
+  },
+  {
+   "at": 1795640100020,
+   "key": "triple-sec",
+   "level": "full",
+   "name": "Cointreau",
+   "note": "",
+   "id": "w2-cointreau"
+  },
+  {
+   "at": 1795640100021,
+   "key": "rum-aged",
+   "level": "full",
+   "name": "Appleton Estate",
+   "note": "Jamaican",
+   "id": "w2-appleton"
+  },
+  {
+   "at": 1795640100022,
+   "key": "bourbon",
+   "level": "full",
+   "name": "Bulleit Bourbon",
+   "note": "",
+   "id": "w2-bulleit"
+  },
+  {
+   "at": 1795640200001,
+   "key": "lemon",
+   "level": "full",
+   "name": "",
+   "note": "",
+   "id": "s-lemon"
+  },
+  {
+   "at": 1795640200002,
+   "key": "lime",
+   "level": "full",
+   "name": "",
+   "note": "",
+   "id": "s-lime"
+  },
+  {
+   "at": 1795640200003,
+   "key": "pineapple-juice",
+   "level": "full",
+   "name": "",
+   "note": "",
+   "id": "s-pineapple"
+  },
+  {
+   "at": 1795640200004,
+   "key": "simple-syrup",
+   "level": "full",
+   "name": "",
+   "note": "",
+   "id": "s-simple"
+  },
+  {
+   "at": 1795640300001,
+   "key": "soda",
+   "level": "full",
+   "name": "Soda water & club soda",
+   "note": "",
+   "id": "s-soda"
+  },
+  {
+   "at": 1795640900001,
+   "key": "honey-syrup",
+   "level": "full",
+   "name": "Honey",
+   "note": "Mix 1:1 with hot water for honey syrup",
+   "id": "s-honey"
+  }
+ ],
+ "shopping": [],
+ "recipes": [
+  {
+   "at": 1795640400001,
+   "base": "mezcal",
+   "desc": "Smoky agave and juicy pineapple, bright with lime.",
+   "garnish": "Pineapple wedge, Tajín rim",
+   "glass": "Rocks",
+   "ing": [
+    {
+     "amt": "1½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "mezcal"
+    },
+    {
+     "amt": "1 oz",
+     "label": "",
+     "opt": false,
+     "spec": "pineapple-juice"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "lime"
+    },
+    {
+     "amt": "½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "orange-liqueur"
+    },
+    {
+     "amt": "¼ oz",
+     "label": "",
+     "opt": false,
+     "spec": "agave|simple-syrup"
+    },
+    {
+     "amt": "rim",
+     "label": "",
+     "opt": true,
+     "spec": "salt"
+    }
+   ],
+   "method": "Shake hard with ice and strain over fresh ice into a Tajín- or salt-rimmed glass.",
+   "n": "Pineapple Mezcal Margarita",
+   "source": "mine",
+   "styles": [
+    "sour",
+    "smoky",
+    "tropical"
+   ],
+   "id": "pineapple-mezcal-margarita"
+  },
+  {
+   "at": 1795640400002,
+   "base": "tequila",
+   "desc": "A classic margarita with tart, tropical passion fruit.",
+   "garnish": "Lime wheel or half a passion fruit",
+   "glass": "Rocks",
+   "ing": [
+    {
+     "amt": "2 oz",
+     "label": "",
+     "opt": false,
+     "spec": "tequila"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "passionfruit-syrup"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "lime"
+    },
+    {
+     "amt": "½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "orange-liqueur"
+    },
+    {
+     "amt": "rim",
+     "label": "",
+     "opt": true,
+     "spec": "salt"
+    }
+   ],
+   "method": "Shake hard with ice and strain over fresh ice into a salt-rimmed glass.",
+   "n": "Passion Fruit Margarita",
+   "source": "mine",
+   "styles": [
+    "sour",
+    "tropical",
+    "fruity"
+   ],
+   "id": "passion-fruit-margarita"
+  },
+  {
+   "at": 1795640500001,
+   "base": "whiskey",
+   "desc": "A creamy, savory whiskey sour: green parsley, nutty sherry, a touch of salt.",
+   "garnish": "Parsley oil drops, fresh parsley leaf",
+   "glass": "Coupe",
+   "ing": [
+    {
+     "amt": "1½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "whiskey"
+    },
+    {
+     "amt": "¼ oz",
+     "label": "",
+     "opt": false,
+     "spec": "sherry"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "lime"
+    },
+    {
+     "amt": "½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "agave"
+    },
+    {
+     "amt": "1 heaping barspoon",
+     "label": "",
+     "opt": false,
+     "spec": "mascarpone"
+    },
+    {
+     "amt": "1 sprig",
+     "label": "",
+     "opt": false,
+     "spec": "parsley"
+    },
+    {
+     "amt": "5–6 drops saline",
+     "label": "",
+     "opt": true,
+     "spec": "salt"
+    }
+   ],
+   "method": "Gently muddle the parsley with the agave. Add everything else and ice, shake hard to whip in the mascarpone, then double strain into a chilled coupe. Float a few drops of parsley oil and top with a parsley leaf. Parsley oil: blend ½ cup olive oil with ¼ bunch parsley and strain finely. Source: @moresavorygoods.",
+   "n": "Whiskey & Mascarpone",
+   "source": "mine",
+   "styles": [
+    "sour",
+    "creamy",
+    "spicy"
+   ],
+   "id": "whiskey-mascarpone"
+  },
+  {
+   "at": 1795640600001,
+   "base": "rum",
+   "desc": "A big Jamaican rum tiki sour: grapefruit, passion fruit and warm cinnamon.",
+   "garnish": "Mint sprig, cherry, lime wheel",
+   "glass": "Tiki mug or double rocks",
+   "ing": [
+    {
+     "amt": "3 oz",
+     "label": "",
+     "opt": false,
+     "spec": "rum-aged"
+    },
+    {
+     "amt": "1 oz",
+     "label": "",
+     "opt": false,
+     "spec": "lime"
+    },
+    {
+     "amt": "1 oz",
+     "label": "",
+     "opt": false,
+     "spec": "grapefruit"
+    },
+    {
+     "amt": "½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "cinnamon-syrup"
+    },
+    {
+     "amt": "½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "passionfruit-syrup"
+    },
+    {
+     "amt": "5 dashes",
+     "label": "",
+     "opt": false,
+     "spec": "angostura"
+    }
+   ],
+   "method": "Shake hard with ice and strain over crushed ice. Ideally split the rum between Appleton Estate Signature and Rum-Bar Gold.",
+   "n": "Quarantine Order",
+   "source": "mine",
+   "styles": [
+    "tropical",
+    "sour"
+   ],
+   "id": "quarantine-order"
+  },
+  {
+   "at": 1795640700001,
+   "base": "gin",
+   "desc": "A classic gimlet with a piney, herbal lift from fresh rosemary.",
+   "garnish": "Rosemary sprig, lime wheel",
+   "glass": "Coupe",
+   "ing": [
+    {
+     "amt": "2 oz",
+     "label": "",
+     "opt": false,
+     "spec": "gin"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "lime"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "simple-syrup"
+    },
+    {
+     "amt": "1 sprig",
+     "label": "",
+     "opt": false,
+     "spec": "rosemary"
+    }
+   ],
+   "method": "Gently press the rosemary with the syrup in the tin, add gin, lime and ice, shake hard and double strain. Or make rosemary syrup ahead: steep 2 sprigs in 1 cup hot simple syrup for 20 minutes.",
+   "n": "Rosemary Gimlet",
+   "source": "mine",
+   "styles": [
+    "sour",
+    "bitter"
+   ],
+   "id": "rosemary-gimlet"
+  },
+  {
+   "at": 1795640700002,
+   "base": "gin",
+   "desc": "Silky and floral: elderflower stirred into gin or vodka.",
+   "garnish": "Lemon twist",
+   "glass": "Coupe",
+   "ing": [
+    {
+     "amt": "2 oz",
+     "label": "",
+     "opt": false,
+     "spec": "gin|vodka"
+    },
+    {
+     "amt": "¾ oz",
+     "label": "",
+     "opt": false,
+     "spec": "st-germain"
+    }
+   ],
+   "method": "Stir with ice until very cold and strain into a chilled coupe.",
+   "n": "Scotsman in Paris",
+   "source": "mine",
+   "styles": [
+    "strong",
+    "fruity"
+   ],
+   "id": "scotsman-in-paris"
+  },
+  {
+   "at": 1795640800001,
+   "base": "gin",
+   "desc": "Briny and savory, rounded out by equal parts dry and sweet vermouth.",
+   "garnish": "Three olives on a pick",
+   "glass": "Coupe or martini glass",
+   "ing": [
+    {
+     "amt": "2½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "gin|vodka"
+    },
+    {
+     "amt": "¼ oz",
+     "label": "",
+     "opt": false,
+     "spec": "dry-vermouth"
+    },
+    {
+     "amt": "¼ oz",
+     "label": "",
+     "opt": false,
+     "spec": "sweet-vermouth"
+    },
+    {
+     "amt": "½ oz brine",
+     "label": "",
+     "opt": false,
+     "spec": "olives"
+    }
+   ],
+   "method": "Stir with ice until very cold and strain into a chilled glass. Shake it instead if your guest wants it extra cold and cloudy.",
+   "n": "Perfect Dirty Martini",
+   "source": "mine",
+   "styles": [
+    "strong",
+    "spicy"
+   ],
+   "id": "perfect-dirty-martini"
+  },
+  {
+   "at": 1795640800002,
+   "base": "gin",
+   "desc": "Crisp, cold and clean. Just a whisper of vermouth.",
+   "garnish": "Lemon twist or an olive",
+   "glass": "Coupe or martini glass",
+   "ing": [
+    {
+     "amt": "3 oz",
+     "label": "",
+     "opt": false,
+     "spec": "gin|vodka"
+    },
+    {
+     "amt": "½ oz",
+     "label": "",
+     "opt": false,
+     "spec": "dry-vermouth"
+    },
+    {
+     "amt": "1 dash",
+     "label": "",
+     "opt": true,
+     "spec": "orange-bitters"
+    }
+   ],
+   "method": "Stir with ice for 30 seconds until very cold and strain into a chilled glass. Express the lemon peel over the top.",
+   "n": "Dry Martini",
+   "source": "mine",
+   "styles": [
+    "strong"
+   ],
+   "id": "dry-martini"
+  }
+ ],
+ "prefs": {
+  "fav": [
+   "margarita",
+   "naked-and-famous",
+   "jungle-bird",
+   "mine-pineapple-mezcal-margarita",
+   "mine-passion-fruit-margarita",
+   "paper-plane",
+   "whiskey-sour",
+   "manhattan",
+   "mine-whiskey-mascarpone",
+   "mine-quarantine-order",
+   "mine-rosemary-gimlet",
+   "mine-scotsman-in-paris",
+   "mine-perfect-dirty-martini",
+   "mine-dry-martini",
+   "mojito"
+  ]
+ },
+ "menu": {
+  "ids": [],
+  "servings": 1
+ }
+}
