@@ -470,7 +470,7 @@ def('bitters', [['angostura','Angostura bitters'],['peychauds',"Peychaud's bitte
 def('syrups', [['simple-syrup','Simple syrup'],['honey-syrup','Honey / honey syrup'],['agave','Agave nectar'],['grenadine','Grenadine'],['orgeat','Orgeat'],['ginger-syrup','Ginger syrup'],['passionfruit-syrup','Passion fruit syrup'],['raspberry-syrup','Raspberry syrup'],['cinnamon-syrup','Cinnamon syrup'],['sugar-cube','Sugar cubes']]);
 def('fresh', [['lime','Limes'],['lemon','Lemons'],['orange','Oranges / OJ'],['grapefruit','Grapefruit / juice'],['pineapple-juice','Pineapple juice'],['cranberry-juice','Cranberry juice'],['tomato-juice','Tomato juice'],['mint','Mint'],['basil','Basil'],['rosemary','Rosemary'],['cucumber','Cucumber'],['jalapeno','Jalapeños'],['egg-white','Eggs'],['cream','Heavy cream'],['coffee','Espresso / coffee'],['coconut-cream','Cream of coconut'],['parsley','Parsley'],['mascarpone','Mascarpone']]);
 def('mixers', [['soda','Soda water'],['tonic','Tonic water'],['ginger-beer','Ginger beer'],['ginger-ale','Ginger ale'],['cola','Cola'],['grapefruit-soda','Grapefruit soda']]);
-def('other', [['salt','Salt'],['worcestershire','Worcestershire'],['hot-sauce','Hot sauce'],['olives','Olives / olive brine'],['cherries','Cocktail cherries']]);
+def('other', [['salt','Salt'],['worcestershire','Worcestershire'],['hot-sauce','Hot sauce'],['olives','Olives / olive brine'],['butter','Butter'],['cherries','Cocktail cherries']]);
 const G = {tequila:'Tequila', rum:'Rum', whiskey:'Whiskey', scotch:'Scotch', 'orange-liqueur':'Orange liqueur', sparkling:'Sparkling wine', brandy:'Brandy'};
 const BASES = [['whiskey','Bourbon & whiskey'],['tequila','Tequila'],['mezcal','Mezcal'],['gin','Gin'],['rum','Rum & cachaça'],['vodka','Vodka'],['brandy','Brandy & pisco'],['aperitivo','Aperitivo & liqueur'],['zero','Zero proof']];
 const BASE_L = Object.fromEntries(BASES);
@@ -675,7 +675,22 @@ const toastEl = $('#toast'); let toastT;
 function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 2600); }
 
 /* ---------- state ---------- */
-const S = {items: [], shopping: [], mine: [], fav: [], menu: [], servings: 1, ready: false, readOnly: false};
+const S = {items: [], shopping: [], mine: [], fav: [], imported: [], menu: [], servings: 1, ready: false, readOnly: false};
+
+/* Recipes Claude adds in code (Helen can't be written to from outside). On her next logged-in
+   visit each one moves into her saved recipes, starred, and its id goes into prefs.imported so a
+   recipe she later deletes never comes back. Safe to leave entries here after they've moved. */
+const INBOX = [
+  {id: 'brown-butter-amaretto-sour', n: 'Brown Butter Amaretto Sour', desc: 'Nutty, toasty and silky: amaretto and brown-butter bourbon with warm cinnamon.', base: 'whiskey', glass: 'Coupe or rocks', styles: ['sour', 'creamy'],
+    method: 'Reverse shake: shake everything with ice, strain out the ice, then shake again hard without ice and strain into the glass. Brown butter bourbon: brown 4 tbsp butter, stir it into a 750 ml bottle of bourbon, rest a few hours, freeze until the fat is solid, then strain it out.',
+    garnish: '', ing: [{spec: 'bourbon', label: '', amt: '1 oz', opt: false}, {spec: 'butter', label: '', amt: 'for the infusion', opt: false}, {spec: 'amaretto', label: '', amt: '1½ oz', opt: false}, {spec: 'cinnamon-syrup', label: '', amt: '1 oz', opt: false}, {spec: 'lemon', label: '', amt: '1 oz', opt: false}, {spec: 'egg-white', label: '', amt: '1 white', opt: false}], source: 'mine', at: 1795641000001},
+  {id: 'hot-buttered-rum', n: 'Hot Buttered Rum', desc: 'Warm, buttery and spiced, like a cinnamon roll in a mug.', base: 'rum', glass: 'Mug', styles: ['creamy', 'spicy'],
+    method: 'Stir a heaping spoonful of batter and the rum in a warm mug, top with hot water and stir until melted. Batter (about 8 drinks): beat 4 tbsp soft butter with ¼ cup brown sugar, ½ tsp cinnamon, ¼ tsp nutmeg and a pinch each of clove and salt. It keeps in the fridge for a couple of weeks.',
+    garnish: 'Cinnamon stick, grated nutmeg', ing: [{spec: 'rum-aged|rum-dark', label: '', amt: '2 oz', opt: false}, {spec: 'butter', label: '', amt: '1 tbsp batter', opt: false}, {spec: '', label: 'Hot water', amt: '4 oz', opt: false}], source: 'mine', at: 1795641000002},
+  {id: 'baby-turtle', n: 'Baby Turtle', desc: 'A silky reposado sour with grapefruit, cinnamon and a bitter edge of Campari.', base: 'tequila', glass: 'Coupe', styles: ['sour', 'bitter'],
+    method: 'Dry shake without ice, then shake hard with ice and double strain into a chilled coupe. Tequila Ocho reposado if you have it. Saline: 1 part salt dissolved in 4 parts water.',
+    garnish: 'Grated cinnamon', ing: [{spec: 'tequila-reposado', label: '', amt: '2 oz', opt: false}, {spec: 'lime', label: '', amt: '¾ oz', opt: false}, {spec: 'egg-white', label: '', amt: '¾ oz', opt: false}, {spec: 'grapefruit', label: '', amt: '½ oz', opt: false}, {spec: 'cinnamon-syrup', label: '', amt: '½ oz', opt: false}, {spec: 'campari', label: '', amt: '¼ oz', opt: false}, {spec: 'salt', label: '', amt: '2 dashes saline', opt: true}], source: 'mine', at: 1795641000003}
+];
 const UI = {tab: 'shelf', filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
 
 function haveSet(){
@@ -706,7 +721,7 @@ function setNote(t, link){
   n.hidden = !t && !link;
 }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const sectionValue = s => s === 'prefs' ? {fav: S.fav} : s === 'menu' ? {ids: S.menu, servings: S.servings} : S[COLS[s]];
+const sectionValue = s => s === 'prefs' ? {fav: S.fav, imported: S.imported} : s === 'menu' ? {ids: S.menu, servings: S.servings} : S[COLS[s]];
 const saving = {};
 function save(section){
   if (S.readOnly) return;
@@ -739,6 +754,16 @@ async function init(){
     S.menu = Array.isArray(d.menu?.ids) ? d.menu.ids : [];
     S.servings = Number.isFinite(d.menu?.servings) ? Math.max(1, Math.min(50, d.menu.servings)) : 1;
     S.readOnly = !d.canEdit;
+    S.imported = Array.isArray(d.prefs?.imported) ? d.prefs.imported : [];
+    const fresh = INBOX.filter(r => !S.imported.includes(r.id) && !S.mine.some(m => m.id === r.id));
+    if (fresh.length){
+      S.mine.push(...fresh.map(r => JSON.parse(JSON.stringify(r))));
+      if (d.canEdit){
+        fresh.forEach(r => { if (!S.fav.includes('mine-' + r.id)) S.fav.push('mine-' + r.id); });
+        S.imported = S.imported.concat(fresh.map(r => r.id));
+        save('recipes'); save('prefs');
+      }
+    }
     if (d.stored === false) setNote('The bar’s database isn’t connected, so changes can’t be saved right now.');
     else if (!d.canEdit) setNote('You’re looking at Helen’s bar.', {href: '/admin/login?next=/recipes', text: 'Log in to make changes'});
     else setNote('');

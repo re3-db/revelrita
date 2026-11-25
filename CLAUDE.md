@@ -241,6 +241,9 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
   that one non-admin `next`). Sections `items`, `shopping`, `recipes`, `prefs` (favorites), `menu`,
   each one JSON value at `bar:<section>` in the same Upstash database. A section never saved yet
   falls back to `lib/bar/seed.json`, her data exported from the artifact at the move.
+- Adding recipes for her from code: put them in `INBOX` in `public/recipes.html` (same shape as a
+  saved recipe, a stable `id`). On her next logged-in visit each moves into her saved recipes,
+  starred, and its id is kept in `prefs.imported`, so one she deletes never comes back.
 - The artifact's Claude-powered buttons (paste a recipe, suggest, invent) need the `sample`
   capability, which only exists inside Claude, so that panel stays hidden here.
 
