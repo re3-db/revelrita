@@ -531,14 +531,14 @@ def('liqueurs', [
   ['chartreuse-green','Green Chartreuse'],['chartreuse-yellow','Yellow Chartreuse'],['benedictine','Bénédictine'],['st-germain','Elderflower liqueur'],
   ['coffee-liqueur','Coffee liqueur'],['amaretto','Amaretto'],['licor-43','Licor 43'],['creme-de-cassis','Crème de cassis'],['creme-de-cacao','Crème de cacao'],
   ['creme-de-menthe','Crème de menthe'],['creme-de-violette','Crème de violette'],['chambord','Raspberry liqueur'],['peach-schnapps','Peach schnapps'],
-  ['irish-cream','Irish cream'],['drambuie','Drambuie'],['falernum','Falernum'],['banana-liqueur','Crème de banane'],['peppermint-schnapps','Peppermint schnapps']
+  ['irish-cream','Irish cream'],['drambuie','Drambuie'],['falernum','Falernum'],['banana-liqueur','Crème de banane'],['peppermint-schnapps','Peppermint schnapps'],['ancho-reyes','Ancho Reyes (red)'],['ancho-reyes-verde','Ancho Reyes Verde']
 ]);
 def('wine', [['sweet-vermouth','Sweet vermouth'],['dry-vermouth','Dry vermouth'],['lillet-blanc','Lillet Blanc / Cocchi Americano'],['prosecco','Prosecco',['sparkling']],['champagne','Champagne / cava',['sparkling']],['sherry','Sherry (oloroso, amontillado…)']]);
 def('bitters', [['angostura','Angostura bitters'],['peychauds',"Peychaud's bitters"],['orange-bitters','Orange bitters']]);
 def('syrups', [['simple-syrup','Simple syrup'],['honey-syrup','Honey / honey syrup'],['agave','Agave nectar'],['grenadine','Grenadine'],['orgeat','Orgeat'],['ginger-syrup','Ginger syrup'],['passionfruit-syrup','Passion fruit syrup'],['raspberry-syrup','Raspberry syrup'],['cinnamon-syrup','Cinnamon syrup'],['sugar-cube','Sugar cubes']]);
 def('fresh', [['lime','Limes'],['lemon','Lemons'],['orange','Oranges / OJ'],['grapefruit','Grapefruit / juice'],['pineapple-juice','Pineapple juice'],['cranberry-juice','Cranberry juice'],['tomato-juice','Tomato juice'],['mint','Mint'],['basil','Basil'],['rosemary','Rosemary'],['cucumber','Cucumber'],['jalapeno','Jalapeños'],['egg-white','Eggs'],['cream','Heavy cream'],['coffee','Espresso / coffee'],['coconut-cream','Cream of coconut'],['parsley','Parsley'],['mascarpone','Mascarpone']]);
 def('mixers', [['soda','Soda water'],['tonic','Tonic water'],['ginger-beer','Ginger beer'],['ginger-ale','Ginger ale'],['cola','Cola'],['grapefruit-soda','Grapefruit soda']]);
-def('other', [['salt','Salt'],['worcestershire','Worcestershire'],['hot-sauce','Hot sauce'],['olives','Olives / olive brine'],['butter','Butter'],['cherries','Cocktail cherries']]);
+def('other', [['salt','Salt'],['worcestershire','Worcestershire'],['hot-sauce','Hot sauce'],['olives','Olives / olive brine'],['sesame-oil','Toasted sesame oil'],['butter','Butter'],['cherries','Cocktail cherries']]);
 const G = {tequila:'Tequila', rum:'Rum', whiskey:'Whiskey', scotch:'Scotch', 'orange-liqueur':'Orange liqueur', sparkling:'Sparkling wine', brandy:'Brandy'};
 const BASES = [['whiskey','Bourbon & whiskey'],['tequila','Tequila'],['mezcal','Mezcal'],['gin','Gin'],['rum','Rum & cachaça'],['vodka','Vodka'],['brandy','Brandy & pisco'],['aperitivo','Aperitivo & liqueur'],['zero','Zero proof']];
 const BASE_L = Object.fromEntries(BASES);
@@ -820,7 +820,10 @@ const INBOX = [
     garnish: 'Grated cinnamon', ing: [{spec: 'tequila-reposado', label: '', amt: '2 oz', opt: false}, {spec: 'lime', label: '', amt: '¾ oz', opt: false}, {spec: 'egg-white', label: '', amt: '¾ oz', opt: false}, {spec: 'grapefruit', label: '', amt: '½ oz', opt: false}, {spec: 'cinnamon-syrup', label: '', amt: '½ oz', opt: false}, {spec: 'campari', label: '', amt: '¼ oz', opt: false}, {spec: 'salt', label: '', amt: '2 dashes saline', opt: true}], source: 'mine', at: 1795641000003},
   {id: 'haiken-lycheetini', n: 'Haiken Lycheetini', desc: 'Floral, juicy lychee with a squeeze of lemon. Bright and dangerously easy.', base: 'vodka', glass: 'Martini glass', styles: ['fruity', 'strong'],
     method: 'Add everything to a shaker with ice, shake well and strain into a chilled martini glass. Use 3 oz for a lighter pour, 4 oz for the full recipe.',
-    garnish: 'A lychee', ing: [{spec: 'vodka', label: '', amt: '3–4 oz Haiken Lychee', opt: false}, {spec: 'lemon', label: '', amt: '½ oz', opt: false}, {spec: 'dry-vermouth', label: '', amt: 'spray or dash', opt: false}], source: 'mine', at: 1795641100001}
+    garnish: 'A lychee', ing: [{spec: 'vodka', label: '', amt: '3–4 oz Haiken Lychee', opt: false}, {spec: 'lemon', label: '', amt: '½ oz', opt: false}, {spec: 'dry-vermouth', label: '', amt: 'spray or dash', opt: false}], source: 'mine', at: 1795641100001},
+  {id: 'seven-swans-a-spicin', n: 'Seven Swans a-Spicin\u2019', desc: 'Green chile heat, juicy pineapple and a nutty whisper of sesame. A spicy margarita with a twist.', base: 'tequila', glass: 'Rocks', ice: 'cubes', styles: ['spicy', 'tropical', 'sour'],
+    method: 'Shake everything but the sesame oil hard with ice and strain over fresh ice. Finish with a few drops of toasted sesame oil on top. Amounts are a starting point (the menu only lists ingredients), so adjust to taste.',
+    garnish: '', ing: [{spec: 'tequila-blanco', label: '', amt: '1½ oz', opt: false}, {spec: 'ancho-reyes-verde', label: '', amt: '½ oz', opt: false}, {spec: 'pineapple-juice', label: '', amt: '1 oz', opt: false}, {spec: 'lime', label: '', amt: '¾ oz', opt: false}, {spec: 'agave', label: '', amt: '¼ oz', opt: false}, {spec: 'sesame-oil', label: '', amt: '2–3 drops', opt: false}], source: 'mine', at: 1795641300001}
 ];
 const UI = {tab: 'drinks', picked: false, detail: null, filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
 
