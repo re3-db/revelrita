@@ -335,7 +335,8 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
   <!-- DRINKS -->
   <section class="panel" id="p-drinks" role="tabpanel" aria-labelledby="tab-drinks" hidden>
    <div class="stack" id="drink-home">
-    <div class="head"><div><h2>What are we <em class="fancy">pouring?</em></h2><p class="sub">Pick a spirit, or what your guest is in the mood for.</p></div></div>
+    <div class="head"><div><h2>What are we <em class="fancy">pouring?</em></h2><p class="sub">Pick a spirit, or what your guest is in the mood for.</p></div>
+      <button class="btn primary" id="home-new-recipe" type="button" data-write>+ Add a recipe</button></div>
     <form class="addbox" id="home-search" role="search">
       <input class="input" id="home-q" type="search" placeholder="Search every drink or ingredient" aria-label="Search every drink">
       <button class="btn dark" type="submit">Search</button>
@@ -486,7 +487,7 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
       <input class="input" id="rec-garnish" type="text" placeholder="Lime wheel" autocomplete="off">
     </label>
     <div class="acts">
-      <button class="btn danger" type="button" id="rec-del" hidden>Delete</button>
+      <div><button class="btn danger" type="button" id="rec-del" hidden>Delete</button><button class="btn" type="button" id="rec-reset" hidden>Reset to the original</button></div>
       <div><button class="btn" type="button" id="rec-cancel">Cancel</button><button class="btn primary" type="submit">Save recipe</button></div>
     </div>
   </form>
@@ -730,7 +731,7 @@ const toastEl = $('#toast'); let toastT;
 function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 2600); }
 
 /* ---------- state ---------- */
-const S = {items: [], shopping: [], mine: [], fav: [], imported: [], photos: {}, menu: [], servings: 1, ready: false, readOnly: false};
+const S = {items: [], shopping: [], mine: [], fav: [], imported: [], hidden: [], photos: {}, menu: [], servings: 1, ready: false, readOnly: false};
 
 /* Recipes Claude adds in code (Helen can't be written to from outside). On her next logged-in
    visit each one moves into her saved recipes, starred, and its id goes into prefs.imported so a
@@ -763,7 +764,7 @@ const BUILTIN_IDS = new Set(BUILTIN.map(b => b.id));
    version's place under the same id, so favorites and the party menu keep pointing at it. */
 function allRecipes(){
   const over = new Map(S.mine.filter(m => m.overrides && BUILTIN_IDS.has(m.overrides)).map(m => [m.overrides, m]));
-  return BUILTIN.map(b => over.has(b.id) ? asMine(over.get(b.id), b.id) : b)
+  return BUILTIN.filter(b => !S.hidden.includes(b.id)).map(b => over.has(b.id) ? asMine(over.get(b.id), b.id) : b)
     .concat(S.mine.filter(m => !(m.overrides && BUILTIN_IDS.has(m.overrides))).map(m => asMine(m, 'mine-' + m.id)));
 }
 function evaluate(){
@@ -785,7 +786,7 @@ function setNote(t, link){
   n.hidden = !t && !link;
 }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const sectionValue = s => s === 'prefs' ? {fav: S.fav, imported: S.imported} : s === 'menu' ? {ids: S.menu, servings: S.servings} : S[COLS[s]];
+const sectionValue = s => s === 'prefs' ? {fav: S.fav, imported: S.imported, hidden: S.hidden} : s === 'menu' ? {ids: S.menu, servings: S.servings} : S[COLS[s]];
 const saving = {};
 function save(section){
   if (S.readOnly) return;
@@ -820,6 +821,7 @@ async function init(){
     S.readOnly = !d.canEdit;
     S.photos = d.photos && typeof d.photos === 'object' ? d.photos : {};
     S.imported = Array.isArray(d.prefs?.imported) ? d.prefs.imported : [];
+    S.hidden = Array.isArray(d.prefs?.hidden) ? d.prefs.hidden : [];
     // Amari used to be one type; give saved bottles their own by name, once
     const AMARI = [[/averna/i, 'amaro-averna'], [/nonino/i, 'amaro-nonino'], [/montenegro/i, 'amaro-montenegro'], [/ramazzotti/i, 'amaro-ramazzotti'], [/angeleno/i, 'amaro-angeleno'], [/meletti/i, 'amaro-meletti'], [/cynar/i, 'amaro-cynar'], [/braulio/i, 'amaro-braulio'], [/lucano/i, 'amaro-lucano'], [/ciociaro/i, 'amaro-ciociaro']];
     let retyped = false;
@@ -1034,6 +1036,13 @@ function renderHome(E){
         });
         return d;
       }))));
+  }
+  if (S.hidden.length && !S.readOnly){
+    const back = el('button', {type: 'button', class: 'btn sm', text: 'Bring them back', onclick: () => {
+      if (back.dataset.armed !== '1'){ back.dataset.armed = '1'; back.textContent = 'Tap again to bring back all ' + S.hidden.length; return; }
+      const n = S.hidden.length; S.hidden = []; save('prefs'); renderAll(); toast('Brought back ' + n + ' drink' + (n === 1 ? '' : 's') + '.');
+    }});
+    all.append(el('p', {class: 'sub', style: 'margin:0; display:flex; gap:10px; align-items:center; flex-wrap:wrap'}, 'You’ve deleted ' + S.hidden.length + ' classic' + (S.hidden.length === 1 ? '' : 's') + ' from the book.', back));
   }
   $('#home-styles').replaceChildren(...STYLES.map(([k, l, d]) => tile('plain', l, d, count(x => stylesOf(x.r).includes(k)), pick({style: k}))));
 }
@@ -1336,19 +1345,36 @@ function openRecipe(r, pre){
   $('#rec-method').value = src.method || ''; $('#rec-garnish').value = src.garnish || '';
   const st = src.ing ? stylesOf(src) : []; STYLES.forEach(([k]) => { document.getElementById('sty-' + k).checked = st.includes(k); });
   const box = $('#rec-ings'); box.replaceChildren(...((src.ing && src.ing.length) ? src.ing : [null, null, null]).map(ingRow));
-  $('#rec-del').hidden = !editingRec; $('#rec-del').textContent = editingRec && editingRec.overrides ? 'Reset to the original' : 'Delete';
+  dRec._r = r || null; $('#rec-reset').dataset.armed = '';
+  $('#rec-del').hidden = !r; $('#rec-del').textContent = 'Delete';
+  $('#rec-reset').hidden = !(editingRec && editingRec.overrides); $('#rec-reset').textContent = 'Reset to the original';
   dRec._source = (pre && pre.source) || (editingRec && editingRec.source) || 'mine'; dRec._desc = src.desc || '';
   dRec._photo = {action: 'keep'}; dRec._photoId = r ? r.id : ''; showDialogPhoto(r && S.photos[r.id] ? photoUrl(r.id) : '');
   dRec.showModal(); $('#rec-name').focus();
 }
 $('#new-recipe').addEventListener('click', () => openRecipe(null));
+$('#home-new-recipe').addEventListener('click', () => openRecipe(null));
 $('#rec-add-ing').addEventListener('click', () => { const row = ingRow(null); $('#rec-ings').append(row); row.querySelector('input').focus(); });
 $('#rec-cancel').addEventListener('click', () => dRec.close());
+/* Deleting: her own recipes go for good; a classic from the book is hidden (prefs.hidden), and
+   "Bring them back" at the bottom of the home list restores those. */
 $('#rec-del').addEventListener('click', () => {
-  if (!editingRec) return;
-  if (!pendingRecDel){ pendingRecDel = true; $('#rec-del').textContent = editingRec.overrides ? 'Tap again to reset' : 'Tap again to delete'; return; }
-  if (!editingRec.overrides && S.photos[editingRec.id]) dropPhoto(editingRec.id).catch(() => {});
-  ops.del('recipes', editingRec.docId); toast(editingRec.overrides ? editingRec.n + ' is back to the original.' : 'Deleted ' + editingRec.n + '.'); dRec.close();
+  const r = dRec._r; if (!r) return;
+  if (!pendingRecDel){ pendingRecDel = true; $('#rec-del').textContent = 'Tap again to delete'; return; }
+  const bookId = BUILTIN_IDS.has(r.id) ? r.id : '';
+  if (r.mine) ops.del('recipes', r.docId);
+  if (S.photos[r.id]) dropPhoto(r.id).catch(() => {});
+  S.fav = S.fav.filter(f => f !== r.id);
+  if (bookId && !S.hidden.includes(bookId)) S.hidden = S.hidden.concat(bookId);
+  save('prefs');
+  if (S.menu.includes(r.id)){ S.menu = S.menu.filter(m => m !== r.id); save('menu'); }
+  renderAll(); toast('Deleted ' + r.n + '.'); dRec.close();
+});
+$('#rec-reset').addEventListener('click', e => {
+  const r = dRec._r; if (!r || !r.overrides) return;
+  if (e.currentTarget.dataset.armed !== '1'){ e.currentTarget.dataset.armed = '1'; e.currentTarget.textContent = 'Tap again to reset'; return; }
+  e.currentTarget.dataset.armed = '';
+  ops.del('recipes', r.docId); toast(r.n + ' is back to the original.'); dRec.close();
 });
 $('#rec-form').addEventListener('submit', e => {
   e.preventDefault();

@@ -251,8 +251,12 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
   starred, and its id is kept in `prefs.imported`, so one she deletes never comes back.
 - Every card has **Edit recipe** once she's logged in. Editing a classic from the book saves her
   copy as a recipe with `overrides: <book id>`; `allRecipes()` shows it in the book version's place
-  under the same id (favorites and the menu keep working). Deleting it ("Reset to the original")
-  brings the book version back.
+  under the same id (favorites and the menu keep working). "Reset to the original" deletes her copy
+  and brings the book version back.
+- **Delete** is in every recipe's editor. Her own recipes are removed for good (and their photo); a
+  classic from the book is hidden by adding its id to `prefs.hidden`, and "Bring them back" under the
+  home list clears that. Deleting also takes it out of favorites and the party menu.
+- **+ Add a recipe** sits at the top of the home tiles (and on the filtered list).
 - Amari each have a type (`amaro-averna`, `amaro-nonino`, ...) in the `amaro` group; `amaro` itself
   is "Amaro (any)", so a recipe calling for it takes any of them. On load, saved bottles still typed
   `amaro` get their own type by name (the `AMARI` list in `init`).
