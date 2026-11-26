@@ -244,6 +244,10 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
 - Adding recipes for her from code: put them in `INBOX` in `public/recipes.html` (same shape as a
   saved recipe, a stable `id`). On her next logged-in visit each moves into her saved recipes,
   starred, and its id is kept in `prefs.imported`, so one she deletes never comes back.
+- Every card has **Edit recipe** once she's logged in. Editing a classic from the book saves her
+  copy as a recipe with `overrides: <book id>`; `allRecipes()` shows it in the book version's place
+  under the same id (favorites and the menu keep working). Deleting it ("Reset to the original")
+  brings the book version back.
 - The artifact's Claude-powered buttons (paste a recipe, suggest, invent) need the `sample`
   capability, which only exists inside Claude, so that panel stays hidden here.
 

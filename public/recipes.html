@@ -414,6 +414,9 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
     <label class="lbl">Name
       <input class="input" id="rec-name" type="text" required maxlength="60" autocomplete="off">
     </label>
+    <label class="lbl">Description <span class="muted" style="font-weight:600">(optional)</span>
+      <input class="input" id="rec-desc" type="text" maxlength="240" placeholder="Bright, tart and a little smoky" autocomplete="off">
+    </label>
     <div class="two">
       <label class="lbl">Base
         <select class="input" id="rec-base"></select>
@@ -699,8 +702,14 @@ function haveSet(){
   return H;
 }
 const specOk = (spec, H) => specAlts(spec).some(k => H.has(k));
+const asMine = (m, id) => ({...m, id, docId: m.id, mine: true, ing: Array.isArray(m.ing) ? m.ing : []});
+const BUILTIN_IDS = new Set(BUILTIN.map(b => b.id));
+/* A classic Helen edits is saved as her recipe with `overrides: <book id>` and takes the book
+   version's place under the same id, so favorites and the party menu keep pointing at it. */
 function allRecipes(){
-  return BUILTIN.concat(S.mine.map(m => ({...m, id: 'mine-' + m.id, docId: m.id, mine: true, ing: Array.isArray(m.ing) ? m.ing : []})));
+  const over = new Map(S.mine.filter(m => m.overrides && BUILTIN_IDS.has(m.overrides)).map(m => [m.overrides, m]));
+  return BUILTIN.map(b => over.has(b.id) ? asMine(over.get(b.id), b.id) : b)
+    .concat(S.mine.filter(m => !(m.overrides && BUILTIN_IDS.has(m.overrides))).map(m => asMine(m, 'mine-' + m.id)));
 }
 function evaluate(){
   const H = haveSet();
@@ -913,7 +922,7 @@ function drinkCard(x){
   const fav = S.fav.includes(r.id);
   return el('article', {class: 'card'},
     el('div', {class: 'card-top'},
-      el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, ...stylesOf(r).map(x => STYLE_L[x]), r.mine ? (r.source === 'claude' ? 'Invented' : r.source === 'suggested' ? 'Suggested' : 'Your recipe') : ''].filter(Boolean).join(' · ')})),
+      el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, ...stylesOf(r).map(x => STYLE_L[x]), r.mine ? (r.overrides ? 'Your version' : r.source === 'claude' ? 'Invented' : r.source === 'suggested' ? 'Suggested' : 'Your recipe') : ''].filter(Boolean).join(' · ')})),
       el('div', {style: 'display:flex; gap:6px; align-items:center'}, pill,
         S.readOnly ? null : el('button', {type: 'button', class: 'star', 'aria-pressed': String(fav), 'aria-label': (fav ? 'Remove ' : 'Save ') + r.n + (fav ? ' from' : ' to') + ' favorites', text: fav ? '★' : '☆',
           onclick: () => ops.setFav(fav ? S.fav.filter(f => f !== r.id) : S.fav.concat(r.id))}))),
@@ -929,7 +938,7 @@ function drinkCard(x){
     r.garnish ? el('p', {class: 'garnish', text: 'Garnish: ' + r.garnish}) : null,
     (S.readOnly || String(r.id).startsWith('preview')) ? null : el('div', {class: 'card-foot'},
       el('button', {type: 'button', class: 'mini' + (S.menu.includes(r.id) ? ' on' : ''), 'aria-pressed': String(S.menu.includes(r.id)), text: S.menu.includes(r.id) ? 'On the menu' : '+ Menu', onclick: () => toggleMenu(r.id)}),
-      r.mine ? el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)}) : null));
+      el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)})));
 }
 function renderDrinks(E){
   const counts = Object.fromEntries(FILTERS.map(([k,,f]) => [k, E.rs.filter(f).length]));
@@ -1147,7 +1156,8 @@ $('#rec-styles').append(...STYLES.map(([k,l]) => el('label', {}, el('input', {ty
 function ingRow(i){
   const sel = el('select', {class: 'input', 'aria-label': 'Ingredient'}); typeOptions(sel, true);
   sel.prepend(el('option', {value: '', text: 'Something else (type it)'}));
-  sel.value = i && i.spec ? specAlts(i.spec)[0] : (i && i.label ? '' : 'lime');
+  if (i && i.spec && !I[i.spec] && !G[i.spec]) sel.prepend(el('option', {value: i.spec, text: specLabel(i.spec)}));
+  sel.value = i && i.spec ? i.spec : (i && i.label ? '' : 'lime');
   const amt = el('input', {class: 'input', type: 'text', placeholder: '1 oz', value: (i && i.amt) || '', 'aria-label': 'Amount'});
   const other = el('input', {class: 'input other', type: 'text', placeholder: 'e.g. Hibiscus syrup', value: (i && i.label && !i.spec) ? i.label : '', 'aria-label': 'Ingredient name'});
   const opt = el('input', {type: 'checkbox'}); opt.checked = !!(i && i.opt);
@@ -1158,13 +1168,15 @@ function ingRow(i){
 }
 function openRecipe(r, pre){
   editingRec = r && r.mine ? r : null; pendingRecDel = false;
+  dRec._overrides = r && !r.mine && BUILTIN_IDS.has(r.id) ? r.id : (editingRec && editingRec.overrides) || '';
   const src = r || pre || {};
-  $('#rec-title').textContent = editingRec ? 'Edit recipe.' : 'Your recipe.';
+  $('#rec-title').textContent = r ? 'Edit ' + r.n + '.' : 'Your recipe.';
+  $('#rec-desc').value = src.desc || '';
   $('#rec-name').value = src.n || ''; $('#rec-base').value = src.base || 'gin'; $('#rec-glass').value = src.glass || '';
   $('#rec-method').value = src.method || ''; $('#rec-garnish').value = src.garnish || '';
   const st = src.ing ? stylesOf(src) : []; STYLES.forEach(([k]) => { document.getElementById('sty-' + k).checked = st.includes(k); });
   const box = $('#rec-ings'); box.replaceChildren(...((src.ing && src.ing.length) ? src.ing : [null, null, null]).map(ingRow));
-  $('#rec-del').hidden = !editingRec; $('#rec-del').textContent = 'Delete';
+  $('#rec-del').hidden = !editingRec; $('#rec-del').textContent = editingRec && editingRec.overrides ? 'Reset to the original' : 'Delete';
   dRec._source = (pre && pre.source) || (editingRec && editingRec.source) || 'mine'; dRec._desc = src.desc || '';
   dRec.showModal(); $('#rec-name').focus();
 }
@@ -1173,17 +1185,17 @@ $('#rec-add-ing').addEventListener('click', () => { const row = ingRow(null); $(
 $('#rec-cancel').addEventListener('click', () => dRec.close());
 $('#rec-del').addEventListener('click', () => {
   if (!editingRec) return;
-  if (!pendingRecDel){ pendingRecDel = true; $('#rec-del').textContent = 'Tap again to delete'; return; }
-  ops.del('recipes', editingRec.docId); toast('Deleted ' + editingRec.n + '.'); dRec.close();
+  if (!pendingRecDel){ pendingRecDel = true; $('#rec-del').textContent = editingRec.overrides ? 'Tap again to reset' : 'Tap again to delete'; return; }
+  ops.del('recipes', editingRec.docId); toast(editingRec.overrides ? editingRec.n + ' is back to the original.' : 'Deleted ' + editingRec.n + '.'); dRec.close();
 });
 $('#rec-form').addEventListener('submit', e => {
   e.preventDefault();
   const ing = [...$('#rec-ings').children].map(r => r._get()).filter(Boolean);
   if (!ing.length){ toast('Add at least one ingredient.'); return; }
-  const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ing, source: dRec._source || 'mine', desc: dRec._desc || '', styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
+  const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ing, source: dRec._source || 'mine', desc: $('#rec-desc').value.trim().slice(0, 240), ...(dRec._overrides ? {overrides: dRec._overrides} : {}), styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
   if (editingRec) ops.update('recipes', editingRec.docId, data); else ops.add('recipes', {...data, at: Date.now()});
   toast('Saved ' + data.n + '.'); dRec.close();
-  if (!editingRec){ UI.filter = 'mine'; }
+  if (!editingRec && !dRec._overrides){ UI.filter = 'mine'; }
 });
 
 /* ---------- shopping ---------- */
