@@ -209,6 +209,10 @@ label.lbl{display:grid; gap:6px; font-family:var(--f-sans); font-weight:700; fon
 .tile.dark{background:var(--strong); color:var(--on-strong)}
 .tile.plain{background:var(--card); border:1.5px solid var(--sand); color:var(--fg)}
 .back{justify-self:start}
+.linkish{background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; text-align:left; cursor:pointer}
+.linkish:hover{text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:3px}
+.makes.linkish{font-family:var(--f-sans); font-weight:600; font-size:13px; color:var(--muted)}
+.bottles .chip b{font-weight:700} .bottles .chip .n{margin-left:2px}
 .rows{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:12px}
 .drow{display:grid; grid-template-columns:56px minmax(0,1fr) auto; gap:14px; align-items:center; width:100%; min-height:84px; text-align:left; background:var(--card); border:1.5px solid var(--sand); border-radius:16px; padding:12px 14px; cursor:pointer; color:var(--fg); font:inherit; transition:transform .15s, border-color .15s}
 .drow:hover{border-color:var(--sand-strong); transform:translateY(-1px)}
@@ -355,6 +359,7 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
       <button class="btn dark" type="submit">Search</button>
     </form>
     <div class="home-group"><p class="eyebrow">Your drinks</p><div class="tiles" id="home-mine"></div></div>
+    <div class="home-group" id="home-bottles-g"><p class="eyebrow">Your bottles</p><p class="sub" style="margin:0">Tap one to see everything you can make with it.</p><div class="chips bottles" id="home-bottles"></div></div>
     <div class="home-group"><p class="eyebrow">By spirit</p><div class="tiles" id="home-spirits"></div></div>
     <div class="home-group"><p class="eyebrow">By style</p><div class="tiles styles" id="home-styles"></div></div>
     <div class="home-group"><p class="eyebrow">Every drink</p><p class="sub" style="margin:0">Scroll through and tap one to see the recipe.</p><div class="drink-sections" id="home-all"></div></div>
@@ -837,7 +842,7 @@ const INBOX = [
     method: 'Mix the sugar with the finely chopped mint and rim the glass. Shake the tequila, lime, grapefruit, honey and jalapeño hard with ice, strain over fresh ice into the rimmed glass, and top with ginger beer.',
     garnish: 'Pomegranate arils and fresh mint', ing: [{spec: 'tequila-blanco', label: '', amt: '2 oz', opt: false}, {spec: 'lime', label: '', amt: '½ lime (½ oz)', opt: false}, {spec: 'grapefruit', label: '', amt: '½ small (1½ oz)', opt: false}, {spec: 'honey-syrup', label: '', amt: '2 tsp', opt: false}, {spec: 'jalapeno', label: '', amt: '1–2 slices', opt: false}, {spec: 'ginger-beer', label: '', amt: 'to top', opt: false}, {spec: 'sugar', label: '', amt: '2 tbsp, for the rim', opt: false}, {spec: 'mint', label: '', amt: '2–4 leaves, chopped', opt: false}, {spec: '', label: 'Pomegranate arils', amt: 'to serve', opt: true}], source: 'mine', at: 1795641700001}
 ];
-const UI = {tab: 'drinks', picked: false, detail: null, filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
+const UI = {tab: 'drinks', picked: false, detail: null, filter: null, base: '', style: '', ing: '', q: '', pair: null, openCats: new Set(['spirits'])};
 
 function haveSet(){
   const H = new Set();
@@ -980,8 +985,8 @@ function renderShelf(E){
         LEVELS.map(([l, lab]) => el('button', {type: 'button', 'data-l': l, 'aria-pressed': String((it.level || 'full') === l), disabled: S.readOnly || null, text: lab,
           onclick: () => { if (it.level !== l){ ops.update('items', it.id, {level: l}); if (l === 'out' || l === 'low') toast((it.name || c.l) + ' is on your shopping radar.'); } }})));
       cat.append(el('div', {class: 'row' + (it.level === 'out' ? ' out' : '')},
-        el('div', {class: 'who'}, el('b', {text: it.name || c.l}), (it.name || it.note) ? el('small', {text: [it.name ? c.l : '', it.note].filter(Boolean).join(' · ')}) : null),
-        el('span', {class: 'makes', text: it.level === 'out' ? 'Out' : (n ? 'In ' + n + ' ready drink' + (n === 1 ? '' : 's') : 'No ready drinks yet')}),
+        el('div', {class: 'who'}, el('b', {}, el('button', {type: 'button', class: 'linkish', title: 'See every drink with ' + (it.name || c.l), onclick: () => showWith(it.key), text: it.name || c.l})), (it.name || it.note) ? el('small', {text: [it.name ? c.l : '', it.note].filter(Boolean).join(' · ')}) : null),
+        el('button', {type: 'button', class: 'makes linkish', onclick: () => showWith(it.key), text: it.level === 'out' ? 'Out' : (n ? 'In ' + n + ' ready drink' + (n === 1 ? '' : 's') : 'No ready drinks yet')}),
         lvl,
         S.readOnly ? null : el('button', {type: 'button', class: 'iconbtn', text: 'Edit', 'aria-label': 'Edit ' + (it.name || c.l), onclick: () => openItem(it)})));
     }
@@ -1126,13 +1131,22 @@ dPhoto.addEventListener('click', () => dPhoto.close());
 function renderHome(E){
   const tile = (cls, title, sub, n, onclick) => el('button', {type: 'button', class: 'tile ' + cls, disabled: n === 0 || null, onclick},
     el('span', {class: 'tile-t', text: title}), sub ? el('span', {class: 'tile-s', text: sub}) : null, el('span', {class: 'tile-n', text: n + ' drink' + (n === 1 ? '' : 's')}));
-  const pick = (patch) => () => { Object.assign(UI, {base: '', style: '', q: '', filter: 'all', picked: true}, patch); $('#drink-q').value = UI.q; renderDrinks(evaluate()); window.scrollTo({top: document.querySelector('.tabs').offsetTop}); };
+  const pick = (patch) => () => { Object.assign(UI, {base: '', style: '', ing: '', q: '', filter: 'all', picked: true}, patch); $('#drink-q').value = UI.q; renderDrinks(evaluate()); window.scrollTo({top: document.querySelector('.tabs').offsetTop}); };
   const count = f => E.rs.filter(f).length;
   $('#home-mine').replaceChildren(
     tile('dark', '★ Favorites', 'The ones you love.', count(x => S.fav.includes(x.r.id)), pick({filter: 'fav'})),
     tile('plain', 'Ready right now', 'Everything on your shelf can make.', count(x => !x.missing.length), pick({filter: 'ready'})),
     tile('plain', 'Your recipes', 'The ones you added or changed.', count(x => x.r.mine), pick({filter: 'mine'})),
     tile('plain', 'Every drink', 'The whole book.', E.rs.length, pick({})));
+  const owned = new Map();
+  for (const it of S.items){
+    const c = I[it.key]; if (!c || it.level === 'out' || !['spirits', 'liqueurs', 'wine'].includes(c.c)) continue;
+    owned.set(it.key, owned.has(it.key) ? c.l : (it.name || c.l));
+  }
+  const bottles = [...owned.entries()].map(([k, label]) => ({k, label, n: E.rs.filter(x => !x.missing.length && usesKey(x.r, k)).length}))
+    .sort((a, b) => CATS.findIndex(x => x[0] === I[a.k].c) - CATS.findIndex(x => x[0] === I[b.k].c) || a.label.localeCompare(b.label));
+  $('#home-bottles-g').hidden = !bottles.length;
+  $('#home-bottles').replaceChildren(...bottles.map(b => el('button', {type: 'button', class: 'chip', onclick: () => showWith(b.k)}, el('b', {text: b.label}), el('span', {class: 'n', text: b.n + ' ready'}))));
   $('#home-spirits').replaceChildren(...BASES.map(([k, l], i) => tile('g' + (i % 5), l, '', count(x => x.r.base === k), pick({base: k}))));
   const all = $('#home-all'); all.replaceChildren();
   for (const [bk, bl] of BASES){
@@ -1151,9 +1165,15 @@ function renderHome(E){
   }
   $('#home-styles').replaceChildren(...STYLES.map(([k, l, d]) => tile('plain', l, d, count(x => stylesOf(x.r).includes(k)), pick({style: k}))));
 }
-$('#home-search').addEventListener('submit', e => { e.preventDefault(); const q = $('#home-q').value.trim(); if (!q) return; Object.assign(UI, {base: '', style: '', filter: 'all', q, picked: true}); $('#drink-q').value = q; $('#home-q').value = ''; renderDrinks(evaluate()); });
-$('#drink-back').addEventListener('click', () => { Object.assign(UI, {base: '', style: '', q: '', filter: 'all', picked: false}); $('#drink-q').value = ''; renderDrinks(evaluate()); window.scrollTo({top: document.querySelector('.tabs').offsetTop}); });
+$('#home-search').addEventListener('submit', e => { e.preventDefault(); const q = $('#home-q').value.trim(); if (!q) return; Object.assign(UI, {ing: '', base: '', style: '', filter: 'all', q, picked: true}); $('#drink-q').value = q; $('#home-q').value = ''; renderDrinks(evaluate()); });
+$('#drink-back').addEventListener('click', () => { Object.assign(UI, {base: '', style: '', ing: '', q: '', filter: 'all', picked: false}); $('#drink-q').value = ''; renderDrinks(evaluate()); window.scrollTo({top: document.querySelector('.tabs').offsetTop}); });
+function showWith(key){
+  Object.assign(UI, {ing: key, base: '', style: '', q: '', filter: 'all', picked: true}); $('#drink-q').value = '';
+  if (UI.tab !== 'drinks') go('drinks'); else renderDrinks(evaluate());
+  window.scrollTo({top: document.querySelector('.tabs').offsetTop});
+}
 function browseTitle(){
+  if (UI.ing && I[UI.ing]) return 'With ' + I[UI.ing].l + '.';
   if (UI.q.trim()) return '“' + UI.q.trim() + '”';
   const f = {fav: 'Favorites', ready: 'Ready right now', mine: 'Your recipes', one: 'One buy away', two: 'Two buys away'}[UI.filter];
   const parts = [UI.base ? BASE_L[UI.base] : '', UI.style ? STYLE_L[UI.style] : ''].filter(Boolean);
@@ -1172,7 +1192,7 @@ function renderDrinks(E){
   const q = norm(UI.q.trim());
   const pool = E.rs.filter(f).filter(x => !q || norm(x.r.n + ' ' + x.r.ing.map(i => specLabel(i.spec, i.label)).join(' ')).includes(q));
   const inStyle = x => !UI.style || stylesOf(x.r).includes(UI.style);
-  const inBase = x => !UI.base || x.r.base === UI.base;
+  const inBase = x => (!UI.base || x.r.base === UI.base) && (!UI.ing || usesKey(x.r, UI.ing));
   const chip = (label, on, n, onclick) => el('button', {type: 'button', class: 'chip' + (on ? ' on' : ''), 'aria-pressed': String(on), disabled: (!on && n === 0) || null, onclick}, label, el('span', {class: 'n', text: n}));
   const sp = pool.filter(inBase);
   $('#style-chips').replaceChildren(chip('Any style', !UI.style, sp.length, () => { UI.style = ''; renderDrinks(evaluate()); }),
@@ -1186,6 +1206,15 @@ function renderDrinks(E){
   if (!list.length){
     const msg = cur === 'ready' && !counts.ready ? 'Nothing is fully stocked yet. Try “One away” to see what a single bottle would unlock.' : cur === 'fav' ? 'Tap the star on any drink to keep it here.' : 'Nothing matches that combination. Try “All” above, or loosen the style or spirit.';
     box.append(el('p', {class: 'muted', text: msg}));
+    return;
+  }
+  if (UI.ing){
+    for (const [label, test] of [['Ready to make', x => !x.missing.length], ['One buy away', x => x.missing.length === 1], ['Need a few more', x => x.missing.length > 1]]){
+      const xs = list.filter(test); if (!xs.length) continue;
+      box.append(el('section', {class: 'spirit-sec', 'aria-label': label},
+        el('div', {class: 'cat-h'}, el('h3', {text: label}), el('span', {text: xs.length + ' drink' + (xs.length === 1 ? '' : 's')})),
+        el('div', {class: 'rows'}, xs.map(drow))));
+    }
     return;
   }
   for (const [bk, bl] of BASES){

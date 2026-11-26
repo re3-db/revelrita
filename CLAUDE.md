@@ -240,6 +240,9 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
   or glass icon, name, glass and ice, Ready/Need). The filtered list uses the same rows. A row opens
   the full card in a pop-up (`#dlg-drink`, `openDrink`, re-rendered by `renderAll`); tapping a photo
   shows it full screen (`#dlg-photo`).
+- Tap a bottle to see its drinks: the home's "Your bottles" chips and each bottle's name (or its "In N
+  ready drinks") on the Shelf call `showWith(key)`, which sets `UI.ing`. The list then filters with
+  `usesKey` and groups into Ready to make / One buy away / Need a few more instead of by spirit.
 - Glass and ice icons: `glassOf` reads the glass text, `iceOf` works out no ice / on ice / big cube /
   crushed / blended / hot from the method unless the recipe sets `ice` (the editor's Ice field).
   Icons are the static SVG paths in `ICON`.
