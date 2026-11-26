@@ -209,6 +209,18 @@ label.lbl{display:grid; gap:6px; font-family:var(--f-sans); font-weight:700; fon
 .tile.dark{background:var(--strong); color:var(--on-strong)}
 .tile.plain{background:var(--card); border:1.5px solid var(--sand); color:var(--fg)}
 .back{justify-self:start}
+.dk{background:var(--card); border:1.5px solid var(--sand); border-radius:16px; min-width:0}
+.dk > summary{list-style:none; display:flex; gap:12px; align-items:center; padding:12px 14px; cursor:pointer; border-radius:16px}
+.dk > summary::-webkit-details-marker{display:none}
+.dk > summary:hover{background:var(--tint)}
+.dk[open] > summary{border-bottom:1px solid var(--hair); border-radius:16px 16px 0 0}
+.dk-thumb{width:48px; height:48px; border-radius:10px; object-fit:cover; flex:none; max-width:none}
+.dk-txt{flex:1; min-width:0}
+.dk-txt b{display:block; font-family:var(--f-sans); font-weight:700; font-size:17px; line-height:1.2}
+.dk-txt small{font-size:13px; color:var(--muted)}
+.dk .card{border:0; border-radius:0 0 16px 16px}
+.dk .card .card-top h3, .dk .card .card-top .meta, .dk .card .card-top .pill, .dk .card .card-photo{display:none}
+.dk .card .card-top{justify-content:end}
 
 /* guest guide */
 .guide{background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-card); padding:20px; display:grid; gap:18px}
@@ -331,6 +343,7 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
     <div class="home-group"><p class="eyebrow">Your drinks</p><div class="tiles" id="home-mine"></div></div>
     <div class="home-group"><p class="eyebrow">By spirit</p><div class="tiles" id="home-spirits"></div></div>
     <div class="home-group"><p class="eyebrow">By style</p><div class="tiles styles" id="home-styles"></div></div>
+    <div class="home-group"><p class="eyebrow">Every drink</p><p class="sub" style="margin:0">Scroll through and tap one to see the recipe.</p><div class="drink-sections" id="home-all"></div></div>
    </div>
    <div class="stack" id="drink-browse" hidden>
     <button class="btn sm back" id="drink-back" type="button">← All spirits and styles</button>
@@ -736,7 +749,7 @@ const INBOX = [
     method: 'Add everything to a shaker with ice, shake well and strain into a chilled martini glass. Use 3 oz for a lighter pour, 4 oz for the full recipe.',
     garnish: 'A lychee', ing: [{spec: 'vodka', label: '', amt: '3–4 oz Haiken Lychee', opt: false}, {spec: 'lemon', label: '', amt: '½ oz', opt: false}, {spec: 'dry-vermouth', label: '', amt: 'spray or dash', opt: false}], source: 'mine', at: 1795641100001}
 ];
-const UI = {tab: 'drinks', picked: false, filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
+const UI = {tab: 'drinks', picked: false, openDrinks: new Set(), filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
 
 function haveSet(){
   const H = new Set();
@@ -1001,6 +1014,27 @@ function renderHome(E){
     tile('plain', 'Your recipes', 'The ones you added or changed.', count(x => x.r.mine), pick({filter: 'mine'})),
     tile('plain', 'Every drink', 'The whole book.', E.rs.length, pick({})));
   $('#home-spirits').replaceChildren(...BASES.map(([k, l], i) => tile('g' + (i % 5), l, '', count(x => x.r.base === k), pick({base: k}))));
+  const all = $('#home-all'); all.replaceChildren();
+  for (const [bk, bl] of BASES){
+    const xs = E.rs.filter(x => x.r.base === bk).sort((a, b) => a.missing.length - b.missing.length || a.r.n.localeCompare(b.r.n));
+    if (!xs.length) continue;
+    all.append(el('section', {class: 'spirit-sec', 'aria-label': bl},
+      el('div', {class: 'cat-h'}, el('h3', {text: bl}), el('span', {text: xs.length + ' drink' + (xs.length === 1 ? '' : 's')})),
+      el('div', {class: 'grid'}, xs.map(x => {
+        const n = x.missing.length; const open = UI.openDrinks.has(x.r.id);
+        const d = el('details', {class: 'dk', open: open || null},
+          el('summary', {},
+            S.photos[x.r.id] ? el('img', {class: 'dk-thumb', src: photoUrl(x.r.id), alt: '', loading: 'lazy'}) : null,
+            el('span', {class: 'dk-txt'}, el('b', {text: x.r.n}), el('small', {text: [x.r.glass, ...stylesOf(x.r).map(k => STYLE_L[k])].filter(Boolean).join(' · ')})),
+            el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})),
+          open ? drinkCard(x) : null);
+        d.addEventListener('toggle', () => {
+          if (d.open){ UI.openDrinks.add(x.r.id); if (d.children.length < 2) d.append(drinkCard(x)); }
+          else UI.openDrinks.delete(x.r.id);
+        });
+        return d;
+      }))));
+  }
   $('#home-styles').replaceChildren(...STYLES.map(([k, l, d]) => tile('plain', l, d, count(x => stylesOf(x.r).includes(k)), pick({style: k}))));
 }
 $('#home-search').addEventListener('submit', e => { e.preventDefault(); const q = $('#home-q').value.trim(); if (!q) return; Object.assign(UI, {base: '', style: '', filter: 'all', q, picked: true}); $('#drink-q').value = q; $('#home-q').value = ''; renderDrinks(evaluate()); });

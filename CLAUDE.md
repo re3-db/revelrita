@@ -236,6 +236,8 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
 - It opens on Drinks: a home of tiles (her favorites, ready now, her recipes, every drink, then each
   spirit and each style). Picking one sets `UI.picked` and shows the filtered list, with a back
   button to the tiles. No counts in the header; she didn't want them.
+  Below the tiles, "Every drink" lists the whole book by spirit as compact rows (`<details class="dk">`)
+  that open into the full card in place; open ones are remembered in `UI.openDrinks` across re-renders.
 - It is one self-contained page, `public/recipes.html` (vanilla JS, its own CSS and Revelrita
   tokens, no Tailwind or `globals.css`), served at `/recipes` by a rewrite in `next.config.ts`.
   The ingredient catalog, recipe book (`RAW`), styles (`STY`) and flavor notes live in its script.
