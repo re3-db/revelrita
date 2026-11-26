@@ -254,6 +254,13 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
 - Amari each have a type (`amaro-averna`, `amaro-nonino`, ...) in the `amaro` group; `amaro` itself
   is "Amaro (any)", so a recipe calling for it takes any of them. On load, saved bottles still typed
   `amaro` get their own type by name (the `AMARI` list in `init`).
+- Ingredients in the recipe editor are typed, with suggestions (a `<datalist>`). `specFor` maps
+  what she types to a catalog key through `LBL` (labels, keys, amaro brand names and aliases like
+  "lime juice"); anything else is saved as a plain label and isn't checked against the shelf.
+- Drink photos: `app/api/bar/photo/route.ts`, one per drink id (a book id, or `mine-<id>`), stored
+  as base64 at `bar:photo:<id>` plus `bar:photos` (hash, id -> version; `GET /api/bar` returns it
+  as `photos`). The page shrinks them to 1200px JPEG first and asks for `?v=<version>`, so the
+  image response caches forever. Added from a card's "Add photo" or the editor; anyone can view.
 - The artifact's Claude-powered buttons (paste a recipe, suggest, invent) need the `sample`
   capability, which only exists inside Claude, so that panel stays hidden here.
 

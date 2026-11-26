@@ -21,9 +21,12 @@ export async function GET() {
   const canEdit = await isAdmin();
   if (!storeConfigured()) return Response.json({ ...fallback, canEdit: false, stored: false }, { headers: noStore });
   try {
-    const [values] = (await pipeline([["MGET", ...SECTIONS.map(key)]])) as [unknown[]];
+    const [values, flat] = (await pipeline([["MGET", ...SECTIONS.map(key)], ["HGETALL", "bar:photos"]])) as [unknown[], string[]];
     const data = Object.fromEntries(SECTIONS.map((s, i) => [s, parseJson(values[i]) ?? fallback[s]]));
-    return Response.json({ ...data, canEdit, stored: true }, { headers: noStore });
+    // Which drinks have a photo (app/api/bar/photo), as id -> version
+    const photos: Record<string, number> = {};
+    for (let i = 0; i + 1 < (flat ?? []).length; i += 2) photos[flat[i]] = Number(flat[i + 1]);
+    return Response.json({ ...data, photos, canEdit, stored: true }, { headers: noStore });
   } catch (error) {
     console.error("Back bar read failed", error);
     return Response.json({ ...fallback, canEdit: false, stored: false }, { headers: noStore });

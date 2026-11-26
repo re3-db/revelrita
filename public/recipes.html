@@ -264,7 +264,13 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
 .radios input:checked + span{background:var(--strong); color:var(--on-strong); border-color:var(--strong)}
 .radios input:focus-visible + span{outline:3px solid var(--fg); outline-offset:2px}
 .ingrow{display:grid; grid-template-columns:5.5em minmax(0,1fr) auto; gap:8px; align-items:center}
-.ingrow .other{grid-column:2 / 3}
+.ingmeta{grid-column:2 / 3; display:flex; gap:6px 14px; flex-wrap:wrap; align-items:center}
+.hint{font-family:var(--f-sans); font-size:12px; font-weight:600; color:var(--muted)}
+.hint.ok::before{content:"✓ "; color:var(--ember)}
+.card-photo{display:block; width:calc(100% + 40px); max-width:none; margin:-20px -20px 0; aspect-ratio:4 / 3; object-fit:cover; border-radius:var(--r-card) var(--r-card) 0 0; background:var(--tint)}
+.menu-card .card-photo{width:calc(100% + 48px); margin:-24px -24px 0}
+.photo-edit{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+.photo-edit img{width:96px; height:96px; object-fit:cover; border-radius:12px; max-width:none}
 .ingrow .input{padding:9px 10px; font-size:15px}
 .ingrow .x{border:0; background:none; cursor:pointer; color:var(--ember); font-family:var(--f-sans); font-weight:800; font-size:18px; padding:4px 8px}
 .ingrow label{display:flex; gap:4px; align-items:center; font-family:var(--f-sans); font-size:12px; font-weight:600; color:var(--muted); grid-column:2/3}
@@ -449,6 +455,13 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
       <legend class="lbl" style="padding:0; margin-bottom:8px">Style</legend>
       <div class="radios" id="rec-styles"></div>
     </fieldset>
+    <div class="lbl" style="gap:10px">Photo <span class="muted" style="font-weight:600">(optional)</span>
+      <div class="photo-edit">
+        <img id="rec-photo-img" alt="" hidden>
+        <button class="btn sm" type="button" id="rec-photo-pick">Add a photo</button>
+        <button class="btn sm danger" type="button" id="rec-photo-remove" hidden>Remove photo</button>
+      </div>
+    </div>
     <div class="lbl" style="gap:10px">Ingredients
       <div id="rec-ings" style="display:grid; gap:10px"></div>
       <button class="btn sm" type="button" id="rec-add-ing" style="justify-self:start">Add ingredient</button>
@@ -704,7 +717,7 @@ const toastEl = $('#toast'); let toastT;
 function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 2600); }
 
 /* ---------- state ---------- */
-const S = {items: [], shopping: [], mine: [], fav: [], imported: [], menu: [], servings: 1, ready: false, readOnly: false};
+const S = {items: [], shopping: [], mine: [], fav: [], imported: [], photos: {}, menu: [], servings: 1, ready: false, readOnly: false};
 
 /* Recipes Claude adds in code (Helen can't be written to from outside). On her next logged-in
    visit each one moves into her saved recipes, starred, and its id goes into prefs.imported so a
@@ -773,7 +786,7 @@ function save(section){
   });
 }
 const ops = {
-  add(col, data){ S[COLS[col]].push({id: uid(), ...data}); renderAll(); save(col); },
+  add(col, data){ const id = uid(); S[COLS[col]].push({id, ...data}); renderAll(); save(col); return id; },
   update(col, id, patch){ const it = S[COLS[col]].find(x => x.id === id); if (it) Object.assign(it, patch); renderAll(); save(col); },
   del(col, id){ S[COLS[col]] = S[COLS[col]].filter(x => x.id !== id); renderAll(); save(col); },
   setFav(fav){ S.fav = fav; renderAll(); save('prefs'); },
@@ -792,6 +805,7 @@ async function init(){
     S.menu = Array.isArray(d.menu?.ids) ? d.menu.ids : [];
     S.servings = Number.isFinite(d.menu?.servings) ? Math.max(1, Math.min(50, d.menu.servings)) : 1;
     S.readOnly = !d.canEdit;
+    S.photos = d.photos && typeof d.photos === 'object' ? d.photos : {};
     S.imported = Array.isArray(d.prefs?.imported) ? d.prefs.imported : [];
     // Amari used to be one type; give saved bottles their own by name, once
     const AMARI = [[/averna/i, 'amaro-averna'], [/nonino/i, 'amaro-nonino'], [/montenegro/i, 'amaro-montenegro'], [/ramazzotti/i, 'amaro-ramazzotti'], [/angeleno/i, 'amaro-angeleno'], [/meletti/i, 'amaro-meletti'], [/cynar/i, 'amaro-cynar'], [/braulio/i, 'amaro-braulio'], [/lucano/i, 'amaro-lucano'], [/ciociaro/i, 'amaro-ciociaro']];
@@ -955,6 +969,7 @@ function drinkCard(x){
     el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : n === 1 ? 'Need 1' : 'Need ' + n});
   const fav = S.fav.includes(r.id);
   return el('article', {class: 'card'},
+    S.photos[r.id] ? el('img', {class: 'card-photo', src: photoUrl(r.id), alt: r.n, loading: 'lazy'}) : null,
     el('div', {class: 'card-top'},
       el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, ...stylesOf(r).map(x => STYLE_L[x]), r.mine ? (r.overrides ? 'Your version' : r.source === 'claude' ? 'Invented' : r.source === 'suggested' ? 'Suggested' : 'Your recipe') : ''].filter(Boolean).join(' · ')})),
       el('div', {style: 'display:flex; gap:6px; align-items:center'}, pill,
@@ -972,7 +987,8 @@ function drinkCard(x){
     r.garnish ? el('p', {class: 'garnish', text: 'Garnish: ' + r.garnish}) : null,
     (S.readOnly || String(r.id).startsWith('preview')) ? null : el('div', {class: 'card-foot'},
       el('button', {type: 'button', class: 'mini' + (S.menu.includes(r.id) ? ' on' : ''), 'aria-pressed': String(S.menu.includes(r.id)), text: S.menu.includes(r.id) ? 'On the menu' : '+ Menu', onclick: () => toggleMenu(r.id)}),
-      el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)})));
+      el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)}),
+      S.photos[r.id] ? null : el('button', {type: 'button', class: 'mini', text: 'Add photo', onclick: () => pickPhoto(async url => { await putPhoto(r.id, url); toast('Photo added to ' + r.n + '.'); })})));
 }
 function renderHome(E){
   const tile = (cls, title, sub, n, onclick) => el('button', {type: 'button', class: 'tile ' + cls, disabled: n === 0 || null, onclick},
@@ -1137,6 +1153,7 @@ function scaleAmt(a, k){
 function menuCard(x, k){
   const {r, missing, H} = x; const n = missing.length;
   return el('article', {class: 'card menu-card'},
+    S.photos[r.id] ? el('img', {class: 'card-photo', src: photoUrl(r.id), alt: r.n, loading: 'lazy'}) : null,
     el('div', {class: 'card-top'},
       el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, k > 1 ? 'Makes ' + k : ''].filter(Boolean).join(' · ')})),
       el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})),
@@ -1211,19 +1228,70 @@ $('#menu-clear').addEventListener('click', () => { if (S.menu.length){ ops.setMe
 const dRec = $('#dlg-recipe'); let editingRec = null, pendingRecDel = false;
 $('#rec-base').append(...BASES.map(([k,l]) => el('option', {value: k, text: l})));
 $('#rec-styles').append(...STYLES.map(([k,l]) => el('label', {}, el('input', {type: 'checkbox', value: k, id: 'sty-' + k}), el('span', {text: l}))));
+/* Ingredient names: typing a name on the shelf list (or a common alias) tracks it; anything else
+   is kept as typed and isn't checked against the shelf. */
+const LBL = new Map();
+const ingOptions = el('datalist', {id: 'ing-options'});
+Object.values(I).forEach(c => {
+  LBL.set(norm(c.l), c.k); LBL.set(norm(c.k.replace(/-/g, ' ')), c.k);
+  if (c.k.startsWith('amaro-')) LBL.set(norm(c.l.replace(/^Amaro /, '')), c.k);
+  ingOptions.append(el('option', {value: c.l}));
+});
+Object.entries(G).forEach(([k, l]) => { LBL.set(norm('any ' + l), k); if (!LBL.has(norm(l))) LBL.set(norm(l), k); ingOptions.append(el('option', {value: 'Any ' + l.toLowerCase()})); });
+[['lime juice','lime'],['lemon juice','lemon'],['orange juice','orange'],['grapefruit juice','grapefruit'],['cointreau','triple-sec'],['egg','egg-white'],['egg white','egg-white'],['saline','salt'],['saline solution','salt'],['club soda','soda'],['sparkling water','soda'],['soda water','soda'],['espresso','coffee'],['honey','honey-syrup'],['honey syrup','honey-syrup'],['mint leaves','mint'],['st-germain','st-germain'],['st germain','st-germain'],['elderflower','st-germain'],['angostura','angostura'],['peychauds','peychauds'],['simple','simple-syrup'],['agave','agave'],['agave syrup','agave'],['luxardo','maraschino'],['luxardo cherries','cherries'],['olive brine','olives'],['champagne','champagne'],['prosecco','prosecco'],['bourbon whiskey','bourbon'],['rye','rye'],['dry vermouth','dry-vermouth'],['sweet vermouth','sweet-vermouth'],['blanco tequila','tequila-blanco'],['reposado tequila','tequila-reposado'],['reposado','tequila-reposado']]
+  .forEach(([t, k]) => { if (I[k]) LBL.set(norm(t), k); });
+document.body.append(ingOptions);
+const specFor = text => LBL.get(norm(String(text || '').trim())) || '';
 function ingRow(i){
-  const sel = el('select', {class: 'input', 'aria-label': 'Ingredient'}); typeOptions(sel, true);
-  sel.prepend(el('option', {value: '', text: 'Something else (type it)'}));
-  if (i && i.spec && !I[i.spec] && !G[i.spec]) sel.prepend(el('option', {value: i.spec, text: specLabel(i.spec)}));
-  sel.value = i && i.spec ? i.spec : (i && i.label ? '' : 'lime');
   const amt = el('input', {class: 'input', type: 'text', placeholder: '1 oz', value: (i && i.amt) || '', 'aria-label': 'Amount'});
-  const other = el('input', {class: 'input other', type: 'text', placeholder: 'e.g. Hibiscus syrup', value: (i && i.label && !i.spec) ? i.label : '', 'aria-label': 'Ingredient name'});
+  let start = '';
+  if (i && i.spec){ start = specLabel(i.spec); if (!LBL.has(norm(start))){ LBL.set(norm(start), i.spec); ingOptions.append(el('option', {value: start})); } }
+  else if (i && i.label) start = i.label;
+  const name = el('input', {class: 'input', type: 'text', list: 'ing-options', value: start, placeholder: 'Type it: lime, Averna, hibiscus syrup…', 'aria-label': 'Ingredient', autocomplete: 'off'});
+  const hint = el('span', {class: 'hint'});
   const opt = el('input', {type: 'checkbox'}); opt.checked = !!(i && i.opt);
-  const row = el('div', {class: 'ingrow'}, amt, sel, el('button', {type: 'button', class: 'x', 'aria-label': 'Remove ingredient', text: '×', onclick: () => row.remove()}), other, el('label', {}, opt, 'Optional'));
-  const sync = () => { other.hidden = sel.value !== ''; }; sel.addEventListener('change', sync); sync();
-  row._get = () => { const spec = sel.value; const label = spec ? '' : other.value.trim(); if (!spec && !label) return null; return {spec, label: label.slice(0, 60), amt: amt.value.trim().slice(0, 24), opt: opt.checked}; };
+  const sync = () => { const t = name.value.trim(); const sp = specFor(t); hint.textContent = !t ? '' : sp ? 'Checked against your shelf' : 'Not on your shelf list, so it won’t be checked'; hint.classList.toggle('ok', !!sp); };
+  name.addEventListener('input', sync); sync();
+  const row = el('div', {class: 'ingrow'}, amt, name, el('button', {type: 'button', class: 'x', 'aria-label': 'Remove ingredient', text: '×', onclick: () => row.remove()}),
+    el('div', {class: 'ingmeta'}, el('label', {}, opt, 'Optional'), hint));
+  row._get = () => { const t = name.value.trim(); if (!t) return null; const sp = specFor(t); return {spec: sp, label: sp ? '' : t.slice(0, 60), amt: amt.value.trim().slice(0, 24), opt: opt.checked}; };
   return row;
 }
+
+/* ---------- photos ---------- */
+const photoUrl = id => '/api/bar/photo?id=' + encodeURIComponent(id) + '&v=' + S.photos[id];
+const photoInput = el('input', {type: 'file', accept: 'image/*', hidden: true});
+document.body.append(photoInput);
+let photoDone = null;
+function pickPhoto(done){ photoDone = done; photoInput.value = ''; photoInput.click(); }
+photoInput.addEventListener('change', async () => {
+  const file = photoInput.files && photoInput.files[0]; if (!file || !photoDone) return;
+  try { const url = await shrink(file); await photoDone(url); }
+  catch (e) { toast(e && e.message ? e.message : 'That photo didn’t open. Try a JPEG or PNG.'); }
+});
+async function shrink(file){
+  let img = await createImageBitmap(file).catch(() => null);
+  if (!img) img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('That photo didn’t open. Try a JPEG or PNG.')); im.src = URL.createObjectURL(file); });
+  const k = Math.min(1, 1200 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.82);
+}
+async function putPhoto(id, dataUrl){
+  const r = await fetch('/api/bar/photo', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, dataUrl})});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'The photo didn’t save. Try again.');
+  S.photos[id] = d.v; renderAll();
+}
+async function dropPhoto(id){
+  const r = await fetch('/api/bar/photo?id=' + encodeURIComponent(id), {method: 'DELETE'});
+  if (!r.ok) throw new Error('The photo wasn’t removed. Try again.');
+  delete S.photos[id]; renderAll();
+}
+function showDialogPhoto(src){ const img = $('#rec-photo-img'); img.hidden = !src; if (src) img.src = src; $('#rec-photo-remove').hidden = !src; $('#rec-photo-pick').textContent = src ? 'Change photo' : 'Add a photo'; }
+$('#rec-photo-pick').addEventListener('click', () => pickPhoto(async url => { dRec._photo = {action: 'set', url}; showDialogPhoto(url); }));
+$('#rec-photo-remove').addEventListener('click', () => { dRec._photo = {action: 'remove'}; showDialogPhoto(''); });
+
 function openRecipe(r, pre){
   editingRec = r && r.mine ? r : null; pendingRecDel = false;
   dRec._overrides = r && !r.mine && BUILTIN_IDS.has(r.id) ? r.id : (editingRec && editingRec.overrides) || '';
@@ -1236,6 +1304,7 @@ function openRecipe(r, pre){
   const box = $('#rec-ings'); box.replaceChildren(...((src.ing && src.ing.length) ? src.ing : [null, null, null]).map(ingRow));
   $('#rec-del').hidden = !editingRec; $('#rec-del').textContent = editingRec && editingRec.overrides ? 'Reset to the original' : 'Delete';
   dRec._source = (pre && pre.source) || (editingRec && editingRec.source) || 'mine'; dRec._desc = src.desc || '';
+  dRec._photo = {action: 'keep'}; dRec._photoId = r ? r.id : ''; showDialogPhoto(r && S.photos[r.id] ? photoUrl(r.id) : '');
   dRec.showModal(); $('#rec-name').focus();
 }
 $('#new-recipe').addEventListener('click', () => openRecipe(null));
@@ -1244,6 +1313,7 @@ $('#rec-cancel').addEventListener('click', () => dRec.close());
 $('#rec-del').addEventListener('click', () => {
   if (!editingRec) return;
   if (!pendingRecDel){ pendingRecDel = true; $('#rec-del').textContent = editingRec.overrides ? 'Tap again to reset' : 'Tap again to delete'; return; }
+  if (!editingRec.overrides && S.photos[editingRec.id]) dropPhoto(editingRec.id).catch(() => {});
   ops.del('recipes', editingRec.docId); toast(editingRec.overrides ? editingRec.n + ' is back to the original.' : 'Deleted ' + editingRec.n + '.'); dRec.close();
 });
 $('#rec-form').addEventListener('submit', e => {
@@ -1251,8 +1321,13 @@ $('#rec-form').addEventListener('submit', e => {
   const ing = [...$('#rec-ings').children].map(r => r._get()).filter(Boolean);
   if (!ing.length){ toast('Add at least one ingredient.'); return; }
   const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ing, source: dRec._source || 'mine', desc: $('#rec-desc').value.trim().slice(0, 240), ...(dRec._overrides ? {overrides: dRec._overrides} : {}), styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
-  if (editingRec) ops.update('recipes', editingRec.docId, data); else ops.add('recipes', {...data, at: Date.now()});
+  let newId = null;
+  if (editingRec) ops.update('recipes', editingRec.docId, data); else newId = ops.add('recipes', {...data, at: Date.now()});
+  const pid = dRec._photoId || (dRec._overrides ? dRec._overrides : 'mine-' + newId);
+  const ph = dRec._photo || {action: 'keep'};
   toast('Saved ' + data.n + '.'); dRec.close();
+  if (ph.action === 'set') putPhoto(pid, ph.url).catch(e => toast(e.message));
+  if (ph.action === 'remove' && S.photos[pid]) dropPhoto(pid).catch(e => toast(e.message));
   if (!editingRec && !dRec._overrides){ Object.assign(UI, {filter: 'mine', base: '', style: '', q: '', picked: true}); $('#drink-q').value = ''; }
 });
 
