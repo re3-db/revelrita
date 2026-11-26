@@ -233,6 +233,9 @@ bartenders table. The "Proposals / Events" tabs (`components/admin/AdminNav.tsx`
 Helen's home bar inventory: a port of her "The Back Bar" Claude artifact (bottles and levels,
 ~100 classic specs checked against what she has, her own recipes, favorites, a party menu with
 scaled specs and a prep list, shopping list, pairings). Not linked from the site, `noindex`.
+- It opens on Drinks: a home of tiles (her favorites, ready now, her recipes, every drink, then each
+  spirit and each style). Picking one sets `UI.picked` and shows the filtered list, with a back
+  button to the tiles. No counts in the header; she didn't want them.
 - It is one self-contained page, `public/recipes.html` (vanilla JS, its own CSS and Revelrita
   tokens, no Tailwind or `globals.css`), served at `/recipes` by a rewrite in `next.config.ts`.
   The ingredient catalog, recipe book (`RAW`), styles (`STY`) and flavor notes live in its script.

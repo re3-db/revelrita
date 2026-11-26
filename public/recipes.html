@@ -17,7 +17,7 @@
   --bg:#fff9e9; --card:#ffffff; --fg:#14374f; --muted:#45606f; --ember:#c4400d;
   --orange:#fb5718; --sky:#78b8cd; --mist:#bbd6e6; --blush:#ffb59a; --peach:#ff8b5f;
   --sand:#e0d2b6; --sand-strong:#c9b999; --hair:rgba(20,55,79,.16); --tint:#f6eedb;
-  --strong:#14374f; --on-strong:#fff9e9; --pill-ink:#14374f; --placeholder:#9aa8b2;
+  --strong:#14374f; --on-strong:#fff9e9; --wheat:#f3e3c3; --pill-ink:#14374f; --placeholder:#9aa8b2;
   --f-sans:"Bricolage Grotesque", system-ui, -apple-system, sans-serif;
   --f-serif:Newsreader, Georgia, "Times New Roman", serif;
   --f-fancy:"Instrument Serif", Georgia, serif;
@@ -56,10 +56,6 @@ button,input,select,textarea{font:inherit; color:inherit}
 .hero{padding-block:36px 22px}
 .hero h1{font-size:clamp(40px, 7vw, 64px); line-height:1.02; margin-top:10px}
 .lede{font-size:clamp(17px,2.2vw,20px); color:var(--muted); max-width:52ch; margin:12px 0 0}
-.stats{display:flex; flex-wrap:wrap; gap:10px 28px; margin-top:24px}
-.stat{display:flex; align-items:baseline; gap:8px}
-.stat b{font-family:var(--f-sans); font-weight:800; font-size:34px; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1}
-.stat span{font-family:var(--f-sans); font-weight:600; font-size:14px; color:var(--muted)}
 .note{margin-top:14px; font-size:15px; color:var(--muted)}
 
 /* tabs */
@@ -198,6 +194,22 @@ label.lbl{display:grid; gap:6px; font-family:var(--f-sans); font-weight:700; fon
 .dlist button{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; border:0; border-bottom:1px solid var(--hair); background:none; padding:10px 0; cursor:pointer; font-family:var(--f-sans); font-weight:700; font-size:16px}
 .dlist button:hover{color:var(--ember)}
 
+/* drinks home: pick a spirit or a style */
+.stack{display:grid; gap:28px}
+.home-group{display:grid; gap:12px}
+.tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap:12px}
+.tiles.styles{grid-template-columns:repeat(auto-fill, minmax(min(100%, 250px), 1fr))}
+.tile{display:grid; gap:6px; align-content:start; text-align:left; border:0; border-radius:var(--r-card); padding:18px 18px 16px; min-height:112px; cursor:pointer; color:var(--pill-ink); font:inherit; transition:transform .15s, box-shadow .15s}
+.tile:hover{transform:translateY(-2px); box-shadow:var(--lift)}
+.tile[disabled]{opacity:.45; cursor:default; transform:none; box-shadow:none}
+.tile-t{font-family:var(--f-sans); font-weight:800; font-size:22px; letter-spacing:-.02em; line-height:1.1}
+.tile-s{font-size:15px; line-height:1.4}
+.tile-n{font-family:var(--f-sans); font-weight:700; font-size:13px; opacity:.75; margin-top:auto; padding-top:6px}
+.tile.g0{background:var(--sky)} .tile.g1{background:var(--blush)} .tile.g2{background:var(--peach)} .tile.g3{background:var(--mist)} .tile.g4{background:var(--wheat)}
+.tile.dark{background:var(--strong); color:var(--on-strong)}
+.tile.plain{background:var(--card); border:1.5px solid var(--sand); color:var(--fg)}
+.back{justify-self:start}
+
 /* guest guide */
 .guide{background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-card); padding:20px; display:grid; gap:18px}
 .guide-row{display:grid; gap:10px}
@@ -267,23 +279,18 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
 
 <header class="hero">
   <div class="wrap">
-    <p class="eyebrow">Bar inventory</p>
-    <h1>What's on the <em class="fancy">shelf.</em></h1>
-    <p class="lede">Every bottle you've got, what you can pour with it tonight, and what to buy next.</p>
-    <div class="stats" id="stats" aria-live="polite">
-      <div class="stat"><b id="st-bottles">0</b><span>bottles</span></div>
-      <div class="stat"><b id="st-ready">0</b><span>drinks ready to pour</span></div>
-      <div class="stat"><b id="st-one">0</b><span>one buy away</span></div>
-    </div>
+    <p class="eyebrow">Revelrita</p>
+    <h1>The back <em class="fancy">bar.</em></h1>
+    <p class="lede">Your recipes, your bottles, and what to pour tonight.</p>
     <p class="note" id="note" hidden></p>
   </div>
 </header>
 
 <nav class="tabs" aria-label="Sections">
   <div class="wrap" role="tablist">
-    <button class="tab" role="tab" id="tab-shelf" data-tab="shelf" aria-selected="true">Shelf</button>
-    <button class="tab" role="tab" id="tab-drinks" data-tab="drinks" aria-selected="false">Drinks<span class="ct" id="ct-drinks"></span></button>
+    <button class="tab" role="tab" id="tab-drinks" data-tab="drinks" aria-selected="true">Drinks</button>
     <button class="tab" role="tab" id="tab-menu" data-tab="menu" aria-selected="false">Party menu<span class="ct" id="ct-menu"></span></button>
+    <button class="tab" role="tab" id="tab-shelf" data-tab="shelf" aria-selected="false">Shelf</button>
     <button class="tab" role="tab" id="tab-shop" data-tab="shop" aria-selected="false">Shopping<span class="ct" id="ct-shop"></span></button>
     <button class="tab" role="tab" id="tab-pairings" data-tab="pairings" aria-selected="false">Pairings</button>
   </div>
@@ -309,8 +316,20 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
 
   <!-- DRINKS -->
   <section class="panel" id="p-drinks" role="tabpanel" aria-labelledby="tab-drinks" hidden>
+   <div class="stack" id="drink-home">
+    <div class="head"><div><h2>What are we <em class="fancy">pouring?</em></h2><p class="sub">Pick a spirit, or what your guest is in the mood for.</p></div></div>
+    <form class="addbox" id="home-search" role="search">
+      <input class="input" id="home-q" type="search" placeholder="Search every drink or ingredient" aria-label="Search every drink">
+      <button class="btn dark" type="submit">Search</button>
+    </form>
+    <div class="home-group"><p class="eyebrow">Your drinks</p><div class="tiles" id="home-mine"></div></div>
+    <div class="home-group"><p class="eyebrow">By spirit</p><div class="tiles" id="home-spirits"></div></div>
+    <div class="home-group"><p class="eyebrow">By style</p><div class="tiles styles" id="home-styles"></div></div>
+   </div>
+   <div class="stack" id="drink-browse" hidden>
+    <button class="btn sm back" id="drink-back" type="button">← All spirits and styles</button>
     <div class="head">
-      <div><h2>What you can <em class="fancy">pour.</em></h2><p class="sub" id="drinks-sub">Grouped by spirit and checked against your shelf. Talking to a guest? Pick what they like and the list narrows to match.</p></div>
+      <div><h2 id="browse-title">Every drink.</h2><p class="sub" id="drinks-sub">Checked against your shelf. Anything you're missing shows in orange, with a button to put it on your shopping list.</p></div>
       <button class="btn" id="new-recipe" type="button" data-write>Add your own recipe</button>
     </div>
     <div class="invent" id="invent" hidden>
@@ -333,6 +352,7 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
       <input class="input" id="drink-q" type="search" placeholder="Search drinks or ingredients" aria-label="Search drinks">
     </div>
     <div class="drink-sections" id="drink-list"></div>
+   </div>
   </section>
 
   <!-- MENU -->
@@ -692,9 +712,12 @@ const INBOX = [
     garnish: 'Cinnamon stick, grated nutmeg', ing: [{spec: 'rum-aged|rum-dark', label: '', amt: '2 oz', opt: false}, {spec: 'butter', label: '', amt: '1 tbsp batter', opt: false}, {spec: '', label: 'Hot water', amt: '4 oz', opt: false}], source: 'mine', at: 1795641000002},
   {id: 'baby-turtle', n: 'Baby Turtle', desc: 'A silky reposado sour with grapefruit, cinnamon and a bitter edge of Campari.', base: 'tequila', glass: 'Coupe', styles: ['sour', 'bitter'],
     method: 'Dry shake without ice, then shake hard with ice and double strain into a chilled coupe. Tequila Ocho reposado if you have it. Saline: 1 part salt dissolved in 4 parts water.',
-    garnish: 'Grated cinnamon', ing: [{spec: 'tequila-reposado', label: '', amt: '2 oz', opt: false}, {spec: 'lime', label: '', amt: '¾ oz', opt: false}, {spec: 'egg-white', label: '', amt: '¾ oz', opt: false}, {spec: 'grapefruit', label: '', amt: '½ oz', opt: false}, {spec: 'cinnamon-syrup', label: '', amt: '½ oz', opt: false}, {spec: 'campari', label: '', amt: '¼ oz', opt: false}, {spec: 'salt', label: '', amt: '2 dashes saline', opt: true}], source: 'mine', at: 1795641000003}
+    garnish: 'Grated cinnamon', ing: [{spec: 'tequila-reposado', label: '', amt: '2 oz', opt: false}, {spec: 'lime', label: '', amt: '¾ oz', opt: false}, {spec: 'egg-white', label: '', amt: '¾ oz', opt: false}, {spec: 'grapefruit', label: '', amt: '½ oz', opt: false}, {spec: 'cinnamon-syrup', label: '', amt: '½ oz', opt: false}, {spec: 'campari', label: '', amt: '¼ oz', opt: false}, {spec: 'salt', label: '', amt: '2 dashes saline', opt: true}], source: 'mine', at: 1795641000003},
+  {id: 'haiken-lycheetini', n: 'Haiken Lycheetini', desc: 'Floral, juicy lychee with a squeeze of lemon. Bright and dangerously easy.', base: 'vodka', glass: 'Martini glass', styles: ['fruity', 'strong'],
+    method: 'Add everything to a shaker with ice, shake well and strain into a chilled martini glass. Use 3 oz for a lighter pour, 4 oz for the full recipe.',
+    garnish: 'A lychee', ing: [{spec: 'vodka', label: '', amt: '3–4 oz Haiken Lychee', opt: false}, {spec: 'lemon', label: '', amt: '½ oz', opt: false}, {spec: 'dry-vermouth', label: '', amt: 'spray or dash', opt: false}], source: 'mine', at: 1795641100001}
 ];
-const UI = {tab: 'shelf', filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
+const UI = {tab: 'drinks', picked: false, filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
 
 function haveSet(){
   const H = new Set();
@@ -940,9 +963,33 @@ function drinkCard(x){
       el('button', {type: 'button', class: 'mini' + (S.menu.includes(r.id) ? ' on' : ''), 'aria-pressed': String(S.menu.includes(r.id)), text: S.menu.includes(r.id) ? 'On the menu' : '+ Menu', onclick: () => toggleMenu(r.id)}),
       el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)})));
 }
+function renderHome(E){
+  const tile = (cls, title, sub, n, onclick) => el('button', {type: 'button', class: 'tile ' + cls, disabled: n === 0 || null, onclick},
+    el('span', {class: 'tile-t', text: title}), sub ? el('span', {class: 'tile-s', text: sub}) : null, el('span', {class: 'tile-n', text: n + ' drink' + (n === 1 ? '' : 's')}));
+  const pick = (patch) => () => { Object.assign(UI, {base: '', style: '', q: '', filter: 'all', picked: true}, patch); $('#drink-q').value = UI.q; renderDrinks(evaluate()); window.scrollTo({top: document.querySelector('.tabs').offsetTop}); };
+  const count = f => E.rs.filter(f).length;
+  $('#home-mine').replaceChildren(
+    tile('dark', '★ Favorites', 'The ones you love.', count(x => S.fav.includes(x.r.id)), pick({filter: 'fav'})),
+    tile('plain', 'Ready right now', 'Everything on your shelf can make.', count(x => !x.missing.length), pick({filter: 'ready'})),
+    tile('plain', 'Your recipes', 'The ones you added or changed.', count(x => x.r.mine), pick({filter: 'mine'})),
+    tile('plain', 'Every drink', 'The whole book.', E.rs.length, pick({})));
+  $('#home-spirits').replaceChildren(...BASES.map(([k, l], i) => tile('g' + (i % 5), l, '', count(x => x.r.base === k), pick({base: k}))));
+  $('#home-styles').replaceChildren(...STYLES.map(([k, l, d]) => tile('plain', l, d, count(x => stylesOf(x.r).includes(k)), pick({style: k}))));
+}
+$('#home-search').addEventListener('submit', e => { e.preventDefault(); const q = $('#home-q').value.trim(); if (!q) return; Object.assign(UI, {base: '', style: '', filter: 'all', q, picked: true}); $('#drink-q').value = q; $('#home-q').value = ''; renderDrinks(evaluate()); });
+$('#drink-back').addEventListener('click', () => { Object.assign(UI, {base: '', style: '', q: '', filter: 'all', picked: false}); $('#drink-q').value = ''; renderDrinks(evaluate()); window.scrollTo({top: document.querySelector('.tabs').offsetTop}); });
+function browseTitle(){
+  if (UI.q.trim()) return '“' + UI.q.trim() + '”';
+  const f = {fav: 'Favorites', ready: 'Ready right now', mine: 'Your recipes', one: 'One buy away', two: 'Two buys away'}[UI.filter];
+  const parts = [UI.base ? BASE_L[UI.base] : '', UI.style ? STYLE_L[UI.style] : ''].filter(Boolean);
+  return (parts.length ? parts.join(', ') : f || 'Every drink') + '.';
+}
 function renderDrinks(E){
+  $('#drink-home').hidden = UI.picked; $('#drink-browse').hidden = !UI.picked;
+  if (!UI.picked){ renderHome(E); return; }
+  $('#browse-title').textContent = browseTitle();
   const counts = Object.fromEntries(FILTERS.map(([k,,f]) => [k, E.rs.filter(f).length]));
-  if (!UI.filter && S.ready) UI.filter = counts.ready ? 'ready' : 'all';
+  if (!UI.filter) UI.filter = 'all';
   const cur = UI.filter || 'all';
   const fbox = $('#drink-filters'); fbox.replaceChildren(...FILTERS.filter(([k]) => k !== 'mine' || counts.mine).filter(([k]) => k !== 'fav' || counts.fav || cur === 'fav').map(([k, l]) =>
     el('button', {type: 'button', class: 'chip' + (cur === k ? ' on' : ''), 'aria-pressed': String(cur === k), onclick: () => { UI.filter = k; renderDrinks(evaluate()); }}, l, el('span', {class: 'n', text: counts[k]}))));
@@ -999,7 +1046,7 @@ function previewCard(r){
   const dup = allRecipes().find(x => norm(x.n) === norm(r.n));
   const foot = el('div', {class: 'card-foot'});
   if (dup) foot.append(el('span', {class: 'muted', style: 'font-size:14px', text: 'Already in your book as ' + dup.n + '. '}),
-    el('button', {type: 'button', class: 'mini', text: 'Show it', onclick: () => { UI.filter = 'all'; UI.q = dup.n; $('#drink-q').value = dup.n; renderDrinks(evaluate()); $('#drink-list').scrollIntoView({behavior: 'smooth', block: 'start'}); }}));
+    el('button', {type: 'button', class: 'mini', text: 'Show it', onclick: () => { UI.filter = 'all'; UI.picked = true; UI.base = ''; UI.style = ''; UI.q = dup.n; $('#drink-q').value = dup.n; renderDrinks(evaluate()); $('#drink-list').scrollIntoView({behavior: 'smooth', block: 'start'}); }}));
   else if (!S.readOnly){
     const save = el('button', {type: 'button', class: 'btn sm dark', text: 'Save to your recipes', onclick: async () => {
       save.disabled = true; save.textContent = 'Saved';
@@ -1101,7 +1148,7 @@ function renderMenu(E){
     out.append(el('div', {class: 'empty'},
       el('h3', {text: 'No drinks on the menu yet.'}),
       el('p', {text: 'Head to Drinks, tap “+ Menu” on the ones you want to serve, and they line up here with scaled specs and one prep list.'}),
-      el('p', {}, el('button', {type: 'button', class: 'btn dark', text: 'Pick from what’s ready', onclick: () => { UI.filter = 'ready'; go('drinks'); }}))));
+      el('p', {}, el('button', {type: 'button', class: 'btn dark', text: 'Pick from what’s ready', onclick: () => { Object.assign(UI, {filter: 'ready', base: '', style: '', q: '', picked: true}); go('drinks'); }}))));
     return;
   }
   const k = S.servings;
@@ -1195,7 +1242,7 @@ $('#rec-form').addEventListener('submit', e => {
   const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ing, source: dRec._source || 'mine', desc: $('#rec-desc').value.trim().slice(0, 240), ...(dRec._overrides ? {overrides: dRec._overrides} : {}), styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
   if (editingRec) ops.update('recipes', editingRec.docId, data); else ops.add('recipes', {...data, at: Date.now()});
   toast('Saved ' + data.n + '.'); dRec.close();
-  if (!editingRec && !dRec._overrides){ UI.filter = 'mine'; }
+  if (!editingRec && !dRec._overrides){ Object.assign(UI, {filter: 'mine', base: '', style: '', q: '', picked: true}); $('#drink-q').value = ''; }
 });
 
 /* ---------- shopping ---------- */
@@ -1304,7 +1351,7 @@ function renderPairs(E){
   const dl = el('div', {class: 'dlist'});
   rs.slice().sort((a,b) => a.missing.length - b.missing.length || a.r.n.localeCompare(b.r.n)).forEach(x => {
     const n = x.missing.length;
-    dl.append(el('button', {type: 'button', onclick: () => { UI.filter = 'all'; UI.q = x.r.n; $('#drink-q').value = x.r.n; UI.base = ''; UI.style = ''; go('drinks'); }},
+    dl.append(el('button', {type: 'button', onclick: () => { Object.assign(UI, {filter: 'all', q: x.r.n, base: '', style: '', picked: true}); $('#drink-q').value = x.r.n; go('drinks'); }},
       el('span', {text: x.r.n}), el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})));
   });
   if (!rs.length) dl.append(el('p', {class: 'muted', text: 'None yet.'}));
@@ -1315,7 +1362,7 @@ function renderPairs(E){
 /* ---------- tabs & render ---------- */
 const TABS = ['shelf','drinks','menu','shop','pairings'];
 function go(t, push = true){
-  if (!TABS.includes(t)) t = 'shelf';
+  if (!TABS.includes(t)) t = 'drinks';
   UI.tab = t;
   TABS.forEach(x => { $('#p-' + x).hidden = x !== t; $('#tab-' + x).setAttribute('aria-selected', String(x === t)); });
   if (push && location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
@@ -1326,10 +1373,6 @@ window.addEventListener('hashchange', () => go(location.hash.slice(1), false));
 
 function renderAll(){
   const E = evaluate();
-  const bottles = S.items.filter(x => x.level !== 'out' && ['spirits','liqueurs','wine','bitters'].includes(I[x.key]?.c)).length;
-  const ready = E.rs.filter(x => !x.missing.length).length, one = E.rs.filter(x => x.missing.length === 1).length;
-  $('#st-bottles').textContent = bottles; $('#st-ready').textContent = ready; $('#st-one').textContent = one;
-  $('#ct-drinks').textContent = ready ? ' ' + ready : '';
   const openList = S.shopping.filter(s => !s.done).length; $('#ct-shop').textContent = openList ? ' ' + openList : '';
   if (UI.tab === 'shelf'){ renderShelf(E); renderQuick(); }
   if (UI.tab === 'drinks') renderDrinks(E);
@@ -1338,7 +1381,7 @@ function renderAll(){
   if (UI.tab === 'menu') renderMenu(E);
   $('#ct-menu').textContent = S.menu.length ? ' ' + S.menu.length : '';
 }
-go(location.hash.slice(1) || 'shelf', false);
+go(location.hash.slice(1) || 'drinks', false);
 init();
 })();
 </script>
