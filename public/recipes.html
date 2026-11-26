@@ -923,7 +923,8 @@ async function init(){
     /* Items Claude adds for her, moved onto the shelf once on her next logged-in visit */
     const SHELF_INBOX = [
       {id: 's-eggs', key: 'egg-white', name: 'Eggs', level: 'full', note: '', at: 1795641200001},
-      {id: 's-salt', key: 'salt', name: '', level: 'full', note: '', at: 1795641200002}
+      {id: 's-salt', key: 'salt', name: '', level: 'full', note: '', at: 1795641200002},
+      {id: 's-st-germain', key: 'st-germain', name: 'St-Germain', level: 'full', note: '', at: 1795641200003}
     ];
     const newItems = SHELF_INBOX.filter(it => !S.imported.includes('item:' + it.id) && !S.items.some(x => x.key === it.key && x.level !== 'out'));
     if (newItems.length){
