@@ -236,8 +236,14 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
 - It opens on Drinks: a home of tiles (her favorites, ready now, her recipes, every drink, then each
   spirit and each style). Picking one sets `UI.picked` and shows the filtered list, with a back
   button to the tiles. No counts in the header; she didn't want them.
-  Below the tiles, "Every drink" lists the whole book by spirit as compact rows (`<details class="dk">`)
-  that open into the full card in place; open ones are remembered in `UI.openDrinks` across re-renders.
+  Below the tiles, "Every drink" lists the whole book by spirit, A to Z, as even rows (`drow`: photo
+  or glass icon, name, glass and ice, Ready/Need). The filtered list uses the same rows. A row opens
+  the full card in a pop-up (`#dlg-drink`, `openDrink`, re-rendered by `renderAll`); tapping a photo
+  shows it full screen (`#dlg-photo`).
+- Glass and ice icons: `glassOf` reads the glass text, `iceOf` works out no ice / on ice / big cube /
+  crushed / blended / hot from the method unless the recipe sets `ice` (the editor's Ice field).
+  Icons are the static SVG paths in `ICON`.
+- `SHELF_INBOX` (in `init`) adds items to her shelf from code, once, like `INBOX` does for recipes.
 - It is one self-contained page, `public/recipes.html` (vanilla JS, its own CSS and Revelrita
   tokens, no Tailwind or `globals.css`), served at `/recipes` by a rewrite in `next.config.ts`.
   The ingredient catalog, recipe book (`RAW`), styles (`STY`) and flavor notes live in its script.

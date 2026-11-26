@@ -209,18 +209,31 @@ label.lbl{display:grid; gap:6px; font-family:var(--f-sans); font-weight:700; fon
 .tile.dark{background:var(--strong); color:var(--on-strong)}
 .tile.plain{background:var(--card); border:1.5px solid var(--sand); color:var(--fg)}
 .back{justify-self:start}
-.dk{background:var(--card); border:1.5px solid var(--sand); border-radius:16px; min-width:0}
-.dk > summary{list-style:none; display:flex; gap:12px; align-items:center; padding:12px 14px; cursor:pointer; border-radius:16px}
-.dk > summary::-webkit-details-marker{display:none}
-.dk > summary:hover{background:var(--tint)}
-.dk[open] > summary{border-bottom:1px solid var(--hair); border-radius:16px 16px 0 0}
-.dk-thumb{width:48px; height:48px; border-radius:10px; object-fit:cover; flex:none; max-width:none}
-.dk-txt{flex:1; min-width:0}
-.dk-txt b{display:block; font-family:var(--f-sans); font-weight:700; font-size:17px; line-height:1.2}
-.dk-txt small{font-size:13px; color:var(--muted)}
-.dk .card{border:0; border-radius:0 0 16px 16px}
-.dk .card .card-top h3, .dk .card .card-top .meta, .dk .card .card-top .pill, .dk .card .card-photo{display:none}
-.dk .card .card-top{justify-content:end}
+.rows{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:12px}
+.drow{display:grid; grid-template-columns:56px minmax(0,1fr) auto; gap:14px; align-items:center; width:100%; min-height:84px; text-align:left; background:var(--card); border:1.5px solid var(--sand); border-radius:16px; padding:12px 14px; cursor:pointer; color:var(--fg); font:inherit; transition:transform .15s, border-color .15s}
+.drow:hover{border-color:var(--sand-strong); transform:translateY(-1px)}
+.drow-thumb{width:56px; height:56px; border-radius:12px; object-fit:cover; max-width:none; display:block}
+.drow-thumb.ph{display:grid; place-items:center; background:var(--tint); color:var(--muted)}
+.drow-thumb.ph svg{width:28px; height:28px}
+.drow-txt{display:grid; gap:5px; min-width:0}
+.drow-txt b{font-family:var(--f-sans); font-weight:700; font-size:17px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.drow-txt b .fv{color:var(--orange); margin-right:4px}
+.drow .pill{min-width:5.4em; justify-content:center}
+.gchips{display:flex; gap:12px; flex-wrap:nowrap; overflow:hidden; white-space:nowrap}
+.card .gchips, .menu-card .gchips{flex-wrap:wrap; margin-top:6px}
+.gchip{display:inline-flex; align-items:center; gap:5px; font-family:var(--f-sans); font-weight:600; font-size:12.5px; color:var(--muted)}
+.gchip svg{width:17px; height:17px; flex:none}
+.card-photo{cursor:zoom-in}
+#dlg-drink{width:min(620px, calc(100vw - 24px))}
+.dd{position:relative}
+.dd .card{border:0; border-radius:0}
+.dd-close{position:absolute; top:12px; right:12px; z-index:3; width:40px; height:40px; border-radius:var(--r-pill); border:0; background:var(--strong); color:var(--on-strong); font-size:22px; line-height:1; cursor:pointer}
+.dd .card-top{padding-right:44px}
+.dd .card-photo + .card-top{padding-right:0}
+#dlg-photo{background:transparent; padding:0; width:auto; max-width:96vw; max-height:96dvh; overflow:visible}
+#dlg-photo::backdrop{background:rgba(8,20,30,.88)}
+#dlg-photo img{display:block; max-width:96vw; max-height:88dvh; object-fit:contain; border-radius:14px; cursor:zoom-out}
+#dlg-photo p{margin:10px 0 0; text-align:center; color:#fff9e9; font-family:var(--f-sans); font-weight:700}
 
 /* guest guide */
 .guide{background:var(--card); border:1.5px solid var(--sand); border-radius:var(--r-card); padding:20px; display:grid; gap:18px}
@@ -465,6 +478,9 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
         <input class="input" id="rec-glass" type="text" placeholder="Rocks" autocomplete="off">
       </label>
     </div>
+    <label class="lbl">Ice
+      <select class="input" id="rec-ice"></select>
+    </label>
     <fieldset style="border:0; padding:0; margin:0">
       <legend class="lbl" style="padding:0; margin-bottom:8px">Style</legend>
       <div class="radios" id="rec-styles"></div>
@@ -493,6 +509,8 @@ dialog::backdrop{background:rgba(13,34,50,.5)}
   </form>
 </dialog>
 
+<dialog id="dlg-drink" aria-label="Drink"><div class="dd"><button class="dd-close" type="button" id="dd-close" aria-label="Close">×</button><div id="dd-body"></div></div></dialog>
+<dialog id="dlg-photo" aria-label="Photo"><img id="lb-img" alt=""><p id="lb-cap"></p></dialog>
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
@@ -709,6 +727,60 @@ function inferStyles(r){
 }
 function stylesOf(r){ const st = Array.isArray(r.styles) ? r.styles.filter(x => STYLE_L[x]) : []; return st.length ? st : inferStyles(r); }
 
+/* ---------- glass and ice ---------- */
+const ICON = {
+  coupe: '<path d="M3.5 6h17c0 4-3.8 6.5-8.5 6.5S3.5 10 3.5 6Z"/><path d="M12 12.5V20M8 20h8"/>',
+  martini: '<path d="M3 5h18l-9 9Z"/><path d="M12 14v6M8 20h8"/>',
+  rocks: '<path d="M5 7h14l-1.3 12H6.3Z"/><path d="M5.6 12h12.8"/>',
+  highball: '<path d="M7 3h10l-1.2 18H8.2Z"/><path d="M7.4 9h9.2"/>',
+  flute: '<path d="M9 3h6l-.6 8.5a2.4 2.4 0 0 1-4.8 0Z"/><path d="M12 14v6M9 20h6"/>',
+  wine: '<path d="M7 3h10v4.5a5 5 0 0 1-10 0Z"/><path d="M12 12.5V20M8.5 20h7"/>',
+  mug: '<path d="M5 6h11v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/>',
+  tiki: '<path d="M8 3h8c0 3-2 4-2 7s3 3 3 7v4H7v-4c0-4 3-4 3-7S8 6 8 3Z"/>',
+  julep: '<path d="M6 4h12l-1.2 14H7.2Z"/><path d="M5 20.5h14"/>',
+  shot: '<path d="M7.5 7h9l-1.2 12H8.7Z"/>',
+  up: '<circle cx="12" cy="12" r="8.5"/><path d="M6 18 18 6"/>',
+  cubes: '<rect x="3.5" y="10" width="7.5" height="7.5" rx="1.2"/><rect x="12.5" y="5" width="7.5" height="7.5" rx="1.2" transform="rotate(12 16.25 8.75)"/>',
+  large: '<rect x="4.5" y="4.5" width="15" height="15" rx="2"/><path d="M8 8.5h3"/>',
+  crushed: '<path d="M5 9l2-1.5L8.5 9 7 10.5Z M11 6l2-1 1 2-2 1Z M16 9l2.2-.8.6 2.2-2 .6Z M7 15l2-1 1 2-2 1.2Z M12.5 12.5l2.2.2-.4 2.2-2.1-.4Z M10.5 18.5l1.8-1.2 1.3 1.6-1.8 1.2Z M16.5 16l2-.6.6 2-2 .7Z"/>',
+  blended: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
+  hot: '<path d="M8 20c-2-2 2-4 0-6s2-4 0-6M12 20c-2-2 2-4 0-6s2-4 0-6M16 20c-2-2 2-4 0-6s2-4 0-6"/>'
+};
+function icon(name){
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.7'); svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round'); svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = ICON[name] || ''; // static markup from ICON above, never user data
+  return svg;
+}
+const GLASS = [['coupe','Coupe'],['martini','Martini'],['flute','Flute'],['wine','Wine glass'],['tiki','Tiki'],['hurricane','Hurricane'],['julep','Julep'],['shot','Shot'],['collins','Collins'],['highball','Highball'],['mug','Mug'],['rocks','Rocks']];
+const GLASS_ICON = {hurricane: 'tiki', collins: 'highball'};
+function glassOf(r){
+  const g = (r.glass || '').toLowerCase(); let best = null;
+  for (const [k, l] of GLASS){ const i = g.indexOf(k); if (i >= 0 && (!best || i < best.i)) best = {k, l, i}; }
+  return best ? {icon: GLASS_ICON[best.k] || best.k, label: best.l} : {icon: 'rocks', label: r.glass ? r.glass.split(/,| or /)[0].trim() : 'Rocks'};
+}
+const ICE_L = {up: 'No ice', cubes: 'On ice', large: 'Big cube', crushed: 'Crushed', blended: 'Blended', hot: 'Hot'};
+function iceOf(r){
+  if (ICE_L[r.ice]) return r.ice;
+  const m = (r.method || '').toLowerCase(), g = (r.glass || '').toLowerCase();
+  if (/hot water|hot coffee|into hot|warm mug/.test(m)) return 'hot';
+  if (/(^|\.\s+)blend\b/.test(m)) return 'blended';
+  if (/crushed/.test(m)) return 'crushed';
+  if (/large cube|big cube/.test(m)) return 'large';
+  if (/no ice/.test(g)) return 'up';
+  if (/over ice|fresh ice|lots of ice|fill with ice|build over|on the rocks|over a |pour it all|dump/.test(m)) return 'cubes';
+  if (/coupe|martini|flute|shot/.test(g)) return 'up';
+  if (/highball|collins|rocks|wine|hurricane|julep|mug|tiki/.test(g)) return 'cubes';
+  return 'up';
+}
+function glassChips(r){
+  const g = glassOf(r), ice = iceOf(r);
+  return el('span', {class: 'gchips'},
+    el('span', {class: 'gchip', title: 'Glass'}, icon(g.icon), g.label),
+    el('span', {class: 'gchip', title: 'Ice'}, icon(ice), ICE_L[ice]));
+}
+
 /* ---------- helpers ---------- */
 const $ = s => document.querySelector(s);
 function el(tag, props, ...kids){
@@ -750,7 +822,7 @@ const INBOX = [
     method: 'Add everything to a shaker with ice, shake well and strain into a chilled martini glass. Use 3 oz for a lighter pour, 4 oz for the full recipe.',
     garnish: 'A lychee', ing: [{spec: 'vodka', label: '', amt: '3–4 oz Haiken Lychee', opt: false}, {spec: 'lemon', label: '', amt: '½ oz', opt: false}, {spec: 'dry-vermouth', label: '', amt: 'spray or dash', opt: false}], source: 'mine', at: 1795641100001}
 ];
-const UI = {tab: 'drinks', picked: false, openDrinks: new Set(), filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
+const UI = {tab: 'drinks', picked: false, detail: null, filter: null, base: '', style: '', q: '', pair: null, openCats: new Set(['spirits'])};
 
 function haveSet(){
   const H = new Set();
@@ -835,6 +907,16 @@ async function init(){
         S.imported = S.imported.concat(fresh.map(r => r.id));
         save('recipes'); save('prefs');
       }
+    }
+    /* Items Claude adds for her, moved onto the shelf once on her next logged-in visit */
+    const SHELF_INBOX = [
+      {id: 's-eggs', key: 'egg-white', name: 'Eggs', level: 'full', note: '', at: 1795641200001},
+      {id: 's-salt', key: 'salt', name: '', level: 'full', note: '', at: 1795641200002}
+    ];
+    const newItems = SHELF_INBOX.filter(it => !S.imported.includes('item:' + it.id) && !S.items.some(x => x.key === it.key && x.level !== 'out'));
+    if (newItems.length){
+      S.items.push(...newItems.map(it => ({...it})));
+      if (d.canEdit){ S.imported = S.imported.concat(newItems.map(it => 'item:' + it.id)); save('items'); save('prefs'); }
     }
     if (d.stored === false) setNote('The bar’s database isn’t connected, so changes can’t be saved right now.');
     else if (!d.canEdit) setNote('You’re looking at Helen’s bar.', {href: '/admin/login?next=/recipes', text: 'Log in to make changes'});
@@ -984,9 +1066,9 @@ function drinkCard(x){
     el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : n === 1 ? 'Need 1' : 'Need ' + n});
   const fav = S.fav.includes(r.id);
   return el('article', {class: 'card'},
-    S.photos[r.id] ? el('img', {class: 'card-photo', src: photoUrl(r.id), alt: r.n, loading: 'lazy'}) : null,
+    S.photos[r.id] ? el('img', {class: 'card-photo', src: photoUrl(r.id), alt: r.n, loading: 'lazy', onclick: () => openPhoto(r)}) : null,
     el('div', {class: 'card-top'},
-      el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, ...stylesOf(r).map(x => STYLE_L[x]), r.mine ? (r.overrides ? 'Your version' : r.source === 'claude' ? 'Invented' : r.source === 'suggested' ? 'Suggested' : 'Your recipe') : ''].filter(Boolean).join(' · ')})),
+      el('div', {}, el('h3', {text: r.n}), glassChips(r), el('div', {class: 'meta', text: [...stylesOf(r).map(x => STYLE_L[x]), r.mine ? (r.overrides ? 'Your version' : r.source === 'claude' ? 'Invented' : r.source === 'suggested' ? 'Suggested' : 'Your recipe') : ''].filter(Boolean).join(' · ')})),
       el('div', {style: 'display:flex; gap:6px; align-items:center'}, pill,
         S.readOnly ? null : el('button', {type: 'button', class: 'star', 'aria-pressed': String(fav), 'aria-label': (fav ? 'Remove ' : 'Save ') + r.n + (fav ? ' from' : ' to') + ' favorites', text: fav ? '★' : '☆',
           onclick: () => ops.setFav(fav ? S.fav.filter(f => f !== r.id) : S.fav.concat(r.id))}))),
@@ -1005,6 +1087,26 @@ function drinkCard(x){
       el('button', {type: 'button', class: 'mini', text: 'Edit recipe', onclick: () => openRecipe(r)}),
       S.photos[r.id] ? null : el('button', {type: 'button', class: 'mini', text: 'Add photo', onclick: () => pickPhoto(async url => { await putPhoto(r.id, url); toast('Photo added to ' + r.n + '.'); })})));
 }
+function drow(x){
+  const {r, missing} = x; const n = missing.length;
+  return el('button', {type: 'button', class: 'drow', onclick: () => openDrink(r.id)},
+    S.photos[r.id] ? el('img', {class: 'drow-thumb', src: photoUrl(r.id), alt: '', loading: 'lazy'}) : el('span', {class: 'drow-thumb ph'}, icon(glassOf(r).icon)),
+    el('span', {class: 'drow-txt'}, el('b', {}, S.fav.includes(r.id) ? el('span', {class: 'fv', 'aria-label': 'Favorite', text: '★'}) : null, r.n), glassChips(r)),
+    el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n}));
+}
+const dDrink = $('#dlg-drink'), dPhoto = $('#dlg-photo');
+function renderDetail(E){
+  if (!UI.detail || !dDrink.open) return;
+  const x = (E || evaluate()).rs.find(y => y.r.id === UI.detail);
+  if (!x){ dDrink.close(); return; }
+  $('#dd-body').replaceChildren(drinkCard(x));
+}
+function openDrink(id){ UI.detail = id; dDrink.showModal(); renderDetail(); dDrink.scrollTop = 0; }
+$('#dd-close').addEventListener('click', () => dDrink.close());
+dDrink.addEventListener('close', () => { UI.detail = null; });
+dDrink.addEventListener('click', e => { if (e.target === dDrink) dDrink.close(); });
+function openPhoto(r){ $('#lb-img').src = photoUrl(r.id); $('#lb-img').alt = r.n; $('#lb-cap').textContent = r.n; dPhoto.showModal(); }
+dPhoto.addEventListener('click', () => dPhoto.close());
 function renderHome(E){
   const tile = (cls, title, sub, n, onclick) => el('button', {type: 'button', class: 'tile ' + cls, disabled: n === 0 || null, onclick},
     el('span', {class: 'tile-t', text: title}), sub ? el('span', {class: 'tile-s', text: sub}) : null, el('span', {class: 'tile-n', text: n + ' drink' + (n === 1 ? '' : 's')}));
@@ -1018,24 +1120,11 @@ function renderHome(E){
   $('#home-spirits').replaceChildren(...BASES.map(([k, l], i) => tile('g' + (i % 5), l, '', count(x => x.r.base === k), pick({base: k}))));
   const all = $('#home-all'); all.replaceChildren();
   for (const [bk, bl] of BASES){
-    const xs = E.rs.filter(x => x.r.base === bk).sort((a, b) => a.missing.length - b.missing.length || a.r.n.localeCompare(b.r.n));
+    const xs = E.rs.filter(x => x.r.base === bk).sort((a, b) => a.r.n.localeCompare(b.r.n));
     if (!xs.length) continue;
     all.append(el('section', {class: 'spirit-sec', 'aria-label': bl},
       el('div', {class: 'cat-h'}, el('h3', {text: bl}), el('span', {text: xs.length + ' drink' + (xs.length === 1 ? '' : 's')})),
-      el('div', {class: 'grid'}, xs.map(x => {
-        const n = x.missing.length; const open = UI.openDrinks.has(x.r.id);
-        const d = el('details', {class: 'dk', open: open || null},
-          el('summary', {},
-            S.photos[x.r.id] ? el('img', {class: 'dk-thumb', src: photoUrl(x.r.id), alt: '', loading: 'lazy'}) : null,
-            el('span', {class: 'dk-txt'}, el('b', {text: x.r.n}), el('small', {text: [x.r.glass, ...stylesOf(x.r).map(k => STYLE_L[k])].filter(Boolean).join(' · ')})),
-            el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})),
-          open ? drinkCard(x) : null);
-        d.addEventListener('toggle', () => {
-          if (d.open){ UI.openDrinks.add(x.r.id); if (d.children.length < 2) d.append(drinkCard(x)); }
-          else UI.openDrinks.delete(x.r.id);
-        });
-        return d;
-      }))));
+      el('div', {class: 'rows'}, xs.map(drow))));
   }
   if (S.hidden.length && !S.readOnly){
     const back = el('button', {type: 'button', class: 'btn sm', text: 'Bring them back', onclick: () => {
@@ -1076,7 +1165,7 @@ function renderDrinks(E){
   const bp = pool.filter(inStyle);
   $('#base-chips').replaceChildren(chip('All spirits', !UI.base, bp.length, () => { UI.base = ''; renderDrinks(evaluate()); }),
     ...BASES.map(([k, l]) => chip(l, UI.base === k, bp.filter(x => x.r.base === k).length, () => { UI.base = UI.base === k ? '' : k; renderDrinks(evaluate()); })));
-  const list = pool.filter(inStyle).filter(inBase).sort((a,b) => a.missing.length - b.missing.length || a.r.n.localeCompare(b.r.n));
+  const list = pool.filter(inStyle).filter(inBase).sort((a,b) => a.r.n.localeCompare(b.r.n));
   const box = $('#drink-list'); box.replaceChildren();
   if (!list.length){
     const msg = cur === 'ready' && !counts.ready ? 'Nothing is fully stocked yet. Try “One away” to see what a single bottle would unlock.' : cur === 'fav' ? 'Tap the star on any drink to keep it here.' : 'Nothing matches that combination. Try “All” above, or loosen the style or spirit.';
@@ -1088,7 +1177,7 @@ function renderDrinks(E){
     const rd = xs.filter(x => !x.missing.length).length;
     box.append(el('section', {class: 'spirit-sec', 'aria-label': bl},
       el('div', {class: 'cat-h'}, el('h3', {text: bl}), el('span', {text: xs.length + ' drink' + (xs.length === 1 ? '' : 's') + (cur !== 'ready' && rd ? ' · ' + rd + ' ready' : '')})),
-      el('div', {class: 'grid'}, xs.map(drinkCard))));
+      el('div', {class: 'rows'}, xs.map(drow))));
   }
 }
 
@@ -1196,9 +1285,9 @@ function scaleAmt(a, k){
 function menuCard(x, k){
   const {r, missing, H} = x; const n = missing.length;
   return el('article', {class: 'card menu-card'},
-    S.photos[r.id] ? el('img', {class: 'card-photo', src: photoUrl(r.id), alt: r.n, loading: 'lazy'}) : null,
+    S.photos[r.id] ? el('img', {class: 'card-photo', src: photoUrl(r.id), alt: r.n, loading: 'lazy', onclick: () => openPhoto(r)}) : null,
     el('div', {class: 'card-top'},
-      el('div', {}, el('h3', {text: r.n}), el('div', {class: 'meta', text: [r.glass, k > 1 ? 'Makes ' + k : ''].filter(Boolean).join(' · ')})),
+      el('div', {}, el('h3', {text: r.n}), glassChips(r), k > 1 ? el('div', {class: 'meta', text: 'Makes ' + k}) : null),
       el('span', {class: 'pill s' + Math.min(n, 3), text: n === 0 ? 'Ready' : 'Need ' + n})),
     el('ul', {class: 'ings'}, r.ing.map(i => {
       const ok = i.spec ? specOk(i.spec, H) : true;
@@ -1270,6 +1359,7 @@ $('#menu-clear').addEventListener('click', () => { if (S.menu.length){ ops.setMe
 /* recipe dialog */
 const dRec = $('#dlg-recipe'); let editingRec = null, pendingRecDel = false;
 $('#rec-base').append(...BASES.map(([k,l]) => el('option', {value: k, text: l})));
+$('#rec-ice').append(el('option', {value: '', text: 'Work it out from the method'}), ...Object.entries(ICE_L).map(([k, l]) => el('option', {value: k, text: l})));
 $('#rec-styles').append(...STYLES.map(([k,l]) => el('label', {}, el('input', {type: 'checkbox', value: k, id: 'sty-' + k}), el('span', {text: l}))));
 /* Ingredient names: typing a name on the shelf list (or a common alias) tracks it; anything else
    is kept as typed and isn't checked against the shelf. */
@@ -1342,7 +1432,7 @@ function openRecipe(r, pre){
   $('#rec-title').textContent = r ? 'Edit ' + r.n + '.' : 'Your recipe.';
   $('#rec-desc').value = src.desc || '';
   $('#rec-name').value = src.n || ''; $('#rec-base').value = src.base || 'gin'; $('#rec-glass').value = src.glass || '';
-  $('#rec-method').value = src.method || ''; $('#rec-garnish').value = src.garnish || '';
+  $('#rec-method').value = src.method || ''; $('#rec-garnish').value = src.garnish || ''; $('#rec-ice').value = ICE_L[src.ice] ? src.ice : '';
   const st = src.ing ? stylesOf(src) : []; STYLES.forEach(([k]) => { document.getElementById('sty-' + k).checked = st.includes(k); });
   const box = $('#rec-ings'); box.replaceChildren(...((src.ing && src.ing.length) ? src.ing : [null, null, null]).map(ingRow));
   dRec._r = r || null; $('#rec-reset').dataset.armed = '';
@@ -1380,7 +1470,7 @@ $('#rec-form').addEventListener('submit', e => {
   e.preventDefault();
   const ing = [...$('#rec-ings').children].map(r => r._get()).filter(Boolean);
   if (!ing.length){ toast('Add at least one ingredient.'); return; }
-  const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ing, source: dRec._source || 'mine', desc: $('#rec-desc').value.trim().slice(0, 240), ...(dRec._overrides ? {overrides: dRec._overrides} : {}), styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
+  const data = {n: $('#rec-name').value.trim().slice(0, 60), base: $('#rec-base').value, glass: $('#rec-glass').value.trim().slice(0, 40), method: $('#rec-method').value.trim().slice(0, 600), garnish: $('#rec-garnish').value.trim().slice(0, 80), ice: $('#rec-ice').value, ing, source: dRec._source || 'mine', desc: $('#rec-desc').value.trim().slice(0, 240), ...(dRec._overrides ? {overrides: dRec._overrides} : {}), styles: STYLES.map(x => x[0]).filter(k => document.getElementById('sty-' + k).checked)};
   let newId = null;
   if (editingRec) ops.update('recipes', editingRec.docId, data); else newId = ops.add('recipes', {...data, at: Date.now()});
   const pid = dRec._photoId || (dRec._overrides ? dRec._overrides : 'mine-' + newId);
@@ -1525,6 +1615,7 @@ function renderAll(){
   if (UI.tab === 'shop') renderShop(E);
   if (UI.tab === 'pairings') renderPairs(E);
   if (UI.tab === 'menu') renderMenu(E);
+  renderDetail(E);
   $('#ct-menu').textContent = S.menu.length ? ' ' + S.menu.length : '';
 }
 go(location.hash.slice(1) || 'drinks', false);
