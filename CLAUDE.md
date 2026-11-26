@@ -251,6 +251,9 @@ scaled specs and a prep list, shopping list, pairings). Not linked from the site
   copy as a recipe with `overrides: <book id>`; `allRecipes()` shows it in the book version's place
   under the same id (favorites and the menu keep working). Deleting it ("Reset to the original")
   brings the book version back.
+- Amari each have a type (`amaro-averna`, `amaro-nonino`, ...) in the `amaro` group; `amaro` itself
+  is "Amaro (any)", so a recipe calling for it takes any of them. On load, saved bottles still typed
+  `amaro` get their own type by name (the `AMARI` list in `init`).
 - The artifact's Claude-powered buttons (paste a recipe, suggest, invent) need the `sample`
   capability, which only exists inside Claude, so that panel stays hidden here.
 

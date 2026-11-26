@@ -482,7 +482,7 @@ def('spirits', [
 ]);
 def('liqueurs', [
   ['triple-sec','Triple sec / Cointreau',['orange-liqueur']],['grand-marnier','Grand Marnier',['orange-liqueur']],['dry-curacao','Dry curaçao',['orange-liqueur']],['blue-curacao','Blue curaçao'],
-  ['campari','Campari'],['aperol','Aperol'],['amaro','Amaro (Nonino, Montenegro…)'],['fernet','Fernet-Branca'],['maraschino','Maraschino liqueur'],
+  ['campari','Campari'],['aperol','Aperol'],['amaro','Amaro (any)'],['amaro-averna','Amaro Averna',['amaro']],['amaro-nonino','Amaro Nonino',['amaro']],['amaro-montenegro','Amaro Montenegro',['amaro']],['amaro-ramazzotti','Amaro Ramazzotti',['amaro']],['amaro-angeleno','Amaro Angeleno',['amaro']],['amaro-meletti','Amaro Meletti',['amaro']],['amaro-cynar','Cynar',['amaro']],['amaro-braulio','Braulio',['amaro']],['amaro-lucano','Amaro Lucano',['amaro']],['amaro-ciociaro','Amaro CioCiaro',['amaro']],['fernet','Fernet-Branca'],['maraschino','Maraschino liqueur'],
   ['chartreuse-green','Green Chartreuse'],['chartreuse-yellow','Yellow Chartreuse'],['benedictine','Bénédictine'],['st-germain','Elderflower liqueur'],
   ['coffee-liqueur','Coffee liqueur'],['amaretto','Amaretto'],['licor-43','Licor 43'],['creme-de-cassis','Crème de cassis'],['creme-de-cacao','Crème de cacao'],
   ['creme-de-menthe','Crème de menthe'],['creme-de-violette','Crème de violette'],['chambord','Raspberry liqueur'],['peach-schnapps','Peach schnapps'],
@@ -526,6 +526,12 @@ const FLAV = {
   'chartreuse-green':'Intense alpine herbs. A little goes far; pair it with gin, lime and maraschino.',
   'st-germain':'Elderflower, pear and lychee. Lovely with bubbles, gin and grapefruit.',
   amaro:'Bittersweet and herbal. Try it with bourbon and lemon, or neat after dinner.',
+  'amaro-averna':'Sicilian and rich: cola, caramel, orange peel and licorice. The classic for a Black Manhattan.',
+  'amaro-nonino':'Light and bittersweet with orange and grappa. The original Paper Plane amaro.',
+  'amaro-montenegro':'Floral and gentle, rose and orange. The easiest amaro to love.',
+  'amaro-ramazzotti':'Milanese, with orange, cola and warm spice. Great with soda and an orange slice.',
+  'amaro-angeleno':'Made in California, bright with mandarin and navel orange. Spritz it or use it like Aperol.',
+  'amaro-cynar':'Artichoke-based, vegetal and bittersweet. Lovely in a spritz or a Negroni twist.',
   'triple-sec':'Bright orange. The backbone of margaritas, sidecars and cosmos.',
   'coffee-liqueur':'Roasted coffee and sugar. Vodka, cream and espresso.',
   maraschino:'Funky cherry-pit and almond, not sweet cherry. Use it by the quarter ounce.',
@@ -628,7 +634,7 @@ Carajillo|aperitivo|Rocks|Shake with ice and strain over fresh ice.|licor-43 1½
 B-52|aperitivo|Shot glass|Layer over the back of a spoon: coffee liqueur, Irish cream, then Grand Marnier.|coffee-liqueur ½ oz, irish-cream ½ oz, grand-marnier ½ oz|None
 Banana Daiquiri|rum|Coupe|Shake hard with ice and strain.|rum-white/rum-aged 2 oz, banana-liqueur ½ oz, lime 1 oz, simple-syrup ¼ oz?|Lime wheel
 Rose|aperitivo|Coupe|Stir with ice and strain.|dry-vermouth 2 oz, kirsch 1 oz, raspberry-syrup/chambord 1 tsp|Cherry
-Black Manhattan|whiskey|Coupe|Stir with ice and strain.|rye/bourbon 2 oz, amaro 1 oz, angostura 1 dash, orange-bitters 1 dash?|Brandied cherry
+Black Manhattan|whiskey|Coupe|Stir with ice and strain.|rye/bourbon 2 oz, amaro-averna 1 oz, angostura 1 dash, orange-bitters 1 dash?|Brandied cherry
 Amaro Spritz|aperitivo|Wine glass|Build over ice and top with soda.|amaro 2 oz, sparkling 3 oz, soda 1 oz|Orange slice
 Amaro Sour|aperitivo|Rocks|Dry shake if using egg, then shake with ice and strain over fresh ice.|amaro 1½ oz, lemon ¾ oz, simple-syrup ¼ oz, egg-white 1 white?|Lemon peel
 French Martini|vodka|Coupe|Shake hard with ice and strain.|vodka 1½ oz, chambord ½ oz, pineapple-juice 1½ oz|Lemon twist
@@ -787,6 +793,11 @@ async function init(){
     S.servings = Number.isFinite(d.menu?.servings) ? Math.max(1, Math.min(50, d.menu.servings)) : 1;
     S.readOnly = !d.canEdit;
     S.imported = Array.isArray(d.prefs?.imported) ? d.prefs.imported : [];
+    // Amari used to be one type; give saved bottles their own by name, once
+    const AMARI = [[/averna/i, 'amaro-averna'], [/nonino/i, 'amaro-nonino'], [/montenegro/i, 'amaro-montenegro'], [/ramazzotti/i, 'amaro-ramazzotti'], [/angeleno/i, 'amaro-angeleno'], [/meletti/i, 'amaro-meletti'], [/cynar/i, 'amaro-cynar'], [/braulio/i, 'amaro-braulio'], [/lucano/i, 'amaro-lucano'], [/ciociaro/i, 'amaro-ciociaro']];
+    let retyped = false;
+    S.items.forEach(it => { if (it.key !== 'amaro') return; const m = AMARI.find(([re]) => re.test(it.name || '')); if (m){ it.key = m[1]; retyped = true; } });
+    if (retyped && d.canEdit) save('items');
     const fresh = INBOX.filter(r => !S.imported.includes(r.id) && !S.mine.some(m => m.id === r.id));
     if (fresh.length){
       S.mine.push(...fresh.map(r => JSON.parse(JSON.stringify(r))));
